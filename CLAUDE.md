@@ -207,6 +207,7 @@ Add new entries at the top. Format: date · decision · why · decided by.
 
 | Date | Decision | Why | By |
 | --- | --- | --- | --- |
+| 2026-11-13 | Hero positioning line: "At home in hospitality, curious about what AI can do behind the scenes." / "In der Hotellerie zu Hause, neugierig darauf, was KI im Hintergrund leisten kann." | Speaks to both audiences in one line; picked from 3 options | Mika |
 | 2026-11-13 | Route behaviour per chapter: horizon + pin (Arrival), room key and St. Gallen–Lucerne leg (Check-in), ruler-straight with 60 ticks (Foundations), three glasses (Bar), Lucerne waterfront (Academy), arc over a borderless graticule map into the skyline (Next destination), circuit traces drawing a concierge bell (AI), guestbook writing lines and a sign-off flourish (Check-out). Hidden detail sits on the flight map. Mobile: peak 2 not pinned | Step 1 plan | Claude, approved by Mika |
 | 2026-11-13 | Email delivery: Scaleway Transactional Email via plain `fetch` | Whole stack in the EU; Resend's EU region stores content in the US; no SDK dependency | Claude, approved by Mika |
 | 2026-11-13 | Fonts: Newsreader + Hanken Grotesk, self-hosted via Astro's Fonts API | Free licences, italics for chapter names, no new dependency, fallback metrics prevent layout shift | Claude, approved by Mika |
@@ -236,10 +237,7 @@ Format: date · what happened · the rule that prevents it next time.
 ## 13. Open questions
 
 - [x] Palette tokens and font pairing (approved 2026-11-13; contrast check pending in build step 2)
-- [ ] Headline / positioning line: Mika to pick A, B or C from the step 1 plan (A recommended)
-  - A: "At home in hospitality, curious about what AI can do behind the scenes." / "In der Hotellerie zu Hause, neugierig darauf, was KI im Hintergrund leisten kann."
-  - B: "On the way from St. Gallen to Hong Kong, learning how great hotels make guests feel at home." / "Unterwegs von St. Gallen nach Hongkong, um zu lernen, wie grosse Häuser ihren Gästen ein Zuhause geben."
-  - C: "Guests should leave with a smile. I work on everything that gets them there." / "Gäste sollen mit einem Lächeln gehen. Ich arbeite an allem, was dazu führt."
+- [x] Headline / positioning line (chosen 2026-11-13, see Decision log)
 - [x] Email delivery service: Scaleway Transactional Email (approved 2026-11-13). Mika still needs to create the account, verify mikatrolp.com (SPF/DKIM), create the mailbox and set the API key in Vercel
 - [ ] LinkedIn and GitHub URLs
 - [ ] Shell deny rules for `.env` in `.claude/settings.json` (Mika pastes them in; Claude's edit is blocked)
