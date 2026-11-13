@@ -51,7 +51,7 @@ Full reasoning and sources: *Portfolio Website — Tool Framework* doc. Installe
 | --- | --- |
 | Framework | Astro 7.x; pages prerendered (static) |
 | Server function | `@astrojs/vercel` adapter, used only for the contact form endpoint (`prerender = false`) |
-| Email delivery | A transactional email service with an EU or Swiss region `[TODO: choose in plan]`; API key only in env vars |
+| Email delivery | Scaleway Transactional Email (EU), called with plain `fetch` (no SDK); API key only in env vars |
 | Styling | Tailwind CSS v4 via `@tailwindcss/vite` |
 | Quiet motion | Native CSS scroll-driven animations (`animation-timeline`) |
 | Cinematic peaks | GSAP 3.x + ScrollTrigger (plus DrawSVG, MotionPath, SplitText as needed) |
@@ -71,9 +71,20 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
 ## 4. Design rules
 
 - **Palette:** warm, comfortable and welcoming. Warm paper background, deep ink text, one warm accent. No neon colours, no dark mode.
-  Exact tokens: `[TODO: set after plan approval]`.
+  Tokens (contrast to be confirmed by the axe test in build step 2):
+  `--color-paper #F2E6D3` (background) · `--color-paper-deep #E7D6BC` (map land, form surface) ·
+  `--color-ink #1E2B26` (text) · `--color-ink-soft #55605A` (secondary text) ·
+  `--color-route #A6341B` (route line, links, focus ring: the one accent) ·
+  `--color-brass #B58A3C` (decorative strokes only, never text).
   Colours live only as CSS custom properties / Tailwind theme tokens; never hard-code hex values in components.
-- **Type:** one serif display font + one sans, free licences, **self-hosted** (never loaded from Google's servers). Names: `[TODO]`.
+- **Type:** one serif display font + one sans, free licences, **self-hosted** (never loaded from Google's servers).
+  Display: Newsreader (OFL; italic for chapter names). Text: Hanken Grotesk (OFL). Self-hosted through Astro's built-in Fonts API, Latin subset.
+  Sentence case everywhere, no all-caps labels, left-aligned copy, body lines under ~65 characters.
+- **Layout:** desktop: the route wanders through a central band and each chapter's copy alternates sides of it;
+  mobile: the route is a near-straight rail on the left edge with one stop marker per chapter.
+  The header holds only the name, the current stage name, the language switch and the motion toggle.
+- **One pen line:** the route is the only illustration tool; every chapter drawing is made by that line
+  (chapter-by-chapter behaviour: see the approved step 1 plan in the Decision log).
 - **Illustrations:** code-drawn SVG line art only. One stroke width family, round line caps, the accent colour used sparingly.
   No stock photos, no AI-generated images, no copied illustrations, no portrait photo (for now).
 - **Playful touches:** one small, theme-matching detail per chapter (e.g. cocktail glasses for the bar). Delight, not distraction.
@@ -196,6 +207,10 @@ Add new entries at the top. Format: date · decision · why · decided by.
 
 | Date | Decision | Why | By |
 | --- | --- | --- | --- |
+| 2026-11-13 | Route behaviour per chapter: horizon + pin (Arrival), room key and St. Gallen–Lucerne leg (Check-in), ruler-straight with 60 ticks (Foundations), three glasses (Bar), Lucerne waterfront (Academy), arc over a borderless graticule map into the skyline (Next destination), circuit traces drawing a concierge bell (AI), guestbook writing lines and a sign-off flourish (Check-out). Hidden detail sits on the flight map. Mobile: peak 2 not pinned | Step 1 plan | Claude, approved by Mika |
+| 2026-11-13 | Email delivery: Scaleway Transactional Email via plain `fetch` | Whole stack in the EU; Resend's EU region stores content in the US; no SDK dependency | Claude, approved by Mika |
+| 2026-11-13 | Fonts: Newsreader + Hanken Grotesk, self-hosted via Astro's Fonts API | Free licences, italics for chapter names, no new dependency, fallback metrics prevent layout shift | Claude, approved by Mika |
+| 2026-11-13 | Palette: linen paper, pine ink, aperitivo-red route, brass details (tokens in §4) | Warm and welcoming, drawn from a concierge desk; one accent | Claude, approved by Mika |
 | 2026-11-13 | `@lhci/cli` removed from devDependencies; Lighthouse runs via `npx` in CI | `npm audit` showed 9 high-severity issues, all via `@lhci/cli` → `proxy-agent` → `basic-ftp`; the only "fix" was a breaking downgrade | Mika |
 | 2026-11-13 | Security & privacy rules (§7) adopted; no cookie banner needed with cookieless analytics and self-hosted fonts | Research in the *Privacy & Security* doc | Mika |
 | 2026-11-13 | Public GitHub repo | Free branch protection, secret scanning and push protection; shows the work | Mika `[TODO: confirm]` |
@@ -220,9 +235,14 @@ Format: date · what happened · the rule that prevents it next time.
 
 ## 13. Open questions
 
-- [ ] Palette tokens and font pairing (proposed in the first plan)
-- [ ] Headline / positioning line, EN + DE (3 options in the first plan)
-- [ ] Email delivery service (EU/Swiss region) for the contact form
+- [x] Palette tokens and font pairing (approved 2026-11-13; contrast check pending in build step 2)
+- [ ] Headline / positioning line: Mika to pick A, B or C from the step 1 plan (A recommended)
+  - A: "At home in hospitality, curious about what AI can do behind the scenes." / "In der Hotellerie zu Hause, neugierig darauf, was KI im Hintergrund leisten kann."
+  - B: "On the way from St. Gallen to Hong Kong, learning how great hotels make guests feel at home." / "Unterwegs von St. Gallen nach Hongkong, um zu lernen, wie grosse Häuser ihren Gästen ein Zuhause geben."
+  - C: "Guests should leave with a smile. I work on everything that gets them there." / "Gäste sollen mit einem Lächeln gehen. Ich arbeite an allem, was dazu führt."
+- [x] Email delivery service: Scaleway Transactional Email (approved 2026-11-13). Mika still needs to create the account, verify mikatrolp.com (SPF/DKIM), create the mailbox and set the API key in Vercel
+- [ ] LinkedIn and GitHub URLs
+- [ ] Shell deny rules for `.env` in `.claude/settings.json` (Mika pastes them in; Claude's edit is blocked)
 - [ ] A concrete leadership situation for Foundations (optional; questionnaire left it open)
 - [ ] English spelling: British or American?
 - [ ] Privacy notice text (EN + DE), checked against the final site
