@@ -1,0 +1,220 @@
+---
+import CheckInScene from "../route/CheckInScene.astro";
+import ChapterHeading from "./ChapterHeading.astro";
+
+interface Props {
+  stage: string;
+  heading: string;
+  /** Three paragraphs: how it began, what hospitality means, home and Lucerne. */
+  body: string[];
+  items?: { label: string; values: string[] }[];
+  /** Where the map leg ends (this chapter's place) and where it starts. */
+  place?: string;
+  origin?: string;
+}
+
+const { stage, heading, body, items = [], place, origin } = Astro.props;
+const [began, meaning, ...rest] = body;
+---
+
+<section class="check-in" data-stage-name={stage}>
+  <!-- Desktop: one tall drawing sets the section's height; the copy is laid over it. -->
+  <div class="scene scene--desktop scroll-scene">
+    <CheckInScene part="desktop" origin={origin} place={place} />
+  </div>
+
+  <div class="block block--began scroll-rail">
+    <div class="scroll-reveal">
+      <ChapterHeading stage={stage} heading={heading} />
+      <p class="mt-4">{began}</p>
+    </div>
+  </div>
+
+  <div class="scene scene--phone">
+    <CheckInScene part="key" />
+  </div>
+
+  <div class="block block--meaning scroll-rail">
+    <p class="quote font-display text-quote scroll-reveal">{meaning}</p>
+  </div>
+
+  <div class="scene scene--phone">
+    <CheckInScene part="map" origin={origin} place={place} />
+  </div>
+
+  <div class="block block--leg scroll-rail">
+    {rest.map((paragraph) => (
+      <p class="scroll-reveal">{paragraph}</p>
+    ))}
+  </div>
+
+  {items.map((item) => (
+    <div class="block block--tags scroll-rail">
+      <p class="font-semibold">{item.label}</p>
+      <ul class="tags" data-enter>
+        {item.values.map((value) => (
+          <li class="tag">{value}</li>
+        ))}
+      </ul>
+    </div>
+  ))}
+</section>
+
+<style>
+  .check-in {
+    position: relative;
+  }
+
+  /* Phones: copy and drawings alternate in one column. Every copy block carries its
+     own piece of the rail at 10% (x = 39 of 390), where the drawings pick it up. */
+  .scene--desktop {
+    display: none;
+  }
+
+  .block {
+    position: relative;
+    padding: 1.5rem var(--spacing-page) 2.5rem calc(10% + 1.25rem);
+  }
+
+  .block::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    left: 10%;
+    width: calc(var(--route-stroke-width) * 1px);
+    translate: -50% 0;
+    background: var(--color-route);
+    transform-origin: top;
+  }
+
+  .quote {
+    text-wrap: balance;
+  }
+
+  /* The languages hang as key tags from a brass rail: the chapter's playful touch. */
+  .tags {
+    --string: 2rem;
+    --line: calc(var(--route-detail-stroke-width) * 1px);
+
+    display: flex;
+    flex-wrap: wrap;
+    /* The row gap equals the string length: when tags wrap, each hangs from the one above. */
+    gap: var(--string) 1rem;
+    margin-top: 1rem;
+    padding-top: var(--string);
+    border-top: var(--line) solid var(--color-brass);
+  }
+
+  .tag {
+    position: relative;
+    padding: 1.4rem 0.9rem 0.6rem;
+    border: var(--line) solid var(--color-brass);
+    border-radius: 0.5rem;
+    /* Tags swing from the point where their string meets the rail. */
+    transform-origin: 50% calc(var(--string) * -1);
+  }
+
+  /* The string up to the rail. */
+  .tag::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    width: var(--line);
+    height: var(--string);
+    background: var(--color-brass);
+  }
+
+  /* The punched hole. */
+  .tag::after {
+    content: "";
+    position: absolute;
+    top: 0.4rem;
+    left: 50%;
+    width: 0.5rem;
+    height: 0.5rem;
+    translate: -50% 0;
+    border: var(--line) solid var(--color-brass);
+    border-radius: 50%;
+  }
+
+  /* On entering the view the tags swing once and come to rest, each a beat later,
+     as if the rail had just been hung up. */
+  :global(html[data-motion="on"]) .tags[data-inview] .tag {
+    animation: swing var(--duration-swing) var(--ease-settle) both;
+  }
+
+  :global(html[data-motion="on"]) .tags[data-inview] .tag:nth-child(2) {
+    animation-delay: var(--delay-stagger);
+  }
+
+  :global(html[data-motion="on"]) .tags[data-inview] .tag:nth-child(3) {
+    animation-delay: calc(var(--delay-stagger) * 2);
+  }
+
+  @keyframes swing {
+    0% {
+      rotate: 9deg;
+    }
+
+    35% {
+      rotate: -5deg;
+    }
+
+    65% {
+      rotate: 2.5deg;
+    }
+
+    100% {
+      rotate: 0deg;
+    }
+  }
+
+  /* Desktop: positions are percentages of the 1440 × 1860 drawing (CheckInScene.astro). */
+  @media (width >= 60rem) {
+    .scene--desktop {
+      display: block;
+    }
+
+    .scene--phone {
+      display: none;
+    }
+
+    .block {
+      position: absolute;
+      padding: 0;
+    }
+
+    .block::before {
+      content: none;
+    }
+
+    /* Left of the key (key spans x 744–1140, y 236–364). */
+    .block--began {
+      top: 8.5%;
+      left: 8.33%;
+      width: 36%;
+    }
+
+    /* Left of the route as it runs down the right side (x ≈ 1185). */
+    .block--meaning {
+      top: 29%;
+      left: 8.33%;
+      width: 66%;
+    }
+
+    /* Right of the map leg, between St. Gallen (1040, 1000) and Lucerne (430, 1340). */
+    .block--leg {
+      top: 67%;
+      left: 55%;
+      width: 26%;
+    }
+
+    /* Right of the route's last straight (x = 720). */
+    .block--tags {
+      top: 85%;
+      left: 55%;
+      width: 38%;
+    }
+  }
+</style>

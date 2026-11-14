@@ -1,0 +1,236 @@
+---
+// The Check-in drawings. The route arrives from the Arrival pin, draws a room key in one
+// stroke, runs down beside the large sentence, crosses a small map from St. Gallen to
+// Lucerne and leaves straight down for Foundations.
+// - "desktop": one tall drawing (1440 × 1900) that the copy is laid over.
+// - "key" and "map": two short drawings (390 wide) that sit between the copy on phones;
+//   the line leaves the left rail (x = 39), draws, and returns to it.
+import { contours, graticule } from "./contours";
+
+interface Props {
+  part: "desktop" | "key" | "map";
+  origin?: string;
+  place?: string;
+}
+
+const { part, origin, place } = Astro.props;
+
+const ground =
+  part === "desktop"
+    ? {
+        grid: graticule(1440, 1900, 180),
+        hills: [
+          ...contours(1040, 1000, { first: 34, step: 40, count: 6 }),
+          ...contours(430, 1290, { first: 40, step: 42, count: 7, seed: 1 }),
+          ...contours(960, 1430, { first: 26, step: 34, count: 5, seed: 3 }),
+        ],
+      }
+    : part === "map"
+      ? {
+          grid: graticule(390, 340, 110),
+          hills: [
+            ...contours(270, 70, { first: 16, step: 20, count: 5 }),
+            ...contours(110, 210, { first: 22, step: 22, count: 6, seed: 1 }),
+          ],
+        }
+      : { grid: [], hills: [] };
+---
+
+{part === "desktop" && (
+  <svg
+    class="scene-svg"
+    viewBox="0 0 1440 1860"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <defs>
+      <clipPath id="check-in-sheet">
+        <rect x="250" y="880" width="960" height="640" rx="6" />
+      </clipPath>
+    </defs>
+
+    <g class="scroll-fade">
+      {ground.grid.map((d) => (
+        <path class="map-grid" d={d} />
+      ))}
+    </g>
+
+    {/* A map sheet laid on the page, slightly askew: land in the darker paper tone,
+        lakes, contours and grid in the lighter one. */}
+    <g class="scroll-fade" transform="rotate(-1.2 730 1200)">
+      <rect class="map-sheet" x="250" y="880" width="960" height="640" rx="6" />
+      <g class="on-sheet" clip-path="url(#check-in-sheet)">
+        {ground.grid.map((d) => (
+          <path class="map-grid" d={d} />
+        ))}
+        {/* Lake Zurich, north-west of the leg, and Lake Lucerne, south-east of the town. */}
+        <path
+          class="map-water"
+          d="M468 972C562 980 664 1018 756 1074C770 1086 758 1104 742 1096C650 1054 564 1026 464 1012C444 1006 448 972 468 972Z"
+        />
+        <path
+          class="map-water"
+          d="M474 1374C520 1358 560 1374 600 1392C640 1378 690 1382 700 1400C706 1416 660 1420 630 1414C640 1440 610 1458 590 1440C580 1424 560 1410 530 1404C500 1400 462 1394 474 1374Z"
+        />
+        {ground.hills.map((d) => (
+          <path class="map-contour" d={d} />
+        ))}
+      </g>
+    </g>
+
+    <path
+      class="route-line scene-draw draw-in"
+      pathLength="1"
+      d="M1040 0C1040 110 872 130 872 300"
+    />
+    <g class="key">
+      <path
+        class="route-line scene-draw draw-key"
+        pathLength="1"
+        d="M872 300A64 64 0 0 1 744 300A64 64 0 0 1 872 300L1010 300L1010 344L1040 344L1040 300L1066 300L1066 334L1092 334L1092 300L1140 300"
+      />
+      <circle class="brass" cx="808" cy="300" r="20" />
+    </g>
+    <path
+      class="route-line scene-draw draw-out"
+      pathLength="1"
+      d="M1140 300C1180 300 1196 330 1196 400C1196 520 1180 640 1185 760C1190 860 1170 900 1120 940C1090 964 1060 980 1040 1000C960 1070 760 1100 660 1180C580 1240 520 1290 430 1340C430 1340 396 1304 396 1276A34 34 0 1 1 464 1276C464 1304 430 1340 430 1340C430 1440 430 1500 500 1530C580 1565 720 1540 720 1640L720 1860"
+    />
+
+    <g data-enter>
+      <circle class="brass marker" cx="1040" cy="1000" r="10" />
+      {origin && (
+        <text class="map-label" x="1016" y="984" text-anchor="end">
+          {origin}
+        </text>
+      )}
+    </g>
+    <g data-enter>
+      <circle class="brass marker" cx="430" cy="1276" r="10" />
+      {place && (
+        <text class="map-label" x="378" y="1284" text-anchor="end">
+          {place}
+        </text>
+      )}
+    </g>
+  </svg>
+)}
+
+{part === "key" && (
+  <svg
+    class="scene-svg"
+    viewBox="0 0 390 170"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path
+      class="route-line scroll-draw"
+      pathLength="1"
+      d="M39 0C39 40 174 20 174 80A24 24 0 0 1 126 80A24 24 0 0 1 174 80L236 80L236 96L248 96L248 80L260 80L260 92L272 92L272 80L296 80C330 80 336 128 296 132L90 132C56 132 39 146 39 170"
+    />
+    <circle class="brass" cx="150" cy="80" r="7" />
+  </svg>
+)}
+
+{part === "map" && (
+  <svg
+    class="scene-svg"
+    viewBox="0 0 390 340"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <defs>
+      <clipPath id="check-in-sheet-phone">
+        <rect x="58" y="20" width="320" height="300" rx="4" />
+      </clipPath>
+    </defs>
+
+    {/* The same map sheet as on desktop, right of the rail. */}
+    <g class="scroll-fade" transform="rotate(-1.5 218 170)">
+      <rect class="map-sheet" x="58" y="20" width="320" height="300" rx="4" />
+      <g class="on-sheet" clip-path="url(#check-in-sheet-phone)">
+        {ground.grid.map((d) => (
+          <path class="map-grid" d={d} />
+        ))}
+        <path
+          class="map-water"
+          d="M108 64C138 68 168 80 194 98C198 102 194 108 188 106C162 92 136 82 106 76C100 74 102 64 108 64Z"
+        />
+        <path
+          class="map-water"
+          d="M190 260C216 252 238 260 260 270C280 262 304 266 308 276C310 284 288 286 274 282C278 296 262 304 252 294C246 286 236 280 222 276C206 274 184 270 190 260Z"
+        />
+        {ground.hills.map((d) => (
+          <path class="map-contour" d={d} />
+        ))}
+      </g>
+    </g>
+
+    <path
+      class="route-line scroll-draw"
+      pathLength="1"
+      d="M39 0C39 40 170 30 270 70C230 104 190 124 170 160C150 196 130 220 110 240C110 240 92 220 92 204A18 18 0 1 1 128 204C128 220 110 240 110 240C110 300 39 290 39 340"
+    />
+
+    <g data-enter>
+      <circle class="brass marker" cx="270" cy="70" r="6" />
+      {origin && (
+        <text class="map-label map-label--small" x="284" y="62">
+          {origin}
+        </text>
+      )}
+    </g>
+    <g data-enter>
+      <circle class="brass marker" cx="110" cy="204" r="6" />
+      {place && (
+        <text class="map-label map-label--small" x="124" y="266">
+          {place}
+        </text>
+      )}
+    </g>
+  </svg>
+)}
+
+<style>
+  /* The share of the scene's scroll timeline each part of the line takes, in drawing
+     order and roughly in proportion to its length (see .scene-draw in route.css). */
+  .draw-in {
+    --from: 0;
+    --to: 0.1;
+  }
+
+  .key {
+    --from: 0.1;
+    --to: 0.31;
+  }
+
+  .draw-out {
+    --from: 0.31;
+    --to: 1;
+  }
+
+  /* While it is drawn, the key turns into place like a key in a lock. It pivots where
+     the incoming line meets the ring, so it never lets go of the route. */
+  .key {
+    transform-box: view-box;
+    transform-origin: 872px 300px;
+  }
+
+  @supports (animation-timeline: view()) {
+    :global(html[data-motion="on"]) .key {
+      --span: calc(100% - var(--scroll-draw-lead) - var(--scroll-draw-trail));
+
+      animation: turn linear both;
+      animation-timeline: --scene;
+      animation-range: cover
+        calc(var(--scroll-draw-lead) + var(--from) * var(--span)) cover
+        calc(var(--scroll-draw-lead) + var(--to) * var(--span));
+    }
+  }
+
+  @keyframes turn {
+    from {
+      rotate: -40deg;
+    }
+  }
+</style>

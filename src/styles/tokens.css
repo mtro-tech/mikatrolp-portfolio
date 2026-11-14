@@ -24,6 +24,9 @@
   /* The stage name in the header: shrinks on phones so the longest chapter name fits. */
   --text-stage: clamp(0.875rem, 3.7vw, 1.125rem);
   --text-stage--line-height: 1.2;
+  /* A chapter's one large sentence. */
+  --text-quote: clamp(1.5rem, 2.9vw, 2.75rem);
+  --text-quote--line-height: 1.25;
   --text-display: clamp(2.5rem, 6vw, 4.5rem);
   --text-display--line-height: 1.05;
   --text-chapter: clamp(1.75rem, 3.5vw, 2.5rem);
@@ -56,6 +59,13 @@
   --duration-land: 0.9s;
   --duration-needle: 2s;
   --duration-fade: 0.8s;
+
+  /* Chapters: on-enter animations and the scroll-drawn route. */
+  --duration-turn: 1.4s;
+  --duration-swing: 2.2s;
+  --delay-stagger: 0.12s;
+  --scroll-draw-lead: 35vh;
+  --scroll-draw-trail: 65vh;
   --ease-draw: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
 }

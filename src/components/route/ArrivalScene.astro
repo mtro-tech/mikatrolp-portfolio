@@ -15,8 +15,12 @@ interface Props {
 
 const { place, coordinates } = Astro.props;
 
+// The drawings scale with the page width only, so one unit is the same length in every
+// chapter and the route meets exactly at each join. The stage can be taller than the
+// drawing (tall, narrow screens), so the map ground extends beyond the viewBox:
+// upwards on desktop (anchored to the bottom), downwards on phones (anchored to the top).
 const desktop = {
-  graticule: graticule(1440, 900, 180),
+  graticule: graticule(1440, 2000, 180),
   hills: [
     ...contours(1040, 600, { first: 46, step: 44, count: 15 }),
     ...contours(250, 250, { first: 30, step: 36, count: 5, seed: 2 }),
@@ -24,10 +28,11 @@ const desktop = {
 };
 
 const mobile = {
-  graticule: graticule(390, 700, 110),
+  graticule: graticule(390, 1500, 110),
   hills: [
     ...contours(39, 210, { first: 30, step: 34, count: 9 }),
     ...contours(330, 560, { first: 24, step: 30, count: 5, seed: 2 }),
+    ...contours(120, 1050, { first: 24, step: 30, count: 6, seed: 4 }),
   ],
 };
 
@@ -38,7 +43,6 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
 <svg
   class="scene scene--desktop"
   viewBox="0 0 1440 900"
-  preserveAspectRatio="xMidYMax slice"
   aria-hidden="true"
   focusable="false"
 >
@@ -48,9 +52,11 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
       class="water"
       d="M770 96C860 58 1010 84 1130 122C1240 156 1360 150 1470 198L1470 262C1380 246 1290 266 1190 238C1080 206 960 186 868 186C806 186 748 146 770 96Z"
     ></path>
-    {desktop.graticule.map((d) => (
-      <path class="grid" d={d} />
-    ))}
+    <g transform="translate(0 -1100)">
+      {desktop.graticule.map((d) => (
+        <path class="grid" d={d} />
+      ))}
+    </g>
     {desktop.hills.map((d) => (
       <path class="contour" d={d} />
     ))}
@@ -93,7 +99,6 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
 <svg
   class="scene scene--mobile"
   viewBox="0 0 390 700"
-  preserveAspectRatio="xMinYMin slice"
   aria-hidden="true"
   focusable="false"
 >
@@ -124,7 +129,7 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
     class="line route-start"
     data-route-start
     pathLength="1000"
-    d="M39 272C38 360 40 540 39 720"
+    d="M39 272C38 500 40 900 39 1400"
   ></path>
   <circle class="ring" cx="39" cy="194" r="5.5"></circle>
 
@@ -143,9 +148,11 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
 <style>
   .scene {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 100%;
+    height: auto;
+    overflow: visible;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -158,6 +165,8 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
   @media (width >= 60rem) {
     .scene--desktop {
       display: block;
+      top: auto;
+      bottom: 0;
     }
 
     .scene--mobile {

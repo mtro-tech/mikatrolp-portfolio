@@ -2,6 +2,8 @@
 import { getCollection, getEntry } from "astro:content";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import Arrival from "../../components/chapters/Arrival.astro";
+import ChapterHeading from "../../components/chapters/ChapterHeading.astro";
+import CheckIn from "../../components/chapters/CheckIn.astro";
 import Header from "../../components/Header.astro";
 import Base from "../../layouts/Base.astro";
 
@@ -18,7 +20,7 @@ const otherSite = (await getEntry("site", other))!.data;
 const chapters = (
   await getCollection("chapters", ({ id }) => id.startsWith(`${locale}/`))
 ).sort((a, b) => a.data.order - b.data.order);
-const [arrival, ...stops] = chapters;
+const [arrival, checkIn, ...stops] = chapters;
 
 // "2027-02-15" → day, month and year; "2025-08" → month and year only.
 const formatDate = (value: string) =>
@@ -51,18 +53,29 @@ const formatDate = (value: string) =>
 
   <main id="main">
     <Arrival
+      stage={arrival.data.stage}
       heading={arrival.data.heading}
       line={arrival.data.body[0]}
       place={arrival.data.place}
       coordinates={arrival.data.coordinates}
     />
 
+    <CheckIn
+      stage={checkIn.data.stage}
+      heading={checkIn.data.heading}
+      body={checkIn.data.body}
+      items={checkIn.data.items}
+      place={checkIn.data.place}
+      origin={arrival.data.place}
+    />
+
     <!-- Plain placeholders until step 4 designs each chapter. -->
     <div class="mx-auto max-w-2xl space-y-16 p-6">
       {stops.map(({ data }) => (
-        <section class="space-y-4">
-          <h2 class="font-display text-chapter italic">{data.stage}</h2>
-          <p class="font-semibold">{data.heading}</p>
+        <section class="space-y-4" data-stage-name={data.stage}>
+          <div>
+            <ChapterHeading stage={data.stage} heading={data.heading} />
+          </div>
           {(data.role || data.period || data.status) && (
             <p class="text-ink-soft">
               {[
@@ -106,4 +119,5 @@ const formatDate = (value: string) =>
 
 <script>
   import "../../lib/motion/main";
+  import "../../lib/scroll";
 </script>
