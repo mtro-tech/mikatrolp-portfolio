@@ -1,0 +1,18 @@
+order: 4
+stage: Behind the bar
+heading: Appenzeller Huus
+organisation:
+  name: Appenzeller Huus
+role: Intern Bar & Lounges
+period:
+  start: "2026-02-02"
+  end: "2026-07-31"
+body:
+  - I joined Appenzeller Huus as Intern Bar & Lounges, in a five-star house that is a member of The Leading Hotels of the World and works to LQA standards. Today I tend bar there part-time at weekends.
+  - My guest contact grew from rather reserved to authentic and confident, and responsibility came quickly, such as co-organising events.
+items:
+  - label: Tools
+    values:
+      - Rotary evaporator
+      - Centrifuge
+      - Ultrasonic homogeniser

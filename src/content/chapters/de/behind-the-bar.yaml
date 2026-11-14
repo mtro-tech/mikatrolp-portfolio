@@ -1,0 +1,18 @@
+order: 4
+stage: Hinter der Bar
+heading: Appenzeller Huus
+organisation:
+  name: Appenzeller Huus
+role: Praktikant Bar & Lounges
+period:
+  start: "2026-02-02"
+  end: "2026-07-31"
+body:
+  - Im Appenzeller Huus begann ich als Praktikant Bar & Lounges, in einem Fünf-Sterne-Haus, das zu The Leading Hotels of the World gehört und nach LQA-Standards arbeitet. Heute stehe ich dort an den Wochenenden in Teilzeit hinter der Bar.
+  - Mein Gästekontakt hat sich von eher zurückhaltend zu authentisch und selbstsicher entwickelt, und Verantwortung kam schnell, etwa bei der Mitorganisation von Events.
+items:
+  - label: Werkzeuge
+    values:
+      - Rotationsverdampfer
+      - Zentrifuge
+      - Ultraschall-Homogenisator

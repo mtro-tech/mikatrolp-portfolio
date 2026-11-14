@@ -1,0 +1,13 @@
+order: 7
+stage: Concierge der Zukunft
+heading: Hotellerie trifft KI
+body:
+  - Irgendwann habe ich mir KI angeschaut und mich gefragt, wie weit ich damit kommen kann und ob ich verstehen kann, wie sie wirklich funktioniert.
+  - Hotellerie ist ein Geschäft von Menschen für Menschen, das sich nicht durch Workflows und Automatisierungen ersetzen lässt. Aber KI hat enormes Potenzial, Prozesse im Hintergrund zu erleichtern und die Margen in einem sehr engen Geschäft zu verbessern.
+  - Diese Website ist mein erstes Projekt. Weitere folgen.
+items:
+  - label: Werkzeuge
+    values:
+      - Claude
+      - Firecrawl
+      - Notion

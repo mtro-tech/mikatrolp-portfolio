@@ -1,0 +1,26 @@
+/* Design tokens (CLAUDE.md §4). The only place where colours, fonts and type sizes are defined. */
+
+@theme inline {
+  /* The --font-newsreader / --font-hanken-grotesk variables come from Astro's Fonts API. */
+  --font-display: var(--font-newsreader);
+  --font-text: var(--font-hanken-grotesk);
+}
+
+@theme {
+  /* Drop Tailwind's default palette so only the approved colours can be used. */
+  --color-*: initial;
+  --color-paper: #f2e6d3;
+  --color-paper-deep: #e7d6bc;
+  --color-ink: #1e2b26;
+  --color-ink-soft: #55605a;
+  --color-route: #a6341b;
+  /* Decorative strokes only, never text. */
+  --color-brass: #b58a3c;
+
+  --text-display: clamp(2.5rem, 6vw, 4.5rem);
+  --text-display--line-height: 1.05;
+  --text-chapter: clamp(1.75rem, 3.5vw, 2.5rem);
+  --text-chapter--line-height: 1.15;
+  --text-body: 1.125rem;
+  --text-body--line-height: 1.6;
+}

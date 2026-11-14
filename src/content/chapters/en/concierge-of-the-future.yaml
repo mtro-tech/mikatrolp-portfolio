@@ -1,0 +1,13 @@
+order: 7
+stage: Concierge of the future
+heading: Hospitality meets AI
+body:
+  - At some point I looked at AI and asked how far I could go with it, and whether I could understand how it really works.
+  - Hospitality is a people business that workflows and automations cannot replace. But AI has enormous potential to ease background processes and improve margins in a very tight business.
+  - This website is my first project. More will follow.
+items:
+  - label: Tools
+    values:
+      - Claude
+      - Firecrawl
+      - Notion

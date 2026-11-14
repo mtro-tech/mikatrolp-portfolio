@@ -1,0 +1,16 @@
+order: 5
+stage: The academy
+heading: Bachelor in Hospitality Management
+organisation:
+  name: SHL Schweizerische Hotelfachschule Luzern
+period:
+  start: "2025-08"
+  end: "2029-07"
+body:
+  - I am studying for a Bachelor in Hospitality Management at SHL Schweizerische Hotelfachschule Luzern. I am currently in semester 3, Rooms Division.
+items:
+  - label: Favourite modules
+    values:
+      - Accounting
+      - Economics
+      - Anything that touches on informatics
