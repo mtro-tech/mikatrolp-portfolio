@@ -17,8 +17,9 @@ Never delete or weaken a rule without Mika's explicit OK.
   (2) AI/tech people, innovators, investors and fellow students interested in Mika's AI work.
 - **Main action:** contact Mika through the contact form; links to LinkedIn and GitHub.
 - **Languages:** English and German (all copy, including the privacy notice).
-- **Mood:** calm, warm and editorial, with exactly 3 cinematic peaks (Arrival hero, flight to Hong Kong, transition to AI)
-  and small playful touches that match each chapter (e.g. cocktail glasses in "Behind the bar").
+- **Mood:** warm and professional, and spectacular to scroll through (changed 2026-11-14: "calm and editorial" proved too quiet).
+  Every chapter is a staged scene; the 3 cinematic peaks (Arrival hero, flight to Hong Kong, transition to AI) are the biggest.
+  Small playful touches match each chapter (e.g. cocktail glasses in "Behind the bar").
 - **Target launch:** before the Hong Kong internship starts (February 2027).
 - **Sources of truth:**
   - Facts about Mika: `src/content/` only, built from `docs/content-source.md`. Nothing else.
@@ -71,6 +72,8 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
 ## 4. Design rules
 
 - **Palette:** warm, comfortable and welcoming. Warm paper background, deep ink text, one warm accent. No neon colours, no dark mode.
+  Individual scenes may switch to a full background in another palette colour (pine ink, aperitivo red, darker paper)
+  for contrast (allowed 2026-11-14); text on them must still pass AA contrast.
   Tokens (text colours pass the axe contrast check on the paper background, 2026-11-14):
   `--color-paper #F2E6D3` (background) · `--color-paper-deep #E7D6BC` (map land, form surface) ·
   `--color-ink #1E2B26` (text) · `--color-ink-soft #55605A` (secondary text) ·
@@ -83,17 +86,25 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
 - **Layout:** desktop: the route wanders through a central band and each chapter's copy alternates sides of it;
   mobile: the route is a near-straight rail on the left edge with one stop marker per chapter.
   The header holds only the name, the current stage name, the language switch and the motion toggle.
-- **One pen line:** the route is the only illustration tool; every chapter drawing is made by that line
-  (chapter-by-chapter behaviour: see the approved step 1 plan in the Decision log).
+- **The route connects, objects are drawn properly** (changed 2026-11-14): the route line is the spine that links every scene,
+  but objects (a key, glasses, a skyline) are full line-art illustrations with several strokes and filled shapes in the palette,
+  so they read at a glance. The line's thickness on screen stays the same from the first scene to the last.
 - **Illustrations:** code-drawn SVG line art only. One stroke width family, round line caps, the accent colour used sparingly.
   No stock photos, no AI-generated images, no copied illustrations, no portrait photo (for now).
 - **Playful touches:** one small, theme-matching detail per chapter (e.g. cocktail glasses for the bar). Delight, not distraction.
 - **The route line** is the spine of the site: continuous, same style everywhere, never hidden for more than one viewport.
 - **Motion budget:**
-  - Exactly 3 cinematic peaks. Everything else is quiet: fades, line drawing, text reveals.
-  - Quiet motion: CSS scroll-driven animations. Peaks: GSAP. Don't mix both on the same element.
-  - No scroll-jacking outside the peaks; pinned sections must stay short enough not to frustrate.
-  - The flowing, continuous feel of deathbyscroll.com is the animation benchmark.
+  - **Staged chapters** (changed 2026-11-14): every chapter is a held scene, roughly two screens of scrolling, in which objects
+    build, move and turn into the next chapter. The 3 cinematic peaks (Arrival hero, flight to Hong Kong, transition to AI)
+    are the biggest of these, not the only ones.
+  - **Something is always alive:** each scene has a few small animations that run without scrolling
+    (a needle trembling, a pin pulsing, something drifting). Delight, not distraction; never behind body text.
+  - **Text arrives in short beats:** a few words or one sentence at a time, large, as the reader scrolls. Text never just sits
+    there finished when a scene opens. Beats are cut from the copy in `src/content/`; no facts are added.
+  - Held scenes and scroll-linked choreography: GSAP. Load and idle animations: CSS. Don't mix both on the same element.
+  - A held scene must always show progress: something visibly moves with every bit of scrolling, so it never feels stuck.
+  - With motion off, every scene is a normal scrolling section with all its content visible.
+  - deathbyscroll.com is the animation benchmark: one flowing whole, scenes that transform, constant life.
 - **No sound.**
 - **The contact form** is designed and animated as part of the Check-out chapter, not a generic form block.
 - **References are for principles only** (thewayapp.com, davidwhyte.com/experience, dieselfarm.com/en, deathbyscroll.com):
@@ -216,6 +227,7 @@ Add new entries at the top. Format: date · decision · why · decided by.
 
 | Date | Decision | Why | By |
 | --- | --- | --- | --- |
+| 2026-11-14 | New direction after the Check-in review: (1) staged chapters, every chapter a held scene of about two screens; (2) fuller line art, objects drawn properly with fills, the route still the spine; (3) individual scenes may use full palette-colour backgrounds; (4) text in short beats; (5) small idle animations in every scene; (6) the line keeps one thickness on screen throughout. §1 and §4 are rewritten to match; the earlier "exactly 3 peaks, everything else quiet" and "one pen line draws everything" rules are replaced | Mika: the hero-to-Check-in handover was boring, the text was already written, the key did not read as a key, the line changed thickness, and the site should be more spectacular, like Death by Scroll, with objects that move on their own | Mika |
 | 2026-11-14 | Check-in: the line draws a room key beside "How it began"; the hospitality sentence is set large; a map sheet (land in the darker paper tone, Lake Zurich and Lake Lucerne, contours) carries the leg from St. Gallen to Lucerne; the languages hang as brass key tags. Phones: the same pieces alternate with the copy along the left rail | Step 4 plan | Claude, plan approved by Mika |
 | 2026-11-14 | One coordinate system for the route: every drawing scales with the page width only (desktop viewBox 1440 wide, phones 390, switch at 60rem). Desktop chapters are one tall drawing with the copy laid over it in percentages; phone chapters alternate copy blocks (each carrying its piece of the rail at 10%) with short drawings | The line must meet exactly where chapters join, at every screen size | Claude, plan approved by Mika |
 | 2026-11-14 | Quiet chapter motion is CSS only, in `src/styles/route.css`: the route draws on a scroll timeline (`.scroll-draw`, or `.scene-draw` with `--from`/`--to` when several paths draw in order), copy uses `.scroll-reveal`, and `[data-enter]` elements play a short timed animation once in view. Browsers without scroll-driven animations show everything drawn | CLAUDE.md §4 motion budget | Claude, plan approved by Mika |
