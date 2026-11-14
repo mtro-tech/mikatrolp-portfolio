@@ -216,6 +216,10 @@ Add new entries at the top. Format: date · decision · why · decided by.
 
 | Date | Decision | Why | By |
 | --- | --- | --- | --- |
+| 2026-11-14 | The first hero was too minimal: the page must look professional and also have a wow effect while scrolling. Every chapter needs a rich drawn scene and motion with presence, not just type and one thin line | Mika's feedback on the step 3 screenshots ("basically empty") | Mika |
+| 2026-11-14 | German copy addresses visitors with "Sie" | Formal tone for employers and recruiters | Mika |
+| 2026-11-14 | German chapter names approved: Ankunft, Check-in, Fundament, Hinter der Bar, Die Akademie, Nächstes Ziel, Concierge der Zukunft, Check-out | Mika's review | Mika |
+| 2026-11-14 | Header stage name: the text size shrinks on small screens so the longest chapter name fits on one line at 390px; it wraps onto two lines only below that | Mika asked for the size to adapt; a test checks every stage name in both languages | Mika |
 | 2026-11-14 | Arrival hero: one pen line enters as a horizon with a low ridge, loops into a pin labelled "St. Gallen" and drops down as the route. Desktop: copy above the line, pin at 68% of the width. Mobile: the line enters from the right, the pin sits on the left rail at 10%, the copy sits right of the rail | Step 3 plan | Claude, approved by Mika |
 | 2026-11-14 | Until step 6 the hero's only motion is the line drawing once on load (CSS); the name and positioning line are visible from the first frame | The peaks and the toggle are step 6; hiding the name behind a fade would delay the largest paint | Claude, step 3 plan approved by Mika |
 | 2026-11-14 | Route stroke widths are set in SVG units (no `non-scaling-stroke`) | `non-scaling-stroke` breaks the `pathLength` dash trick the draw animation relies on | Claude `[TODO: confirm]` |
@@ -250,6 +254,7 @@ Add new entries at the top. Format: date · decision · why · decided by.
 Add an entry whenever a bug, a correction from Mika or a wrong assumption teaches something reusable.
 Format: date · what happened · the rule that prevents it next time.
 
+- 2026-11-14 · The step 3 hero followed "calm and editorial" so literally that Mika found the page basically empty · Calm describes the pacing, not the amount on screen. Before showing a chapter, ask whether a first-time visitor would find something to look at and something that moves; if the screenshot is mostly blank paper, it is not done.
 - 2026-11-14 · A screenshot taken a fixed few seconds after loading caught the hero mid-animation (the dev server compiles on first load), so the label and the rail looked missing · Take review screenshots with reduced motion emulated, and check animated states separately.
 - 2026-11-14 · Tailwind's `focus:not-sr-only` resets padding, so `px-4 py-2` on the skip link had no effect · Put spacing for a revealed `sr-only` element on the same variant (`focus:px-4`).
 - 2026-11-14 · The adapter attached the CSP header to `/en` but the site serves `/en/`, so the live pages had no CSP at all; nothing local showed it · After every change to headers or routing, check the response headers on the deployed URL for the exact paths visitors use. Previews are behind Vercel sign-in; the production URL is not.
@@ -276,8 +281,9 @@ Format: date · what happened · the rule that prevents it next time.
 - [x] Confirmed on the production URL after the fix (2026-11-14): CSP header on `/en/` and `/de/`, `/` redirects to `/en/` at once, no CSP errors in the browser console
 - [ ] When mikatrolp.com is connected: re-check the HSTS header on the `/` redirect (on `vercel.app` the platform adds `preload` there)
 - [x] Favicon: code-drawn route pin (step 3)
-- [ ] Mobile header: long stage names such as "Concierge of the future" will not fit next to the name and the language switch; decide in step 4
-- [ ] German: address visitors with "du" or "Sie"? Needed for form labels and the motion toggle (steps 5 and 6)
-- [ ] German chapter names (Ankunft, Fundament, Hinter der Bar, Die Akademie, Nächstes Ziel, Concierge der Zukunft) and all drafted copy: Mika reviews the wording
+- [x] Mobile header: long stage names fit (text size adapts; decided 2026-11-14)
+- [x] German address form: "Sie" (Mika, 2026-11-14)
+- [x] German chapter names approved (Mika, 2026-11-14)
+- [ ] Drafted chapter copy (EN + DE): Mika reviews the wording
 - [ ] "Currently in semester 3" in The academy goes out of date; Mika updates it or the line is dropped
 - [ ] No 404 page yet

@@ -45,6 +45,32 @@ test("the hero does not scroll sideways", async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
+for (const locale of ["en", "de"]) {
+  test(`every stage name fits the header on /${locale}/`, async ({ page }) => {
+    await page.goto(`/${locale}/`);
+    const stage = page.locator("[data-stage]");
+    const stages = await page
+      .getByRole("heading", { level: 2 })
+      .allInnerTexts();
+    const oneLine = await stage.evaluate((el) => el.clientHeight);
+
+    for (const name of stages) {
+      await stage.evaluate((el, text) => (el.textContent = text), name);
+      const fit = await page.evaluate(() => {
+        const header = document.querySelector("header")!;
+        const el = document.querySelector("[data-stage]")!;
+        return {
+          overflow: header.scrollWidth - header.clientWidth,
+          height: el.clientHeight,
+        };
+      });
+      expect(fit.overflow, name).toBeLessThanOrEqual(0);
+      // At both test widths (1440px and 390px) every name stays on one line.
+      expect(fit.height, name).toBe(oneLine);
+    }
+  });
+}
+
 test("German copy uses Swiss spelling (no ß)", async ({ page }) => {
   await page.goto("/de/");
   expect(await page.locator("body").innerText()).not.toContain("ß");

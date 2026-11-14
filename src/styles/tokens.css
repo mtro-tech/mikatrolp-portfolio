@@ -21,6 +21,9 @@
   --text-hero--line-height: 0.95;
   --text-lead: clamp(1.25rem, 2vw, 1.625rem);
   --text-lead--line-height: 1.4;
+  /* The stage name in the header: shrinks on phones so the longest chapter name fits. */
+  --text-stage: clamp(0.875rem, 3.7vw, 1.125rem);
+  --text-stage--line-height: 1.2;
   --text-display: clamp(2.5rem, 6vw, 4.5rem);
   --text-display--line-height: 1.05;
   --text-chapter: clamp(1.75rem, 3.5vw, 2.5rem);
