@@ -24,6 +24,88 @@ test("/ redirects to /en/", async ({ page }) => {
   await expect(page).toHaveURL(/\/en\/$/);
 });
 
+test("the hero line is decorative and static under reduced motion", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/en/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
+  // Two drawings exist (desktop and mobile); exactly one is shown per width.
+  const scene = page.locator("svg.scene:visible");
+  await expect(scene).toHaveCount(1);
+  await expect(scene).toHaveAttribute("aria-hidden", "true");
+  await expect(scene.locator(".skyline")).toHaveCSS("animation-name", "none");
+  // Without motion the whole route is drawn and nothing gets pinned.
+  await expect(scene.locator(".route-start")).toHaveCSS(
+    "stroke-dashoffset",
+    "0px",
+  );
+  await expect(page.locator(".pin-spacer")).toHaveCount(0);
+  await expect(scene.getByText("St. Gallen")).toBeVisible();
+});
+
+test("the motion toggle switches motion off and remembers it", async ({
+  page,
+}) => {
+  await page.goto("/en/");
+  const html = page.locator("html");
+  const toggle = page.getByRole("button", { name: /Motion/ });
+  await expect(html).toHaveAttribute("data-motion", "on");
+  // The accessible name leaves out the hidden state, as a screen reader would.
+  await expect(toggle).toHaveAccessibleName("Motion: on");
+
+  await toggle.click();
+  await expect(html).toHaveAttribute("data-motion", "off");
+  await expect(toggle).toHaveAccessibleName("Motion: off");
+  await expect(page.locator("svg.scene:visible .skyline")).toHaveCSS(
+    "animation-name",
+    "none",
+  );
+
+  await page.reload();
+  await expect(html).toHaveAttribute("data-motion", "off");
+
+  // The setting is the only thing the site stores, and no cookie is set.
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([
+    "motion",
+  ]);
+  expect(await page.context().cookies()).toEqual([]);
+});
+
+test("the hero does not scroll sideways", async ({ page }) => {
+  await page.goto("/de/");
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
+for (const locale of ["en", "de"]) {
+  test(`every stage name fits the header on /${locale}/`, async ({ page }) => {
+    await page.goto(`/${locale}/`);
+    const stage = page.locator("[data-stage]");
+    const stages = await page
+      .getByRole("heading", { level: 2 })
+      .allInnerTexts();
+    const oneLine = await stage.evaluate((el) => el.clientHeight);
+
+    for (const name of stages) {
+      await stage.evaluate((el, text) => (el.textContent = text), name);
+      const fit = await page.evaluate(() => {
+        const header = document.querySelector("header")!;
+        const el = document.querySelector("[data-stage]")!;
+        return {
+          overflow: header.scrollWidth - header.clientWidth,
+          height: el.clientHeight,
+        };
+      });
+      expect(fit.overflow, name).toBeLessThanOrEqual(0);
+      // At both test widths (1440px and 390px) every name stays on one line.
+      expect(fit.height, name).toBe(oneLine);
+    }
+  });
+}
+
 test("German copy uses Swiss spelling (no ß)", async ({ page }) => {
   await page.goto("/de/");
   expect(await page.locator("body").innerText()).not.toContain("ß");

@@ -7,10 +7,13 @@
       "Edit(.env.*)",
       "Edit(./.claude/settings.json)",
       "Edit(./.claude/settings.local.json)",
+      "Edit(./.claude/hooks/**)",
       "Bash(*.env*)",
       "PowerShell(*.env*)",
       "Bash(*.claude*settings*)",
-      "PowerShell(*.claude*settings*)"
+      "PowerShell(*.claude*settings*)",
+      "Bash(*.claude*hooks*)",
+      "PowerShell(*.claude*hooks*)"
     ]
   },
   "hooks": {

@@ -1,0 +1,105 @@
+---
+import ArrivalScene from "../route/ArrivalScene.astro";
+
+interface Props {
+  heading: string;
+  line: string;
+  place?: string;
+  coordinates?: string;
+}
+
+const { heading, line, place, coordinates } = Astro.props;
+---
+
+<section class="arrival" data-arrival aria-labelledby="arrival-title">
+  <div class="scene-wrap" data-arrival-scene>
+    <ArrivalScene place={place} coordinates={coordinates} />
+  </div>
+
+  <div class="copy" data-arrival-copy>
+    <h1 id="arrival-title" class="font-display text-hero">
+      <span class="mask">
+        <span class="rise">{heading}</span>
+      </span>
+    </h1>
+    <p class="lead text-lead mt-4 max-w-[38ch] text-balance">{line}</p>
+  </div>
+</section>
+
+<style>
+  /* The stage fills the first screen below the sticky header. --u is the length of one
+     drawing unit of the scene (ArrivalScene.astro), so the copy can be placed against
+     the skyline at every screen size. */
+  .arrival {
+    --stage-h: max(calc(100svh - var(--header-height)), 34rem);
+    --u: max(100vw / 390, var(--stage-h) / 700);
+
+    position: relative;
+    height: var(--stage-h);
+    overflow: clip;
+  }
+
+  .scene-wrap {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Phones: the copy sits below the skyline (y = 230), right of the rail (x = 39). */
+  .copy {
+    position: absolute;
+    top: calc(var(--u) * 276);
+    left: calc(var(--u) * 39 + 1.25rem);
+    right: var(--spacing-page);
+  }
+
+  /* The mask hides the name until it rises. The padding keeps the descender of the "p". */
+  .mask {
+    display: block;
+    overflow: clip;
+    padding-block: 0.08em 0.22em;
+    margin-block: -0.08em -0.22em;
+  }
+
+  .rise {
+    display: block;
+  }
+
+  /* Desktop: the copy stands on the hills, left of the towers (skyline at y = 700). */
+  @media (width >= 60rem) {
+    .arrival {
+      --u: max(100vw / 1440, var(--stage-h) / 900);
+    }
+
+    .copy {
+      top: auto;
+      right: auto;
+      bottom: calc(var(--u) * 292);
+      left: var(--spacing-page);
+    }
+  }
+
+  /* Load sequence, continued from ArrivalScene: the name comes up from behind the
+     horizon like a sunrise, then the positioning line settles under it. */
+  :global(html[data-motion="on"]) .rise {
+    animation: rise var(--duration-rise) var(--ease-settle) var(--delay-rise)
+      both;
+  }
+
+  :global(html[data-motion="on"]) .lead {
+    animation: settle var(--duration-fade) var(--ease-settle) var(--delay-lead)
+      both;
+  }
+
+  @keyframes rise {
+    from {
+      translate: 0 115%;
+    }
+  }
+
+  @keyframes settle {
+    from {
+      opacity: 0;
+      translate: 0 0.75rem;
+    }
+  }
+</style>
