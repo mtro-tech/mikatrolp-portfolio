@@ -2,6 +2,10 @@ name: Mika Trolp
 languageName: English
 languageSwitchLabel: Language
 skipLink: Skip to content
+motion:
+  label: Motion
+  "on": "on"
+  "off": "off"
 statusLabels:
   upcoming: Upcoming
   current: Current

@@ -30,6 +30,7 @@ const chapters = defineCollection({
       .optional(),
     // Where this stop sits on the map; shown as the label next to the pin.
     place: z.string().min(1).optional(),
+    coordinates: z.string().min(1).optional(),
     role: z.string().min(1).optional(),
     period: z.strictObject({ start: date, end: date.optional() }).optional(),
     // Only Mika changes this (CLAUDE.md §2.4).
@@ -52,6 +53,12 @@ const site = defineCollection({
     languageName: z.string().min(1),
     languageSwitchLabel: z.string().min(1),
     skipLink: z.string().min(1),
+    // The motion toggle reads "<label>: <on>" or "<label>: <off>".
+    motion: z.strictObject({
+      label: z.string().min(1),
+      on: z.string().min(1),
+      off: z.string().min(1),
+    }),
     statusLabels: z.strictObject({
       upcoming: z.string().min(1),
       current: z.string().min(1),

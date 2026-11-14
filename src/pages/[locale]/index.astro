@@ -46,6 +46,7 @@ const formatDate = (value: string) =>
       href: getRelativeLocaleUrl(other),
       languageName: otherSite.languageName,
     }}
+    motion={site.motion}
   />
 
   <main id="main">
@@ -53,6 +54,7 @@ const formatDate = (value: string) =>
       heading={arrival.data.heading}
       line={arrival.data.body[0]}
       place={arrival.data.place}
+      coordinates={arrival.data.coordinates}
     />
 
     <!-- Plain placeholders until step 4 designs each chapter. -->
@@ -101,3 +103,7 @@ const formatDate = (value: string) =>
     </a>
   </footer>
 </Base>
+
+<script>
+  import "../../lib/motion/main";
+</script>

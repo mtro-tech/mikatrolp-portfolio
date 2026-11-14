@@ -2,5 +2,6 @@ order: 1
 stage: Ankunft
 heading: Mika Trolp
 place: St. Gallen
+coordinates: 47.42° N, 9.38° E
 body:
   - In der Hotellerie zu Hause, neugierig darauf, was KI im Hintergrund leisten kann.

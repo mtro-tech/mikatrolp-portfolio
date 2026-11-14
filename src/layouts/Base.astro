@@ -26,6 +26,9 @@ const { locale, title, description, skipLink } = Astro.props;
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <Font cssVariable="--font-newsreader" preload />
     <Font cssVariable="--font-hanken-grotesk" preload />
+    <!-- Sets <html data-motion> before first paint, so nothing animates and then stops.
+         A blocking file from our own origin: the CSP would block it as an inline script. -->
+    <script is:inline src="/motion-init.js"></script>
   </head>
   <body>
     <a

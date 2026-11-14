@@ -1,125 +1,105 @@
 ---
-import ArrivalLine from "../route/ArrivalLine.astro";
+import ArrivalScene from "../route/ArrivalScene.astro";
 
 interface Props {
   heading: string;
   line: string;
   place?: string;
+  coordinates?: string;
 }
 
-const { heading, line, place } = Astro.props;
+const { heading, line, place, coordinates } = Astro.props;
 ---
 
-<section class="arrival" aria-labelledby="arrival-title">
-  <div class="copy px-page">
-    <h1 id="arrival-title" class="font-display text-hero">
-      {heading}
-    </h1>
-    <p class="text-lead mt-6 max-w-[38ch] text-balance">{line}</p>
+<section class="arrival" data-arrival aria-labelledby="arrival-title">
+  <div class="scene-wrap" data-arrival-scene>
+    <ArrivalScene place={place} coordinates={coordinates} />
   </div>
 
-  <div class="band">
-    <ArrivalLine />
-    {place && <p class="place font-display italic">{place}</p>}
+  <div class="copy" data-arrival-copy>
+    <h1 id="arrival-title" class="font-display text-hero">
+      <span class="mask">
+        <span class="rise">{heading}</span>
+      </span>
+    </h1>
+    <p class="lead text-lead mt-4 max-w-[38ch] text-balance">{line}</p>
   </div>
 </section>
 
 <style>
-  /* The hero fills the first screen below the header (about 4rem tall). */
+  /* The stage fills the first screen below the sticky header. --u is the length of one
+     drawing unit of the scene (ArrivalScene.astro), so the copy can be placed against
+     the skyline at every screen size. */
   .arrival {
-    display: flex;
-    flex-direction: column;
-    min-height: calc(100svh - 4rem);
-    overflow-x: clip;
-  }
+    --stage-h: max(calc(100svh - var(--header-height)), 34rem);
+    --u: max(100vw / 390, var(--stage-h) / 700);
 
-  .band {
     position: relative;
+    height: var(--stage-h);
+    overflow: clip;
   }
 
-  /* Label positions are percentages of the band, so they follow the pin at every width. */
-  .place {
+  .scene-wrap {
     position: absolute;
-    left: 19%;
-    top: 8%;
-    color: var(--color-ink-soft);
+    inset: 0;
   }
 
-  /* Mobile: the line comes first, then the copy sits to the right of the left rail.
-     The rail is the same line continuing down beside the copy. */
-  .band {
-    order: 1;
-  }
-
+  /* Phones: the copy sits below the skyline (y = 230), right of the rail (x = 39). */
   .copy {
-    order: 2;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    position: relative;
-    padding-block: 1.5rem 3rem;
-    padding-left: calc(10% + 1.5rem);
-  }
-
-  .copy::before {
-    content: "";
     position: absolute;
-    inset-block: 0;
-    left: 10%;
-    width: calc(var(--route-stroke-width) * 1px);
-    translate: -50% 0;
-    background: var(--color-route);
-    transform-origin: top;
+    top: calc(var(--u) * 276);
+    left: calc(var(--u) * 39 + 1.25rem);
+    right: var(--spacing-page);
   }
 
-  @media (prefers-reduced-motion: no-preference) {
-    .place {
-      animation: appear var(--duration-fade) var(--ease-settle)
-        var(--duration-draw) both;
-    }
-
-    /* The rail grows once the drawn line has reached the bottom of the band. */
-    .copy::before {
-      animation: grow var(--duration-fade) var(--ease-settle)
-        var(--duration-draw) both;
-    }
+  /* The mask hides the name until it rises. The padding keeps the descender of the "p". */
+  .mask {
+    display: block;
+    overflow: clip;
+    padding-block: 0.08em 0.22em;
+    margin-block: -0.08em -0.22em;
   }
 
-  /* Desktop: copy above the horizon, the line as a band at the bottom of the screen. */
-  @media (width >= 48rem) {
+  .rise {
+    display: block;
+  }
+
+  /* Desktop: the copy stands on the hills, left of the towers (skyline at y = 700). */
+  @media (width >= 60rem) {
+    .arrival {
+      --u: max(100vw / 1440, var(--stage-h) / 900);
+    }
+
     .copy {
-      order: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      padding-block: 3rem 0;
-      padding-left: var(--spacing-page);
-    }
-
-    .copy::before {
-      content: none;
-    }
-
-    .band {
-      order: 2;
-    }
-
-    .place {
-      left: 71.5%;
-      top: 38%;
+      top: auto;
+      right: auto;
+      bottom: calc(var(--u) * 292);
+      left: var(--spacing-page);
     }
   }
 
-  @keyframes appear {
+  /* Load sequence, continued from ArrivalScene: the name comes up from behind the
+     horizon like a sunrise, then the positioning line settles under it. */
+  :global(html[data-motion="on"]) .rise {
+    animation: rise var(--duration-rise) var(--ease-settle) var(--delay-rise)
+      both;
+  }
+
+  :global(html[data-motion="on"]) .lead {
+    animation: settle var(--duration-fade) var(--ease-settle) var(--delay-lead)
+      both;
+  }
+
+  @keyframes rise {
+    from {
+      translate: 0 115%;
+    }
+  }
+
+  @keyframes settle {
     from {
       opacity: 0;
-    }
-  }
-
-  @keyframes grow {
-    from {
-      scale: 1 0;
+      translate: 0 0.75rem;
     }
   }
 </style>

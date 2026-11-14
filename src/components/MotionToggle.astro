@@ -1,0 +1,36 @@
+---
+// The visible motion switch. The state lives on <html data-motion="on|off">, set before
+// first paint in Base.astro; the click handler is in src/lib/motion. The button's text is
+// its state, so no aria-pressed is needed.
+interface Props {
+  label: string;
+  on: string;
+  off: string;
+}
+
+const { label, on, off } = Astro.props;
+---
+
+<button type="button" class="motion-toggle" data-motion-toggle>
+  {label}: <span class="state state--on">{on}</span>
+  <span class="state state--off">{off}</span>
+</button>
+
+<style>
+  .motion-toggle {
+    cursor: pointer;
+    color: var(--color-ink-soft);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  /* Without JavaScript there is no motion to switch off, so the button is not shown. */
+  :global(html:not([data-motion])) .motion-toggle {
+    display: none;
+  }
+
+  :global(html[data-motion="on"]) .state--off,
+  :global(html[data-motion="off"]) .state--on {
+    display: none;
+  }
+</style>

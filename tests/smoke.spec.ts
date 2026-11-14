@@ -29,12 +29,47 @@ test("the hero line is decorative and static under reduced motion", async ({
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/en/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
   // Two drawings exist (desktop and mobile); exactly one is shown per width.
-  const line = page.locator("svg.arrival-line:visible");
-  await expect(line).toHaveCount(1);
-  await expect(line).toHaveAttribute("aria-hidden", "true");
-  await expect(line.locator(".route")).toHaveCSS("animation-name", "none");
-  await expect(page.getByText("St. Gallen").first()).toBeVisible();
+  const scene = page.locator("svg.scene:visible");
+  await expect(scene).toHaveCount(1);
+  await expect(scene).toHaveAttribute("aria-hidden", "true");
+  await expect(scene.locator(".skyline")).toHaveCSS("animation-name", "none");
+  // Without motion the whole route is drawn and nothing gets pinned.
+  await expect(scene.locator(".route-start")).toHaveCSS(
+    "stroke-dashoffset",
+    "0px",
+  );
+  await expect(page.locator(".pin-spacer")).toHaveCount(0);
+  await expect(scene.getByText("St. Gallen")).toBeVisible();
+});
+
+test("the motion toggle switches motion off and remembers it", async ({
+  page,
+}) => {
+  await page.goto("/en/");
+  const html = page.locator("html");
+  const toggle = page.getByRole("button", { name: /Motion/ });
+  await expect(html).toHaveAttribute("data-motion", "on");
+  // The accessible name leaves out the hidden state, as a screen reader would.
+  await expect(toggle).toHaveAccessibleName("Motion: on");
+
+  await toggle.click();
+  await expect(html).toHaveAttribute("data-motion", "off");
+  await expect(toggle).toHaveAccessibleName("Motion: off");
+  await expect(page.locator("svg.scene:visible .skyline")).toHaveCSS(
+    "animation-name",
+    "none",
+  );
+
+  await page.reload();
+  await expect(html).toHaveAttribute("data-motion", "off");
+
+  // The setting is the only thing the site stores, and no cookie is set.
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([
+    "motion",
+  ]);
+  expect(await page.context().cookies()).toEqual([]);
 });
 
 test("the hero does not scroll sideways", async ({ page }) => {
