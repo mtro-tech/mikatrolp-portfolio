@@ -8,8 +8,19 @@ import { readFileSync, existsSync } from "node:fs";
 import { extname, join } from "node:path";
 
 const FORMATTABLE = new Set([
-  ".astro", ".ts", ".tsx", ".js", ".mjs", ".cjs",
-  ".json", ".css", ".md", ".mdx", ".yml", ".yaml", ".html",
+  ".astro",
+  ".ts",
+  ".tsx",
+  ".js",
+  ".mjs",
+  ".cjs",
+  ".json",
+  ".css",
+  ".md",
+  ".mdx",
+  ".yml",
+  ".yaml",
+  ".html",
 ]);
 
 try {
@@ -22,12 +33,23 @@ try {
   if (/(^|[\\/])\.env(\.|$)/.test(file)) process.exit(0); // never touch secret files
 
   // Call Prettier's own script with Node directly: works on Windows without a shell
-  const prettier = join(process.cwd(), "node_modules", "prettier", "bin", "prettier.cjs");
+  const prettier = join(
+    process.cwd(),
+    "node_modules",
+    "prettier",
+    "bin",
+    "prettier.cjs",
+  );
   if (!existsSync(prettier)) process.exit(0);
 
-  execFileSync(process.execPath, [prettier, "--write", "--log-level", "warn", file], {
-    stdio: "inherit",
-  });
+  // Pin the root config: a nested prettier.config.* would otherwise be loaded and run as code
+  const config = join(process.cwd(), ".prettierrc");
+
+  execFileSync(
+    process.execPath,
+    [prettier, "--config", config, "--write", "--log-level", "warn", file],
+    { stdio: "inherit" },
+  );
 } catch {
   // ignore: a formatting problem must not stop the edit
 }

@@ -207,6 +207,7 @@ Add new entries at the top. Format: date · decision · why · decided by.
 
 | Date | Decision | Why | By |
 | --- | --- | --- | --- |
+| 2026-11-14 | The format hook always uses the root `.prettierrc` (`--config`) | Security review: a nested Prettier config file would otherwise be loaded and run as code on the next edit | Claude, approved by Mika |
 | 2026-11-14 | `CLAUDE.md` is excluded from Prettier (`.prettierignore`) | The format hook padded the wide tables to full column width; the rulebook stays hand-formatted | Mika |
 | 2026-11-13 | Hero positioning line: "At home in hospitality, curious about what AI can do behind the scenes." / "In der Hotellerie zu Hause, neugierig darauf, was KI im Hintergrund leisten kann." | Speaks to both audiences in one line; picked from 3 options | Mika |
 | 2026-11-13 | Route behaviour per chapter: horizon + pin (Arrival), room key and St. Gallen–Lucerne leg (Check-in), ruler-straight with 60 ticks (Foundations), three glasses (Bar), Lucerne waterfront (Academy), arc over a borderless graticule map into the skyline (Next destination), circuit traces drawing a concierge bell (AI), guestbook writing lines and a sign-off flourish (Check-out). Hidden detail sits on the flight map. Mobile: peak 2 not pinned | Step 1 plan | Claude, approved by Mika |
