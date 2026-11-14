@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
@@ -218,4 +220,44 @@ for (const locale of ["en", "de"]) {
 test("German copy uses Swiss spelling (no ß)", async ({ page }) => {
   await page.goto("/de/");
   expect(await page.locator("body").innerText()).not.toContain("ß");
+});
+
+test("every animation has its own name", () => {
+  // Keyframe names are global: two components using the same name silently share one
+  // animation (the hero's buildings once slid up like the name instead of growing).
+  const files = readdirSync("src", {
+    recursive: true,
+    encoding: "utf8",
+  }).filter((file) => /\.(astro|css)$/.test(file));
+  const seen = new Map<string, string>();
+  for (const file of files) {
+    const source = readFileSync(join("src", file), "utf8");
+    for (const [, name] of source.matchAll(/@keyframes\s+([\w-]+)/g)) {
+      expect(seen.get(name), `@keyframes ${name} in ${file}`).toBeUndefined();
+      seen.set(name, file);
+    }
+  }
+  // Guards the guard: the scan must actually have found the animations.
+  expect(seen.size).toBeGreaterThan(5);
+});
+
+test("the hero's drawings are not visible before they animate in", async ({
+  page,
+}) => {
+  await page.goto("/en/");
+  // Rewind every one-off animation to its first frame, as at the moment of first paint.
+  await page.evaluate(() => {
+    for (const animation of document.getAnimations()) {
+      if (animation.effect?.getComputedTiming().iterations === Infinity)
+        continue;
+      animation.pause();
+      animation.currentTime = 0;
+    }
+  });
+  const scene = page.locator("svg.scene:visible");
+  for (const part of [".building", ".hill", ".pin-drop"]) {
+    for (const element of await scene.locator(part).all()) {
+      await expect(element).toHaveCSS("opacity", "0");
+    }
+  }
 });
