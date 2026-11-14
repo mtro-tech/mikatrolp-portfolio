@@ -247,6 +247,7 @@ Add new entries at the top. Format: date · decision · why · decided by.
 Add an entry whenever a bug, a correction from Mika or a wrong assumption teaches something reusable.
 Format: date · what happened · the rule that prevents it next time.
 
+- 2026-11-14 · The adapter attached the CSP header to `/en` but the site serves `/en/`, so the live pages had no CSP at all; nothing local showed it · After every change to headers or routing, check the response headers on the deployed URL for the exact paths visitors use. Previews are behind Vercel sign-in; the production URL is not.
 - 2026-11-14 · With the CSP active in dev, the page rendered without any styles, and the axe and smoke tests still passed on it · Look at a screenshot before trusting a green test run; a passing contrast check means nothing on an unstyled page.
 - 2026-11-14 · `@astrojs/vercel` brought in a vulnerable `path-to-regexp`; `npm audit fix` only offered a breaking downgrade · When a transitive package has a patched release in the same major version, pin it with `overrides` and re-run the audit and the build.
 - 2026-11-14 · The deny rule `*.env*` also blocks harmless shell commands that contain `.env` inside another word (for example a JSON field name) · When a shell command is denied without an obvious reason, look for `.env` or `.claude…settings` in its text and rephrase.
@@ -266,8 +267,8 @@ Format: date · what happened · the rule that prevents it next time.
 - [ ] A concrete leadership situation for Foundations (optional; questionnaire left it open)
 - [x] English spelling: British (Mika, 2026-11-14)
 - [ ] Privacy notice text (EN + DE), checked against the final site
-- [ ] Security headers on the Vercel preview not yet verified (CSP as a header on `/en/` and `/de/`, and whether `vercel.json` headers apply alongside the adapter): the preview is behind Vercel sign-in
-- [ ] `/` reaches `/en/` through a 2-second meta refresh page in the static build; replace with an instant redirect once the header check shows how Vercel routing behaves
+- [x] Security headers checked on the production URL (2026-11-14): the `vercel.json` headers apply on every route. The CSP header was missing on `/en/` and `/de/` (only sent for `/en`, `/de`); fixed with `trailingSlash: "always"`
+- [ ] After the trailing-slash fix is deployed: confirm the CSP header on `/en/` and `/de/`, and that `/` redirects to `/en/` at once (`vercel.json` redirect; the 2-second meta refresh page stays as a fallback)
 - [ ] Favicon is still the Astro starter icon; replace it with a code-drawn one (step 3 or polish)
 - [ ] German: address visitors with "du" or "Sie"? Needed for form labels and the motion toggle (steps 5 and 6)
 - [ ] German chapter names (Ankunft, Fundament, Hinter der Bar, Die Akademie, Nächstes Ziel, Concierge der Zukunft) and all drafted copy: Mika reviews the wording

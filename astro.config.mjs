@@ -10,6 +10,9 @@ const isDev = process.argv.includes("dev");
 export default defineConfig({
   site: "https://mikatrolp.com",
   output: "static",
+  // Pages live at /en/ and /de/. The adapter's CSP header routes match the exact path,
+  // so the slash form must be the only one that is served.
+  trailingSlash: "always",
 
   // The adapter is here for the contact endpoint (step 5) and cookieless analytics.
   // staticHeaders makes Astro send the CSP as a real header, which frame-ancestors needs.
