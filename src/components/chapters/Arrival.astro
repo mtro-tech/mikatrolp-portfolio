@@ -93,22 +93,23 @@ const { stage, heading, line, place, coordinates } = Astro.props;
   /* Load sequence, continued from ArrivalScene: the name comes up from behind the
      horizon like a sunrise, then the positioning line settles under it. */
   :global(html[data-motion="on"]) .rise {
-    animation: rise var(--duration-rise) var(--ease-settle) var(--delay-rise)
-      both;
+    animation: name-rise var(--duration-rise) var(--ease-settle)
+      var(--delay-rise) both;
   }
 
   :global(html[data-motion="on"]) .lead {
-    animation: settle var(--duration-fade) var(--ease-settle) var(--delay-lead)
-      both;
+    animation: lead-settle var(--duration-fade) var(--ease-settle)
+      var(--delay-lead) both;
   }
 
-  @keyframes rise {
+  @keyframes name-rise {
     from {
-      translate: 0 115%;
+      /* Far enough to clear the mask's padding, so no sliver of the name shows early. */
+      translate: 0 140%;
     }
   }
 
-  @keyframes settle {
+  @keyframes lead-settle {
     from {
       opacity: 0;
       translate: 0 0.75rem;

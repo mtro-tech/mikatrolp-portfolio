@@ -421,12 +421,12 @@ const north = "M0 -38L6 -6L-6 -6Z";
   }
 
   :global(html[data-motion="on"]) .hill {
-    animation: rise var(--duration-building) var(--ease-settle)
+    animation: building-grow var(--duration-building) var(--ease-settle)
       calc(var(--delay-town) - var(--delay-building) * 2) both;
   }
 
   :global(html[data-motion="on"]) .building {
-    animation: rise var(--duration-building) var(--ease-settle)
+    animation: building-grow var(--duration-building) var(--ease-settle)
       calc(var(--delay-town) + var(--i) * var(--delay-building)) both;
   }
 
@@ -497,7 +497,8 @@ const north = "M0 -38L6 -6L-6 -6Z";
   /* Once settled, the needle never rests completely. */
   :global(html[data-motion="on"]) .needle {
     animation:
-      settle var(--duration-needle) var(--ease-settle) var(--delay-draw) both,
+      needle-settle var(--duration-needle) var(--ease-settle) var(--delay-draw)
+        both,
       tremble var(--duration-tremble) ease-in-out
         calc(var(--delay-draw) + var(--duration-needle)) infinite alternate;
   }
@@ -529,7 +530,7 @@ const north = "M0 -38L6 -6L-6 -6Z";
     }
   }
 
-  @keyframes rise {
+  @keyframes building-grow {
     from {
       opacity: 0;
       scale: 1 0;
@@ -560,7 +561,7 @@ const north = "M0 -38L6 -6L-6 -6Z";
   }
 
   /* A compass needle that was just set down: it overshoots north, then rests. */
-  @keyframes settle {
+  @keyframes needle-settle {
     0% {
       rotate: -70deg;
     }
