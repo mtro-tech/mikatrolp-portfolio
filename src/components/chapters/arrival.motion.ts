@@ -7,7 +7,7 @@ import type { Scene } from "../../lib/motion";
 import { arrival as tokens } from "../../lib/motion/tokens";
 
 // The pin's position in the desktop drawing (ArrivalScene.astro, viewBox 1440 × 900,
-// centred horizontally and anchored to the bottom).
+// scaled to the stage's width and anchored to its bottom).
 // The scroll-drawn route path declares pathLength="1000" (ArrivalScene.astro).
 const ROUTE_LENGTH = 1000;
 
@@ -49,11 +49,8 @@ export const arrivalScene: Scene = ({ isDesktop }) => {
   }
 
   const pinOrigin = () => {
-    const unit = Math.max(
-      stage.clientWidth / VIEW.width,
-      stage.clientHeight / VIEW.height,
-    );
-    const x = stage.clientWidth / 2 + (VIEW.pinX - VIEW.width / 2) * unit;
+    const unit = stage.clientWidth / VIEW.width;
+    const x = VIEW.pinX * unit;
     const y = stage.clientHeight - (VIEW.height - VIEW.pinY) * unit;
     return `${x}px ${y}px`;
   };

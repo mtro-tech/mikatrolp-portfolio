@@ -2,16 +2,22 @@
 import ArrivalScene from "../route/ArrivalScene.astro";
 
 interface Props {
+  stage: string;
   heading: string;
   line: string;
   place?: string;
   coordinates?: string;
 }
 
-const { heading, line, place, coordinates } = Astro.props;
+const { stage, heading, line, place, coordinates } = Astro.props;
 ---
 
-<section class="arrival" data-arrival aria-labelledby="arrival-title">
+<section
+  class="arrival"
+  data-arrival
+  data-stage-name={stage}
+  aria-labelledby="arrival-title"
+>
   <div class="scene-wrap" data-arrival-scene>
     <ArrivalScene place={place} coordinates={coordinates} />
   </div>
@@ -32,7 +38,9 @@ const { heading, line, place, coordinates } = Astro.props;
      the skyline at every screen size. */
   .arrival {
     --stage-h: max(calc(100svh - var(--header-height)), 34rem);
-    --u: max(100vw / 390, var(--stage-h) / 700);
+    --u: calc(100cqw / 390);
+
+    container-type: inline-size;
 
     position: relative;
     height: var(--stage-h);
@@ -67,7 +75,7 @@ const { heading, line, place, coordinates } = Astro.props;
   /* Desktop: the copy stands on the hills, left of the towers (skyline at y = 700). */
   @media (width >= 60rem) {
     .arrival {
-      --u: max(100vw / 1440, var(--stage-h) / 900);
+      --u: calc(100cqw / 1440);
     }
 
     .copy {

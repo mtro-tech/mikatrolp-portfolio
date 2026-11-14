@@ -72,6 +72,33 @@ test("the motion toggle switches motion off and remembers it", async ({
   expect(await page.context().cookies()).toEqual([]);
 });
 
+test("the header shows the chapter being read", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/en/");
+  const stage = page.locator("[data-stage]");
+  await expect(stage).toHaveText("Arrival");
+  await page.locator(".check-in").scrollIntoViewIfNeeded();
+  await page.getByText("Languages").scrollIntoViewIfNeeded();
+  await expect(stage).toHaveText("Check-in");
+});
+
+test("Check-in is complete and static without motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/de/");
+  const chapter = page.locator(".check-in");
+  // Every part of the route is drawn; nothing waits for a scroll animation.
+  for (const path of await chapter.locator(".route-line:visible").all()) {
+    await expect(path).toHaveCSS("stroke-dashoffset", "0px");
+    await expect(path).toHaveCSS("animation-name", "none");
+  }
+  await expect(chapter.getByRole("heading", { level: 2 })).toHaveText(
+    "Check-in",
+  );
+  await expect(chapter.locator(".quote")).toBeVisible();
+  await expect(chapter.locator(".quote")).toHaveCSS("opacity", "1");
+  await expect(chapter.getByRole("listitem")).toHaveCount(3);
+});
+
 test("the hero does not scroll sideways", async ({ page }) => {
   await page.goto("/de/");
   const overflow = await page.evaluate(
