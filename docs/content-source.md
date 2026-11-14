@@ -105,7 +105,7 @@ German copy is a translation of these facts, written in Swiss conventions ("ss",
 ## 11. Contact & practical
 
 - **Email on the site:** No. Use a contact form that delivers to a new mailbox Mika will create for this purpose.
-- **Profiles to link:** GitHub, LinkedIn `[TODO: URLs]`
+- **Profiles to link:** LinkedIn: https://www.linkedin.com/in/mika-trolp-767b63381/ · GitHub: https://github.com/mtro-tech
 - **CV download:** No
 - **Contact form:** Yes. It must fit the website's design and animation.
 - **Analytics:** Yes (cookieless: Vercel Web Analytics)

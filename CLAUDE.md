@@ -122,7 +122,7 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
 
 - First person, warm-professional, confident, concise. Max ~60 words per chapter.
 - No buzzwords ("passionate", "synergy", "dynamic", "results-driven").
-- English copy: British English spelling `[TODO: confirm with Mika]`. German copy: Swiss conventions ("ss", never "ß").
+- English copy: British English spelling. German copy: Swiss conventions ("ss", never "ß").
 - Every fact traces back to a field in `src/content/`.
 - The academy chapter shows the programme only; no SHL projects, grades or roles (Mika's decision).
 - The Foundations chapter is a short stop of 2–3 sentences, focused on leadership.
@@ -239,8 +239,12 @@ Format: date · what happened · the rule that prevents it next time.
 - [x] Palette tokens and font pairing (approved 2026-11-13; contrast check pending in build step 2)
 - [x] Headline / positioning line (chosen 2026-11-13, see Decision log)
 - [x] Email delivery service: Scaleway Transactional Email (approved 2026-11-13). Mika still needs to create the account, verify mikatrolp.com (SPF/DKIM), create the mailbox and set the API key in Vercel
-- [ ] LinkedIn and GitHub URLs
+- [x] LinkedIn and GitHub URLs (in `docs/content-source.md` §11, given 2026-11-14)
+- [ ] **Reminder for Claude, at the start of build step 5:** remind Mika of the Scaleway tasks before building the form
+  (create the account, verify mikatrolp.com with SPF/DKIM, create the mailbox, set the API key in Vercel)
+- [ ] **Reminder for Claude:** tell Mika before starting any step that needs mikatrolp.com to be registered
+  (expected first at step 5, for Scaleway domain verification; also for connecting the domain in Vercel at launch)
 - [ ] Shell deny rules for `.env` in `.claude/settings.json` (Mika pastes them in; Claude's edit is blocked)
 - [ ] A concrete leadership situation for Foundations (optional; questionnaire left it open)
-- [ ] English spelling: British or American?
+- [x] English spelling: British (Mika, 2026-11-14)
 - [ ] Privacy notice text (EN + DE), checked against the final site
