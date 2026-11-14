@@ -1,8 +1,8 @@
 ---
-// Step 2 placeholder: proves that content, i18n, fonts and tokens work together.
-// Step 3 replaces it with the Arrival hero; no design decisions live here.
 import { getCollection, getEntry } from "astro:content";
 import { getRelativeLocaleUrl } from "astro:i18n";
+import Arrival from "../../components/chapters/Arrival.astro";
+import Header from "../../components/Header.astro";
 import Base from "../../layouts/Base.astro";
 
 export function getStaticPaths() {
@@ -36,53 +36,60 @@ const formatDate = (value: string) =>
   description={arrival.data.body[0]}
   skipLink={site.skipLink}
 >
-  <header class="mx-auto flex max-w-2xl items-baseline justify-between p-6">
-    <span class="font-display">{site.name}</span>
-    <nav aria-label={site.languageSwitchLabel}>
-      <a href={getRelativeLocaleUrl(other)} lang={other} hreflang={other}>
-        {otherSite.languageName}
-      </a>
-    </nav>
-  </header>
+  <Header
+    name={site.name}
+    homeHref={getRelativeLocaleUrl(locale)}
+    stage={arrival.data.stage}
+    languageSwitchLabel={site.languageSwitchLabel}
+    other={{
+      locale: other,
+      href: getRelativeLocaleUrl(other),
+      languageName: otherSite.languageName,
+    }}
+  />
 
-  <main id="main" class="mx-auto max-w-2xl space-y-16 p-6">
-    <section>
-      <h1 class="font-display text-display">{arrival.data.heading}</h1>
-      <p class="mt-4">{arrival.data.body[0]}</p>
-    </section>
+  <main id="main">
+    <Arrival
+      heading={arrival.data.heading}
+      line={arrival.data.body[0]}
+      place={arrival.data.place}
+    />
 
-    {stops.map(({ data }) => (
-      <section class="space-y-4">
-        <h2 class="font-display text-chapter italic">{data.stage}</h2>
-        <p class="font-semibold">{data.heading}</p>
-        {(data.role || data.period || data.status) && (
-          <p class="text-ink-soft">
-            {[
-              data.role,
-              data.period &&
-                [data.period.start, data.period.end]
-                  .filter((d) => d !== undefined)
-                  .map(formatDate)
-                  .join(" – "),
-              data.status &&
-                data.status !== "past" &&
-                site.statusLabels[data.status],
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
-        )}
-        {data.body.map((paragraph) => (
-          <p>{paragraph}</p>
-        ))}
-        {data.items?.map((item) => (
-          <p>
-            <span class="font-semibold">{item.label}:</span>{" "}
-            {item.values.join(", ")}
-          </p>
-        ))}
-      </section>
-    ))}
+    <!-- Plain placeholders until step 4 designs each chapter. -->
+    <div class="mx-auto max-w-2xl space-y-16 p-6">
+      {stops.map(({ data }) => (
+        <section class="space-y-4">
+          <h2 class="font-display text-chapter italic">{data.stage}</h2>
+          <p class="font-semibold">{data.heading}</p>
+          {(data.role || data.period || data.status) && (
+            <p class="text-ink-soft">
+              {[
+                data.role,
+                data.period &&
+                  [data.period.start, data.period.end]
+                    .filter((d) => d !== undefined)
+                    .map(formatDate)
+                    .join(" – "),
+                data.status &&
+                  data.status !== "past" &&
+                  site.statusLabels[data.status],
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          )}
+          {data.body.map((paragraph) => (
+            <p>{paragraph}</p>
+          ))}
+          {data.items?.map((item) => (
+            <p>
+              <span class="font-semibold">{item.label}:</span>{" "}
+              {item.values.join(", ")}
+            </p>
+          ))}
+        </section>
+      ))}
+    </div>
   </main>
 
   <footer class="mx-auto flex max-w-2xl gap-6 p-6">

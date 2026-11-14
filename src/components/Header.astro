@@ -1,0 +1,24 @@
+---
+interface Props {
+  name: string;
+  homeHref: string;
+  stage: string;
+  languageSwitchLabel: string;
+  other: { locale: string; href: string; languageName: string };
+}
+
+const { name, homeHref, stage, languageSwitchLabel, other } = Astro.props;
+---
+
+<header class="px-page grid grid-cols-[1fr_auto_1fr] items-baseline gap-4 py-5">
+  <a href={homeHref} class="text-ink justify-self-start no-underline">
+    {name}
+  </a>
+  <!-- The stage name follows the scroll once the other chapters exist (step 4). -->
+  <span class="font-display italic">{stage}</span>
+  <nav aria-label={languageSwitchLabel} class="justify-self-end">
+    <a href={other.href} lang={other.locale} hreflang={other.locale}>
+      {other.languageName}
+    </a>
+  </nav>
+</header>

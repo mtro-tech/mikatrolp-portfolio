@@ -23,14 +23,14 @@ const { locale, title, description, skipLink } = Astro.props;
     <link rel="canonical" href={getAbsoluteLocaleUrl(locale)} />
     <link rel="alternate" hreflang="en" href={getAbsoluteLocaleUrl("en")} />
     <link rel="alternate" hreflang="de" href={getAbsoluteLocaleUrl("de")} />
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <Font cssVariable="--font-newsreader" preload />
     <Font cssVariable="--font-hanken-grotesk" preload />
   </head>
   <body>
     <a
       href="#main"
-      class="bg-paper sr-only px-4 py-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2"
+      class="bg-paper sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-10 focus:px-4 focus:py-2"
     >
       {skipLink}
     </a>

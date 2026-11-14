@@ -1,0 +1,96 @@
+---
+// One pen line: it arrives as a horizon, lifts into a low ridge, loops into a pin at
+// St. Gallen and leaves downward as the route. Desktop enters from the left and pins at
+// 68% of the width; mobile enters from the right and pins on the left rail at 10%.
+// pathLength="1" lets the draw animation work without measuring the path.
+---
+
+<svg
+  class="arrival-line arrival-line--desktop"
+  viewBox="0 0 1440 360"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path
+    class="route"
+    pathLength="1"
+    d="M -20 234 C 60 229 110 237 170 232 S 262 228 300 218 C 344 204 372 154 428 150 C 478 147 500 188 544 208 C 590 226 650 234 730 230 S 900 235 980 230 C 980 230 948 196 948 170 A 32 32 0 1 1 1012 170 C 1012 196 980 230 980 230 C 978 270 983 320 980 380"
+  ></path>
+  <circle class="detail" cx="980" cy="170" r="9"></circle>
+</svg>
+
+<svg
+  class="arrival-line arrival-line--mobile"
+  viewBox="0 100 390 150"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path
+    class="route"
+    pathLength="1"
+    d="M 400 172 C 352 168 318 175 284 169 C 256 163 244 128 214 126 C 184 124 172 158 144 166 C 112 174 76 169 39 172 C 39 172 21 152 21 136 A 18 18 0 1 1 57 136 C 57 152 39 172 39 172 C 38 196 40 220 39 250"
+  ></path>
+  <circle class="detail" cx="39" cy="136" r="5"></circle>
+</svg>
+
+<style>
+  .arrival-line {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .arrival-line--desktop {
+    display: none;
+  }
+
+  @media (width >= 48rem) {
+    .arrival-line--desktop {
+      display: block;
+    }
+
+    .arrival-line--mobile {
+      display: none;
+    }
+  }
+
+  .route {
+    stroke: var(--color-route);
+    stroke-width: var(--route-stroke-width);
+    stroke-dasharray: 1;
+  }
+
+  .detail {
+    stroke: var(--color-brass);
+    stroke-width: var(--route-detail-stroke-width);
+  }
+
+  /* The one moment of motion on load: the reader watches the route being drawn,
+     so the line reads as a journey that starts here. Without motion it is simply there. */
+  @media (prefers-reduced-motion: no-preference) {
+    .route {
+      animation: draw var(--duration-draw) var(--ease-draw) both;
+    }
+
+    .detail {
+      animation: appear var(--duration-fade) var(--ease-settle)
+        var(--duration-draw) both;
+    }
+  }
+
+  @keyframes draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+  }
+
+  @keyframes appear {
+    from {
+      opacity: 0;
+    }
+  }
+</style>

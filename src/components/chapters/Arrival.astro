@@ -1,0 +1,125 @@
+---
+import ArrivalLine from "../route/ArrivalLine.astro";
+
+interface Props {
+  heading: string;
+  line: string;
+  place?: string;
+}
+
+const { heading, line, place } = Astro.props;
+---
+
+<section class="arrival" aria-labelledby="arrival-title">
+  <div class="copy px-page">
+    <h1 id="arrival-title" class="font-display text-hero">
+      {heading}
+    </h1>
+    <p class="text-lead mt-6 max-w-[38ch] text-balance">{line}</p>
+  </div>
+
+  <div class="band">
+    <ArrivalLine />
+    {place && <p class="place font-display italic">{place}</p>}
+  </div>
+</section>
+
+<style>
+  /* The hero fills the first screen below the header (about 4rem tall). */
+  .arrival {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100svh - 4rem);
+    overflow-x: clip;
+  }
+
+  .band {
+    position: relative;
+  }
+
+  /* Label positions are percentages of the band, so they follow the pin at every width. */
+  .place {
+    position: absolute;
+    left: 19%;
+    top: 8%;
+    color: var(--color-ink-soft);
+  }
+
+  /* Mobile: the line comes first, then the copy sits to the right of the left rail.
+     The rail is the same line continuing down beside the copy. */
+  .band {
+    order: 1;
+  }
+
+  .copy {
+    order: 2;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    padding-block: 1.5rem 3rem;
+    padding-left: calc(10% + 1.5rem);
+  }
+
+  .copy::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    left: 10%;
+    width: calc(var(--route-stroke-width) * 1px);
+    translate: -50% 0;
+    background: var(--color-route);
+    transform-origin: top;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .place {
+      animation: appear var(--duration-fade) var(--ease-settle)
+        var(--duration-draw) both;
+    }
+
+    /* The rail grows once the drawn line has reached the bottom of the band. */
+    .copy::before {
+      animation: grow var(--duration-fade) var(--ease-settle)
+        var(--duration-draw) both;
+    }
+  }
+
+  /* Desktop: copy above the horizon, the line as a band at the bottom of the screen. */
+  @media (width >= 48rem) {
+    .copy {
+      order: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding-block: 3rem 0;
+      padding-left: var(--spacing-page);
+    }
+
+    .copy::before {
+      content: none;
+    }
+
+    .band {
+      order: 2;
+    }
+
+    .place {
+      left: 71.5%;
+      top: 38%;
+    }
+  }
+
+  @keyframes appear {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes grow {
+    from {
+      scale: 1 0;
+    }
+  }
+</style>

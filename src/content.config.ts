@@ -28,6 +28,8 @@ const chapters = defineCollection({
           .optional(),
       })
       .optional(),
+    // Where this stop sits on the map; shown as the label next to the pin.
+    place: z.string().min(1).optional(),
     role: z.string().min(1).optional(),
     period: z.strictObject({ start: date, end: date.optional() }).optional(),
     // Only Mika changes this (CLAUDE.md §2.4).

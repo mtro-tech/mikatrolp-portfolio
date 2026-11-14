@@ -216,6 +216,9 @@ Add new entries at the top. Format: date · decision · why · decided by.
 
 | Date | Decision | Why | By |
 | --- | --- | --- | --- |
+| 2026-11-14 | Arrival hero: one pen line enters as a horizon with a low ridge, loops into a pin labelled "St. Gallen" and drops down as the route. Desktop: copy above the line, pin at 68% of the width. Mobile: the line enters from the right, the pin sits on the left rail at 10%, the copy sits right of the rail | Step 3 plan | Claude, approved by Mika |
+| 2026-11-14 | Until step 6 the hero's only motion is the line drawing once on load (CSS); the name and positioning line are visible from the first frame | The peaks and the toggle are step 6; hiding the name behind a fade would delay the largest paint | Claude, step 3 plan approved by Mika |
+| 2026-11-14 | Route stroke widths are set in SVG units (no `non-scaling-stroke`) | `non-scaling-stroke` breaks the `pathLength` dash trick the draw animation relies on | Claude `[TODO: confirm]` |
 | 2026-11-14 | Content lives as one YAML file per chapter and language in `src/content/chapters/{en,de}/`, plus site-wide strings and profile links in `src/content/site/`; schemas are strict | A missing field or an unknown key fails the build; EN and DE stay side by side | Claude, step 2 plan approved by Mika |
 | 2026-11-14 | `security.csp` is on for builds only, off in `astro dev` | The dev server sends the policy without hashes, which blocks Vite's own styles and scripts | Claude `[TODO: confirm]` |
 | 2026-11-14 | `package.json` `overrides` pins `path-to-regexp` to 6.3.0 under `@vercel/routing-utils` | `@astrojs/vercel` pulled in 6.1.0 (3 high-severity audit findings); 6.3.0 is the patched release of the same major version | Claude `[TODO: confirm]` |
@@ -247,6 +250,8 @@ Add new entries at the top. Format: date · decision · why · decided by.
 Add an entry whenever a bug, a correction from Mika or a wrong assumption teaches something reusable.
 Format: date · what happened · the rule that prevents it next time.
 
+- 2026-11-14 · A screenshot taken a fixed few seconds after loading caught the hero mid-animation (the dev server compiles on first load), so the label and the rail looked missing · Take review screenshots with reduced motion emulated, and check animated states separately.
+- 2026-11-14 · Tailwind's `focus:not-sr-only` resets padding, so `px-4 py-2` on the skip link had no effect · Put spacing for a revealed `sr-only` element on the same variant (`focus:px-4`).
 - 2026-11-14 · The adapter attached the CSP header to `/en` but the site serves `/en/`, so the live pages had no CSP at all; nothing local showed it · After every change to headers or routing, check the response headers on the deployed URL for the exact paths visitors use. Previews are behind Vercel sign-in; the production URL is not.
 - 2026-11-14 · With the CSP active in dev, the page rendered without any styles, and the axe and smoke tests still passed on it · Look at a screenshot before trusting a green test run; a passing contrast check means nothing on an unstyled page.
 - 2026-11-14 · `@astrojs/vercel` brought in a vulnerable `path-to-regexp`; `npm audit fix` only offered a breaking downgrade · When a transitive package has a patched release in the same major version, pin it with `overrides` and re-run the audit and the build.
@@ -268,8 +273,10 @@ Format: date · what happened · the rule that prevents it next time.
 - [x] English spelling: British (Mika, 2026-11-14)
 - [ ] Privacy notice text (EN + DE), checked against the final site
 - [x] Security headers checked on the production URL (2026-11-14): the `vercel.json` headers apply on every route. The CSP header was missing on `/en/` and `/de/` (only sent for `/en`, `/de`); fixed with `trailingSlash: "always"`
-- [ ] After the trailing-slash fix is deployed: confirm the CSP header on `/en/` and `/de/`, and that `/` redirects to `/en/` at once (`vercel.json` redirect; the 2-second meta refresh page stays as a fallback)
-- [ ] Favicon is still the Astro starter icon; replace it with a code-drawn one (step 3 or polish)
+- [x] Confirmed on the production URL after the fix (2026-11-14): CSP header on `/en/` and `/de/`, `/` redirects to `/en/` at once, no CSP errors in the browser console
+- [ ] When mikatrolp.com is connected: re-check the HSTS header on the `/` redirect (on `vercel.app` the platform adds `preload` there)
+- [x] Favicon: code-drawn route pin (step 3)
+- [ ] Mobile header: long stage names such as "Concierge of the future" will not fit next to the name and the language switch; decide in step 4
 - [ ] German: address visitors with "du" or "Sie"? Needed for form labels and the motion toggle (steps 5 and 6)
 - [ ] German chapter names (Ankunft, Fundament, Hinter der Bar, Die Akademie, Nächstes Ziel, Concierge der Zukunft) and all drafted copy: Mika reviews the wording
 - [ ] "Currently in semester 3" in The academy goes out of date; Mika updates it or the line is dropped

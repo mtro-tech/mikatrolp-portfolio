@@ -17,10 +17,27 @@
   /* Decorative strokes only, never text. */
   --color-brass: #b58a3c;
 
+  --text-hero: clamp(3.25rem, 10vw, 8.5rem);
+  --text-hero--line-height: 0.95;
+  --text-lead: clamp(1.25rem, 2vw, 1.625rem);
+  --text-lead--line-height: 1.4;
   --text-display: clamp(2.5rem, 6vw, 4.5rem);
   --text-display--line-height: 1.05;
   --text-chapter: clamp(1.75rem, 3.5vw, 2.5rem);
   --text-chapter--line-height: 1.15;
   --text-body: 1.125rem;
   --text-body--line-height: 1.6;
+
+  /* Side padding of the page; the header and every chapter share it. */
+  --spacing-page: clamp(1.5rem, 6vw, 6rem);
+
+  /* The route line. Widths are in SVG units, close to CSS pixels at 1440px and 390px. */
+  --route-stroke-width: 1.75;
+  --route-detail-stroke-width: 1.25;
+
+  /* Motion tokens for quiet CSS motion (the GSAP tokens for the peaks come in step 6). */
+  --duration-draw: 2.4s;
+  --duration-fade: 0.8s;
+  --ease-draw: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
 }
