@@ -51,7 +51,7 @@ Full reasoning and sources: *Portfolio Website — Tool Framework* doc. Installe
 | --- | --- |
 | Framework | Astro 7.x; pages prerendered (static) |
 | Server function | `@astrojs/vercel` adapter, used only for the contact form endpoint (`prerender = false`) |
-| Email delivery | A transactional email service with an EU or Swiss region `[TODO: choose in plan]`; API key only in env vars |
+| Email delivery | Scaleway Transactional Email (EU), called with plain `fetch` (no SDK); API key only in env vars |
 | Styling | Tailwind CSS v4 via `@tailwindcss/vite` |
 | Quiet motion | Native CSS scroll-driven animations (`animation-timeline`) |
 | Cinematic peaks | GSAP 3.x + ScrollTrigger (plus DrawSVG, MotionPath, SplitText as needed) |
@@ -71,9 +71,20 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
 ## 4. Design rules
 
 - **Palette:** warm, comfortable and welcoming. Warm paper background, deep ink text, one warm accent. No neon colours, no dark mode.
-  Exact tokens: `[TODO: set after plan approval]`.
+  Tokens (text colours pass the axe contrast check on the paper background, 2026-11-14):
+  `--color-paper #F2E6D3` (background) · `--color-paper-deep #E7D6BC` (map land, form surface) ·
+  `--color-ink #1E2B26` (text) · `--color-ink-soft #55605A` (secondary text) ·
+  `--color-route #A6341B` (route line, links, focus ring: the one accent) ·
+  `--color-brass #B58A3C` (decorative strokes only, never text).
   Colours live only as CSS custom properties / Tailwind theme tokens; never hard-code hex values in components.
-- **Type:** one serif display font + one sans, free licences, **self-hosted** (never loaded from Google's servers). Names: `[TODO]`.
+- **Type:** one serif display font + one sans, free licences, **self-hosted** (never loaded from Google's servers).
+  Display: Newsreader (OFL; italic for chapter names). Text: Hanken Grotesk (OFL). Self-hosted through Astro's built-in Fonts API, Latin subset.
+  Sentence case everywhere, no all-caps labels, left-aligned copy, body lines under ~65 characters.
+- **Layout:** desktop: the route wanders through a central band and each chapter's copy alternates sides of it;
+  mobile: the route is a near-straight rail on the left edge with one stop marker per chapter.
+  The header holds only the name, the current stage name, the language switch and the motion toggle.
+- **One pen line:** the route is the only illustration tool; every chapter drawing is made by that line
+  (chapter-by-chapter behaviour: see the approved step 1 plan in the Decision log).
 - **Illustrations:** code-drawn SVG line art only. One stroke width family, round line caps, the accent colour used sparingly.
   No stock photos, no AI-generated images, no copied illustrations, no portrait photo (for now).
 - **Playful touches:** one small, theme-matching detail per chapter (e.g. cocktail glasses for the bar). Delight, not distraction.
@@ -111,7 +122,7 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
 
 - First person, warm-professional, confident, concise. Max ~60 words per chapter.
 - No buzzwords ("passionate", "synergy", "dynamic", "results-driven").
-- English copy: British English spelling `[TODO: confirm with Mika]`. German copy: Swiss conventions ("ss", never "ß").
+- English copy: British English spelling. German copy: Swiss conventions ("ss", never "ß").
 - Every fact traces back to a field in `src/content/`.
 - The academy chapter shows the programme only; no SHL projects, grades or roles (Mika's decision).
 - The Foundations chapter is a short stop of 2–3 sentences, focused on leadership.
@@ -188,7 +199,16 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
 
 ## 10. Commands
 
-`[TODO: fill in after build step 2 — dev, build, preview, test, test:a11y, lighthouse, audit]`
+| Command | What it does |
+| --- | --- |
+| `npx astro dev --background` | Dev server at `http://localhost:4321` (`astro dev stop` / `status` / `logs`). The CSP is off in dev |
+| `npm run build` | Production build into `.vercel/output/` (static pages + the CSP header config) |
+| `npm test` | Playwright smoke + axe tests at 1440px and 390px, against the dev server |
+| `npm run test:a11y` | Only the axe tests |
+| `npm run format` | Prettier on the whole project (`CLAUDE.md` is excluded) |
+| `npm run audit` | `npm audit`; must report 0 vulnerabilities |
+| Preview | No local `astro preview` (the Vercel adapter does not support it): use the Vercel preview link of the pull request |
+| Lighthouse | CI only: `npx @lhci/cli autorun` in `.github/workflows/ci.yml`; locally use Lighthouse in the browser's DevTools |
 
 ## 11. Decision log
 
@@ -196,6 +216,17 @@ Add new entries at the top. Format: date · decision · why · decided by.
 
 | Date | Decision | Why | By |
 | --- | --- | --- | --- |
+| 2026-11-14 | Content lives as one YAML file per chapter and language in `src/content/chapters/{en,de}/`, plus site-wide strings and profile links in `src/content/site/`; schemas are strict | A missing field or an unknown key fails the build; EN and DE stay side by side | Claude, step 2 plan approved by Mika |
+| 2026-11-14 | `security.csp` is on for builds only, off in `astro dev` | The dev server sends the policy without hashes, which blocks Vite's own styles and scripts | Claude `[TODO: confirm]` |
+| 2026-11-14 | `package.json` `overrides` pins `path-to-regexp` to 6.3.0 under `@vercel/routing-utils` | `@astrojs/vercel` pulled in 6.1.0 (3 high-severity audit findings); 6.3.0 is the patched release of the same major version | Claude `[TODO: confirm]` |
+| 2026-11-14 | Playwright tests run against the dev server; Lighthouse runs in CI on `.vercel/output/static` | The Vercel adapter does not support `astro preview` | Claude, step 2 plan approved by Mika |
+| 2026-11-14 | The format hook always uses the root `.prettierrc` (`--config`) | Security review: a nested Prettier config file would otherwise be loaded and run as code on the next edit | Claude, approved by Mika |
+| 2026-11-14 | `CLAUDE.md` is excluded from Prettier (`.prettierignore`) | The format hook padded the wide tables to full column width; the rulebook stays hand-formatted | Mika |
+| 2026-11-13 | Hero positioning line: "At home in hospitality, curious about what AI can do behind the scenes." / "In der Hotellerie zu Hause, neugierig darauf, was KI im Hintergrund leisten kann." | Speaks to both audiences in one line; picked from 3 options | Mika |
+| 2026-11-13 | Route behaviour per chapter: horizon + pin (Arrival), room key and St. Gallen–Lucerne leg (Check-in), ruler-straight with 60 ticks (Foundations), three glasses (Bar), Lucerne waterfront (Academy), arc over a borderless graticule map into the skyline (Next destination), circuit traces drawing a concierge bell (AI), guestbook writing lines and a sign-off flourish (Check-out). Hidden detail sits on the flight map. Mobile: peak 2 not pinned | Step 1 plan | Claude, approved by Mika |
+| 2026-11-13 | Email delivery: Scaleway Transactional Email via plain `fetch` | Whole stack in the EU; Resend's EU region stores content in the US; no SDK dependency | Claude, approved by Mika |
+| 2026-11-13 | Fonts: Newsreader + Hanken Grotesk, self-hosted via Astro's Fonts API | Free licences, italics for chapter names, no new dependency, fallback metrics prevent layout shift | Claude, approved by Mika |
+| 2026-11-13 | Palette: linen paper, pine ink, aperitivo-red route, brass details (tokens in §4) | Warm and welcoming, drawn from a concierge desk; one accent | Claude, approved by Mika |
 | 2026-11-13 | `@lhci/cli` removed from devDependencies; Lighthouse runs via `npx` in CI | `npm audit` showed 9 high-severity issues, all via `@lhci/cli` → `proxy-agent` → `basic-ftp`; the only "fix" was a breaking downgrade | Mika |
 | 2026-11-13 | Security & privacy rules (§7) adopted; no cookie banner needed with cookieless analytics and self-hosted fonts | Research in the *Privacy & Security* doc | Mika |
 | 2026-11-13 | Public GitHub repo | Free branch protection, secret scanning and push protection; shows the work | Mika `[TODO: confirm]` |
@@ -216,13 +247,29 @@ Add new entries at the top. Format: date · decision · why · decided by.
 Add an entry whenever a bug, a correction from Mika or a wrong assumption teaches something reusable.
 Format: date · what happened · the rule that prevents it next time.
 
+- 2026-11-14 · With the CSP active in dev, the page rendered without any styles, and the axe and smoke tests still passed on it · Look at a screenshot before trusting a green test run; a passing contrast check means nothing on an unstyled page.
+- 2026-11-14 · `@astrojs/vercel` brought in a vulnerable `path-to-regexp`; `npm audit fix` only offered a breaking downgrade · When a transitive package has a patched release in the same major version, pin it with `overrides` and re-run the audit and the build.
+- 2026-11-14 · The deny rule `*.env*` also blocks harmless shell commands that contain `.env` inside another word (for example a JSON field name) · When a shell command is denied without an obvious reason, look for `.env` or `.claude…settings` in its text and rephrase.
 - 2026-11-13 · Installing `@lhci/cli` as a dev dependency added 9 high-severity audit findings, and `npm audit fix --force` would only have downgraded it · Run `npm audit` after every install. Never use `--force`. Keep tools with heavy dependency trees out of `package.json` and run them via `npx` in CI instead.
 
 ## 13. Open questions
 
-- [ ] Palette tokens and font pairing (proposed in the first plan)
-- [ ] Headline / positioning line, EN + DE (3 options in the first plan)
-- [ ] Email delivery service (EU/Swiss region) for the contact form
+- [x] Palette tokens and font pairing (approved 2026-11-13; contrast confirmed by axe in step 2)
+- [x] Headline / positioning line (chosen 2026-11-13, see Decision log)
+- [x] Email delivery service: Scaleway Transactional Email (approved 2026-11-13). Mika still needs to create the account, verify mikatrolp.com (SPF/DKIM), create the mailbox and set the API key in Vercel
+- [x] LinkedIn and GitHub URLs (in `docs/content-source.md` §11, given 2026-11-14)
+- [ ] **Reminder for Claude, at the start of build step 5:** remind Mika of the Scaleway tasks before building the form
+  (create the account, verify mikatrolp.com with SPF/DKIM, create the mailbox, set the API key in Vercel)
+- [ ] **Reminder for Claude:** tell Mika before starting any step that needs mikatrolp.com to be registered
+  (expected first at step 5, for Scaleway domain verification; also for connecting the domain in Vercel at launch)
+- [x] Shell deny rules for `.env` in `.claude/settings.json` (pasted in by Mika, 2026-11-14)
 - [ ] A concrete leadership situation for Foundations (optional; questionnaire left it open)
-- [ ] English spelling: British or American?
+- [x] English spelling: British (Mika, 2026-11-14)
 - [ ] Privacy notice text (EN + DE), checked against the final site
+- [ ] Security headers on the Vercel preview not yet verified (CSP as a header on `/en/` and `/de/`, and whether `vercel.json` headers apply alongside the adapter): the preview is behind Vercel sign-in
+- [ ] `/` reaches `/en/` through a 2-second meta refresh page in the static build; replace with an instant redirect once the header check shows how Vercel routing behaves
+- [ ] Favicon is still the Astro starter icon; replace it with a code-drawn one (step 3 or polish)
+- [ ] German: address visitors with "du" or "Sie"? Needed for form labels and the motion toggle (steps 5 and 6)
+- [ ] German chapter names (Ankunft, Fundament, Hinter der Bar, Die Akademie, Nächstes Ziel, Concierge der Zukunft) and all drafted copy: Mika reviews the wording
+- [ ] "Currently in semester 3" in The academy goes out of date; Mika updates it or the line is dropped
+- [ ] No 404 page yet

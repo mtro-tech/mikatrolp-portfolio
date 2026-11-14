@@ -1,0 +1,13 @@
+order: 2
+stage: Check-in
+heading: How it began
+body:
+  - "I came to hospitality by coincidence: I took a restaurant job to pay for a language stay in Toronto."
+  - Good hospitality, to me, means a guest feels at home, can let their guard down, enjoys the moment and leaves with a smile. I go the extra step for that.
+  - St. Gallen is home. Lucerne is a place of opportunity and connection for the future.
+items:
+  - label: Languages
+    values:
+      - German (native)
+      - English (C2)
+      - French (A2 in progress)

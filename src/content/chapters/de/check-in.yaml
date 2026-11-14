@@ -1,0 +1,13 @@
+order: 2
+stage: Check-in
+heading: Wie es begann
+body:
+  - "Zur Hotellerie kam ich durch Zufall: Ich nahm einen Job in einem Restaurant an, um einen Sprachaufenthalt in Toronto zu finanzieren."
+  - "Gute Gastfreundschaft heisst für mich: Ein Gast fühlt sich zu Hause, kann loslassen, geniesst den Moment und geht mit einem Lächeln. Dafür gehe ich den Schritt weiter."
+  - St. Gallen ist mein Zuhause. Luzern ist ein Ort der Chancen und Verbindungen für die Zukunft.
+items:
+  - label: Sprachen
+    values:
+      - Deutsch (Muttersprache)
+      - Englisch (C2)
+      - Französisch (A2 in Arbeit)

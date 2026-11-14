@@ -1,0 +1,39 @@
+---
+import { Font } from "astro:assets";
+import { getAbsoluteLocaleUrl } from "astro:i18n";
+import "../styles/global.css";
+
+interface Props {
+  locale: string;
+  title: string;
+  description: string;
+  skipLink: string;
+}
+
+const { locale, title, description, skipLink } = Astro.props;
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={getAbsoluteLocaleUrl(locale)} />
+    <link rel="alternate" hreflang="en" href={getAbsoluteLocaleUrl("en")} />
+    <link rel="alternate" hreflang="de" href={getAbsoluteLocaleUrl("de")} />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <Font cssVariable="--font-newsreader" preload />
+    <Font cssVariable="--font-hanken-grotesk" preload />
+  </head>
+  <body>
+    <a
+      href="#main"
+      class="bg-paper sr-only px-4 py-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2"
+    >
+      {skipLink}
+    </a>
+    <slot />
+  </body>
+</html>

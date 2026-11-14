@@ -1,0 +1,5 @@
+order: 8
+stage: Check-out
+heading: Gästebuch
+body:
+  - Das Gästebuch steht für eine Nachricht offen. Mehr von mir gibt es auf LinkedIn und GitHub.

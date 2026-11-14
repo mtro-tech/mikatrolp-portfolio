@@ -27,5 +27,11 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+# test and Lighthouse output
+test-results/
+playwright-report/
+.lighthouseci/
+.playwright-mcp/
+
 # Vercel project link
 .vercel
