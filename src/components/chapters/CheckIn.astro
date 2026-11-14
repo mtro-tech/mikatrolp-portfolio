@@ -88,8 +88,11 @@ const { stage, heading, beats, items = [], place, origin } = Astro.props;
 
 <style>
   /* ---- Shared by both modes ---------------------------------------------------- */
+  /* Clipped in both modes: the route is drawn far beyond the frame in both directions
+     (so tall frames are covered) and must not spill into the neighbouring chapters. */
   .frame {
     position: relative;
+    overflow: clip;
   }
 
   /* The rail on phones: the route as a straight line at 10% (x = 39 of 390). */
@@ -124,15 +127,16 @@ const { stage, heading, beats, items = [], place, origin } = Astro.props;
     gap: var(--string) 1rem;
     margin-top: 0.75rem;
     padding-top: var(--string);
-    border-top: var(--line) solid var(--color-brass);
+    border-top: calc(var(--line) * 2.5) solid var(--color-brass);
   }
 
   .tag {
     display: block;
     position: relative;
     padding: 1.4rem 0.9rem 0.6rem;
-    border: var(--line) solid var(--color-brass);
-    border-radius: 0.5rem;
+    /* House style: a paper tag with an ink outline, like the key's fob. */
+    border: calc(var(--route-stroke-width) * 1px) solid var(--color-ink);
+    border-radius: 0.6rem;
     background: var(--color-paper);
     /* Tags swing from the point where their string meets the rail. */
     transform-origin: 50% calc(var(--string) * -1);
@@ -149,17 +153,18 @@ const { stage, heading, beats, items = [], place, origin } = Astro.props;
     background: var(--color-brass);
   }
 
-  /* The punched hole. */
+  /* The brass eyelet. */
   .tag::after {
     content: "";
     position: absolute;
-    top: 0.4rem;
+    top: 0.35rem;
     left: 50%;
-    width: 0.5rem;
-    height: 0.5rem;
+    width: 0.65rem;
+    height: 0.65rem;
     translate: -50% 0;
-    border: var(--line) solid var(--color-brass);
+    border: calc(var(--line) * 2) solid var(--color-brass);
     border-radius: 50%;
+    background: var(--color-paper);
   }
 
   /* Idle: the tags never hang quite still. */

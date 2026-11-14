@@ -58,6 +58,8 @@ export const checkIn = {
   plane: { duration: 1.6, ease: "power1.inOut" },
   map: { duration: 0.8, ease: "power2.out", fromRotation: -8, fromScale: 0.86 },
   route: { duration: 1.9 },
+  /** The pin drops onto Lucerne and bounces to rest. */
+  pin: { fromY: -90, duration: 0.55, ease: "bounce.out" },
   /** Tags drop onto the rail one after another and swing to rest. */
   tags: {
     duration: 0.7,

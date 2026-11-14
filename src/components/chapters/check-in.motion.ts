@@ -33,6 +33,8 @@ export const checkInScene: Scene = ({ isDesktop }) => {
   const map = isDesktop ? one("[data-map]") : one("[data-map-layer]");
   const keyLayer = isDesktop ? null : one("[data-key-layer]");
   const mapDrawing = isDesktop ? null : one("[data-map-layer] [data-map]");
+  const pin = one("[data-pin]");
+  const halo = one("[data-halo]");
   const markers = all("[data-marker]").filter(
     (marker) => marker.getClientRects().length > 0,
   );
@@ -237,15 +239,27 @@ export const checkInScene: Scene = ({ isDesktop }) => {
         { strokeDashoffset: 0, duration: tokens.route.duration },
         at.route,
       );
-      // A marker pops as the line reaches each town.
-      markers.forEach((marker, index) =>
-        timeline.fromTo(
-          marker,
-          { scale: 0, transformOrigin: "50% 50%" },
-          { scale: 1, duration: 0.3, ease: "back.out(3)" },
-          at.route + tokens.route.duration * (index === 0 ? 0.12 : 0.62),
-        ),
+      // St. Gallen's marker pops as the line leaves it; the pin drops onto Lucerne as
+      // the line arrives, and its brass ring starts to breathe.
+      timeline.fromTo(
+        markers,
+        { scale: 0, transformOrigin: "50% 50%" },
+        { scale: 1, duration: 0.3, ease: "back.out(3)" },
+        at.route + tokens.route.duration * 0.12,
       );
+      timeline
+        .fromTo(
+          pin,
+          { autoAlpha: 0, y: tokens.pin.fromY },
+          {
+            autoAlpha: 1,
+            y: 0,
+            duration: tokens.pin.duration,
+            ease: tokens.pin.ease,
+          },
+          at.route + tokens.route.duration * 0.58,
+        )
+        .fromTo(halo, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.3 }, ">");
 
       beatIn(leg[0], at.leg1);
       beatOut(leg[0], at.leg2 - stage.beatOut.duration);

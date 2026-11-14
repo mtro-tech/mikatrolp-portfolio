@@ -55,6 +55,10 @@
   --delay-rise: 0.5s;
   --duration-rise: 1.1s;
   --delay-lead: 1s;
+  /* The town rises while the line passes it: first building, then one every beat. */
+  --delay-town: 1.7s;
+  --delay-building: 0.13s;
+  --duration-building: 0.7s;
   --delay-landed: 2.9s;
   --duration-land: 0.9s;
   --duration-needle: 2s;

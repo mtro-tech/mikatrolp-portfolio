@@ -89,7 +89,11 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
 - **The route connects, objects are drawn properly** (changed 2026-11-14): the route line is the spine that links every scene,
   but objects (a key, glasses, a skyline) are full line-art illustrations with several strokes and filled shapes in the palette,
   so they read at a glance. The line's thickness on screen stays the same from the first scene to the last.
-- **Illustrations:** code-drawn SVG line art only. One stroke width family, round line caps, the accent colour used sparingly.
+- **Illustrations, the house style** (set 2026-11-14): code-drawn SVG only. Objects are flat fills in palette colours with a 2px ink outline,
+  round corners and joins: brass for metal, aperitivo red for accents and markers, the two paper tones for walls, roofs and ground;
+  a few small ink details, no shading or gradients. The route is the one exception: a plain red line with no outline, so it reads as
+  the thread between objects. Map ground (sheets, lakes, contours) stays flat and without outlines, behind the objects.
+  The key in Check-in is the reference drawing. Shared pieces live in `src/components/route/` (for example `Pin.astro`).
   No stock photos, no AI-generated images, no copied illustrations, no portrait photo (for now).
 - **Playful touches:** one small, theme-matching detail per chapter (e.g. cocktail glasses for the bar). Delight, not distraction.
 - **The route line** is the spine of the site: continuous, same style everywhere, never hidden for more than one viewport.
@@ -227,6 +231,7 @@ Add new entries at the top. Format: date · decision · why · decided by.
 
 | Date | Decision | Why | By |
 | --- | --- | --- | --- |
+| 2026-11-14 | One house style for all drawings (§4): filled shapes with an ink outline, the route a plain red line. The hero is redrawn in it: St. Gallen as small buildings that rise from the route as it passes, a solid red pin with a breathing brass ring, an outlined compass. Check-in gets the same pin on Lucerne, an outlined St. Gallen marker and outlined tags with brass eyelets. Favicon: the solid pin | Mika: the key was in a different style from the rest, and he prefers the key's style | Mika |
 | 2026-11-14 | Check-in is rebuilt as a staged scene (this replaces the scrolling Check-in two rows below): a drawn brass key with a red fob hangs from the route and sways; text arrives in beats; a paper plane crosses for Toronto; the key turns and the scene opens from the keyhole into pine ink for the hospitality lines, with lamplight flecks; it closes, a map sheet unfolds for the leg to Lucerne; the language tags drop onto their rail. Held for 4 screens on desktop, 3.5 on phones | Mika's review; plan approved | Claude, plan approved by Mika |
 | 2026-11-14 | How a staged chapter is built: one frame (`data-stage-frame`) with the drawings and a text slot; `holdStage` in `src/lib/motion/stage.ts` holds it and scrubs its timeline; timings live in `src/lib/motion/tokens.ts`. With motion off the same markup is a normal section with everything visible. Text beats live in the content file as `beats` | One system for all chapters; no second layout to maintain | Claude, plan approved by Mika |
 | 2026-11-14 | Stroke widths are screen pixels (route 2px), divided in CSS by `--route-scale` (page width / viewBox width, set by `src/lib/scroll.ts`) and `--zoom` (any extra scale on a scene). A test compares the line's thickness on screen in the hero, through its zoom, and in Check-in | Mika: the line changed thickness between scenes | Mika |
@@ -280,6 +285,10 @@ Add new entries at the top. Format: date · decision · why · decided by.
 Add an entry whenever a bug, a correction from Mika or a wrong assumption teaches something reusable.
 Format: date · what happened · the rule that prevents it next time.
 
+- 2026-11-14 · Pull request 6 was merged while I was still pushing more commits to its branch, and I reported it as "updated in place"; the staged Check-in never reached `main` · Before saying work is in a pull request, check that the pull request is still open (`gh pr view --json state`). After a merge, new work goes on a new branch and a new pull request.
+- 2026-11-14 · A shell command that built rulebook text contained backticks, so the shell ran the quoted words as commands and dropped them from the text · Edit the rulebook with the edit tool, not through shell strings; re-read any text a script wrote.
+- 2026-11-14 · With motion off, Check-in's route (drawn far beyond its frame to cover tall screens) ran straight up through the hero · Anything drawn beyond its section must be clipped by that section in every mode; check the join between chapters in the motion-off version too.
+- 2026-11-14 · Multi-line search-and-replace edits failed silently on files checked out with Windows line endings · Normalise line endings before scripted edits, and confirm each edit landed.
 - 2026-11-14 · Mika found the first Check-in boring even though it met every rule: the rules themselves ("3 peaks, everything else quiet", "one pen line") were holding the site back · When feedback contradicts a rule, say so, look at the reference he names, ask the few questions that settle the direction, and change the rule with his OK before building again.
 - 2026-11-14 · GSAP's `autoAlpha` sets `visibility: hidden`, which removed the chapter heading and beats from the accessibility tree (a heading-count test caught it) · Fade text with `opacity`; keep `autoAlpha` for decorative drawings.
 - 2026-11-14 · A hidden list still showed its brass rail, because only the list items were hidden · When hiding a component before its moment, hide the element that carries its borders and backgrounds too, and look for stray lines in the first frame.
