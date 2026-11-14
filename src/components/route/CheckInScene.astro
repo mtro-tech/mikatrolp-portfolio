@@ -1,11 +1,13 @@
 ---
-// The Check-in drawings. The route arrives from the Arrival pin, draws a room key in one
-// stroke, runs down beside the large sentence, crosses a small map from St. Gallen to
-// Lucerne and leaves straight down for Foundations.
-// - "desktop": one tall drawing (1440 × 1900) that the copy is laid over.
-// - "key" and "map": two short drawings (390 wide) that sit between the copy on phones;
-//   the line leaves the left rail (x = 39), draws, and returns to it.
+// The Check-in drawings for the staged scene (choreography: chapters/check-in.motion.ts).
+// - "desktop" (1440 × 810): the route comes in from the hero at x = 1040 and ends in a
+//   hook; a room key hangs from it. Left of the key a map sheet carries the leg from
+//   St. Gallen to Lucerne, and the route leaves downward at x = 720.
+// - "key" and "map" (390 × 340): the same two drawings for phones, shown one after the
+//   other in the top half of the frame. The rail at x = 39 is drawn by the frame itself.
+// data-* attributes are the handles the choreography animates.
 import { contours, graticule } from "./contours";
+import Pin from "./Pin.astro";
 
 interface Props {
   part: "desktop" | "key" | "map";
@@ -15,120 +17,254 @@ interface Props {
 
 const { part, origin, place } = Astro.props;
 
+// Lamplight flecks for the dark scene: fixed positions, so every build looks the same.
+const flecks =
+  part === "desktop"
+    ? [
+        [180, 120, 5],
+        [330, 560, 4],
+        [470, 260, 6],
+        [560, 640, 4],
+        [650, 110, 5],
+        [740, 430, 7],
+        [820, 240, 4],
+        [880, 620, 6],
+        [930, 90, 4],
+        [1180, 520, 6],
+        [1250, 180, 5],
+        [1330, 400, 4],
+        [1210, 690, 5],
+        [260, 360, 4],
+        [1120, 60, 4],
+        [420, 720, 5],
+      ]
+    : [
+        [70, 60, 3],
+        [120, 210, 4],
+        [170, 110, 3],
+        [200, 290, 3],
+        [320, 40, 4],
+        [340, 190, 3],
+        [150, 310, 4],
+        [360, 300, 3],
+      ];
+
 const ground =
   part === "desktop"
     ? {
-        grid: graticule(1440, 1900, 180),
+        grid: graticule(1440, 810, 150),
         hills: [
-          ...contours(1040, 1000, { first: 34, step: 40, count: 6 }),
-          ...contours(430, 1290, { first: 40, step: 42, count: 7, seed: 1 }),
-          ...contours(960, 1430, { first: 26, step: 34, count: 5, seed: 3 }),
+          ...contours(900, 260, { first: 26, step: 30, count: 6 }),
+          ...contours(620, 500, { first: 30, step: 32, count: 7, seed: 1 }),
+          ...contours(880, 590, { first: 22, step: 28, count: 5, seed: 3 }),
         ],
       }
-    : part === "map"
-      ? {
-          grid: graticule(390, 340, 110),
-          hills: [
-            ...contours(270, 70, { first: 16, step: 20, count: 5 }),
-            ...contours(110, 210, { first: 22, step: 22, count: 6, seed: 1 }),
-          ],
-        }
-      : { grid: [], hills: [] };
+    : {
+        grid: graticule(390, 340, 110),
+        hills: [
+          ...contours(270, 70, { first: 16, step: 20, count: 5 }),
+          ...contours(110, 210, { first: 22, step: 22, count: 6, seed: 1 }),
+        ],
+      };
 ---
 
-{part === "desktop" && (
+{
+  // The room key, drawn hanging from (1040, 150). Phones reuse it at a smaller scale.
+  // Three nested groups, so idle sway (CSS) and the choreography (GSAP) never share one:
+  // data-key (GSAP) > .idle-sway (CSS) > data-key-turn (GSAP).
+}
+{part !== "map" && (
   <svg
     class="scene-svg"
-    viewBox="0 0 1440 1860"
+    viewBox={part === "desktop" ? "0 0 1440 810" : "0 0 390 340"}
     aria-hidden="true"
     focusable="false"
   >
-    <defs>
-      <clipPath id="check-in-sheet">
-        <rect x="250" y="880" width="960" height="640" rx="6" />
-      </clipPath>
-    </defs>
-
-    <g class="scroll-fade">
-      {ground.grid.map((d) => (
-        <path class="map-grid" d={d} />
+    <g data-flecks class="flecks">
+      {flecks.map(([x, y, r]) => (
+        <circle class="fleck fill-brass" cx={x} cy={y} r={r} />
       ))}
     </g>
 
-    {/* A map sheet laid on the page, slightly askew: land in the darker paper tone,
-        lakes, contours and grid in the lighter one. */}
-    <g class="scroll-fade" transform="rotate(-1.2 730 1200)">
-      <rect class="map-sheet" x="250" y="880" width="960" height="640" rx="6" />
-      <g class="on-sheet" clip-path="url(#check-in-sheet)">
-        {ground.grid.map((d) => (
-          <path class="map-grid" d={d} />
-        ))}
-        {/* Lake Zurich, north-west of the leg, and Lake Lucerne, south-east of the town. */}
+    {part === "desktop" && (
+      <g data-map class="map">
+        <defs>
+          <clipPath id="check-in-sheet">
+            <rect x="480" y="170" width="500" height="500" rx="6" />
+          </clipPath>
+        </defs>
+        <g transform="rotate(-1.2 730 420)">
+          <rect
+            class="map-sheet"
+            x="480"
+            y="170"
+            width="500"
+            height="500"
+            rx="6"
+          />
+          <g class="on-sheet" clip-path="url(#check-in-sheet)">
+            {ground.grid.map((d) => (
+              <path class="map-grid" d={d} />
+            ))}
+            {/* Lake Zurich, north-west of the leg; Lake Lucerne, south-east of the town. */}
+            <path
+              class="map-water"
+              d="M566 290C616 294 672 316 718 346C726 354 720 364 710 360C664 336 614 320 564 312C554 308 556 290 566 290Z"
+            />
+            <path
+              class="map-water"
+              d="M672 548C702 538 728 548 754 560C780 552 812 554 818 566C822 576 792 580 774 576C780 592 760 604 748 592C742 582 728 574 710 570C690 566 664 562 672 548Z"
+            />
+            {ground.hills.map((d) => (
+              <path class="map-contour" d={d} />
+            ))}
+          </g>
+          {/* Light on the water. */}
+          <path class="map-contour idle-shimmer" d="M610 314h44" />
+          <path
+            class="map-contour idle-shimmer idle-shimmer--late"
+            d="M712 562h40"
+          />
+        </g>
+        {origin && (
+          <text class="map-label" x="880" y="248" text-anchor="end">
+            {origin}
+          </text>
+        )}
+        {place && (
+          <text class="map-label" x="572" y="464" text-anchor="end">
+            {place}
+          </text>
+        )}
+      </g>
+    )}
+
+    {/* The route. Desktop: down from the hero to the hook. Phones: a branch off the rail. */}
+    <path
+      class="route-line"
+      d={
+        part === "desktop"
+          ? "M1040 -1200L1040 150"
+          : "M39 30C39 60 250 28 250 70"
+      }
+    />
+
+    {part === "desktop" && (
+      <>
         <path
-          class="map-water"
-          d="M468 972C562 980 664 1018 756 1074C770 1086 758 1104 742 1096C650 1054 564 1026 464 1012C444 1006 448 972 468 972Z"
+          class="route-line route-draw"
+          data-route
+          pathLength="1000"
+          d="M1040 150C1040 190 960 210 900 260C840 320 740 380 690 440C660 480 640 500 620 520C620 600 720 610 720 700L720 2000"
         />
-        <path
-          class="map-water"
-          d="M474 1374C520 1358 560 1374 600 1392C640 1378 690 1382 700 1400C706 1416 660 1420 630 1414C640 1440 610 1458 590 1440C580 1424 560 1410 530 1404C500 1400 462 1394 474 1374Z"
-        />
-        {ground.hills.map((d) => (
-          <path class="map-contour" d={d} />
-        ))}
+        {/* St. Gallen: a small outlined marker. Lucerne: the same pin as in the hero. */}
+        <g data-marker class="pivot">
+          <circle class="fill-paper ink-line" cx="900" cy="260" r="9" />
+          <circle class="fill-route" cx="900" cy="260" r="3.5" />
+        </g>
+        <g data-halo>
+          <circle class="brass pivot idle-pulse" cx="620" cy="456" r="46" />
+        </g>
+        <g data-pin>
+          <Pin x={620} y={520} radius={34} />
+        </g>
+      </>
+    )}
+
+    {/* The paper plane to Toronto and its dashed trail. */}
+    <path
+      class="trail"
+      data-trail
+      pathLength="1000"
+      d={part === "desktop" ? "M680 790L930 -20" : "M30 330L170 -10"}
+    />
+    <g
+      data-plane
+      class="plane"
+      data-dx={part === "desktop" ? 250 : 140}
+      data-dy={part === "desktop" ? -810 : -340}
+    >
+      <g
+        transform={
+          part === "desktop"
+            ? "translate(680 790) rotate(-72.8)"
+            : "translate(30 330) rotate(-67.6) scale(0.7)"
+        }
+      >
+        <path class="fill-paper ink-line" d="M22 0L-22 -15L-12 0L-22 15Z" />
+        <path class="ink-line" d="M22 0L-12 0" />
       </g>
     </g>
 
-    <path
-      class="route-line scene-draw draw-in"
-      pathLength="1"
-      d="M1040 0C1040 110 872 130 872 300"
-    />
-    <g class="key">
-      <path
-        class="route-line scene-draw draw-key"
-        pathLength="1"
-        d="M872 300A64 64 0 0 1 744 300A64 64 0 0 1 872 300L1010 300L1010 344L1040 344L1040 300L1066 300L1066 334L1092 334L1092 300L1140 300"
-      />
-      <circle class="brass" cx="808" cy="300" r="20" />
+    <g data-key class="key">
+      <g
+        class:list={[
+          "idle-sway",
+          part === "desktop" ? "hang--desktop" : "hang--phone",
+        ]}
+      >
+        <g
+          transform={
+            part === "desktop"
+              ? undefined
+              : "translate(250 70) scale(0.62) translate(-1040 -150)"
+          }
+        >
+          <path class="route-line" d="M1040 150L1040 208" />
+          {/* The fob: a red tag on its own short cord, swinging a beat behind the key. */}
+          <g class="idle-sway idle-sway--late fob">
+            <path class="brass" d="M1072 222C1092 232 1104 250 1110 276" />
+            <g transform="rotate(14 1112 330)">
+              <rect
+                class="fill-route ink-line"
+                x="1088"
+                y="276"
+                width="48"
+                height="96"
+                rx="14"
+              />
+              <rect
+                class="fob-edge"
+                x="1095"
+                y="296"
+                width="34"
+                height="68"
+                rx="9"
+              />
+              <circle class="fill-paper ink-line" cx="1112" cy="288" r="5" />
+            </g>
+          </g>
+          <g data-key-turn>
+            <circle class="key-ring" cx="1040" cy="250" r="33" />
+            <circle class="ink-line" cx="1040" cy="250" r="44" />
+            <circle class="ink-line" cx="1040" cy="250" r="22" />
+            <rect
+              class="fill-brass ink-line"
+              x="1026"
+              y="290"
+              width="28"
+              height="12"
+              rx="3"
+            />
+            <rect
+              class="fill-brass ink-line"
+              x="1032"
+              y="302"
+              width="16"
+              height="160"
+              rx="3"
+            />
+            <path
+              class="fill-brass ink-line"
+              d="M1048 392h28v20h-12v10h12v20h-28z"
+            />
+            {/* Balances the teeth, so the turn pivots exactly on the ring's centre. */}
+            <rect class="balance" x="996" y="206" width="88" height="256" />
+          </g>
+          <circle data-keyhole class="balance" cx="1040" cy="250" r="1" />
+        </g>
+      </g>
     </g>
-    <path
-      class="route-line scene-draw draw-out"
-      pathLength="1"
-      d="M1140 300C1180 300 1196 330 1196 400C1196 520 1180 640 1185 760C1190 860 1170 900 1120 940C1090 964 1060 980 1040 1000C960 1070 760 1100 660 1180C580 1240 520 1290 430 1340C430 1340 396 1304 396 1276A34 34 0 1 1 464 1276C464 1304 430 1340 430 1340C430 1440 430 1500 500 1530C580 1565 720 1540 720 1640L720 1860"
-    />
-
-    <g data-enter>
-      <circle class="brass marker" cx="1040" cy="1000" r="10" />
-      {origin && (
-        <text class="map-label" x="1016" y="984" text-anchor="end">
-          {origin}
-        </text>
-      )}
-    </g>
-    <g data-enter>
-      <circle class="brass marker" cx="430" cy="1276" r="10" />
-      {place && (
-        <text class="map-label" x="378" y="1284" text-anchor="end">
-          {place}
-        </text>
-      )}
-    </g>
-  </svg>
-)}
-
-{part === "key" && (
-  <svg
-    class="scene-svg"
-    viewBox="0 0 390 170"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <path
-      class="route-line scroll-draw"
-      pathLength="1"
-      d="M39 0C39 40 174 20 174 80A24 24 0 0 1 126 80A24 24 0 0 1 174 80L236 80L236 96L248 96L248 80L260 80L260 92L272 92L272 80L296 80C330 80 336 128 296 132L90 132C56 132 39 146 39 170"
-    />
-    <circle class="brass" cx="150" cy="80" r="7" />
   </svg>
 )}
 
@@ -145,92 +281,158 @@ const ground =
       </clipPath>
     </defs>
 
-    {/* The same map sheet as on desktop, right of the rail. */}
-    <g class="scroll-fade" transform="rotate(-1.5 218 170)">
-      <rect class="map-sheet" x="58" y="20" width="320" height="300" rx="4" />
-      <g class="on-sheet" clip-path="url(#check-in-sheet-phone)">
-        {ground.grid.map((d) => (
-          <path class="map-grid" d={d} />
-        ))}
+    <g data-map class="map">
+      <g transform="rotate(-1.5 218 170)">
+        <rect class="map-sheet" x="58" y="20" width="320" height="300" rx="4" />
+        <g class="on-sheet" clip-path="url(#check-in-sheet-phone)">
+          {ground.grid.map((d) => (
+            <path class="map-grid" d={d} />
+          ))}
+          <path
+            class="map-water"
+            d="M108 64C138 68 168 80 194 98C198 102 194 108 188 106C162 92 136 82 106 76C100 74 102 64 108 64Z"
+          />
+          <path
+            class="map-water"
+            d="M190 260C216 252 238 260 260 270C280 262 304 266 308 276C310 284 288 286 274 282C278 296 262 304 252 294C246 286 236 280 222 276C206 274 184 270 190 260Z"
+          />
+          {ground.hills.map((d) => (
+            <path class="map-contour" d={d} />
+          ))}
+        </g>
+        <path class="map-contour idle-shimmer" d="M132 78h30" />
         <path
-          class="map-water"
-          d="M108 64C138 68 168 80 194 98C198 102 194 108 188 106C162 92 136 82 106 76C100 74 102 64 108 64Z"
+          class="map-contour idle-shimmer idle-shimmer--late"
+          d="M224 272h30"
         />
-        <path
-          class="map-water"
-          d="M190 260C216 252 238 260 260 270C280 262 304 266 308 276C310 284 288 286 274 282C278 296 262 304 252 294C246 286 236 280 222 276C206 274 184 270 190 260Z"
-        />
-        {ground.hills.map((d) => (
-          <path class="map-contour" d={d} />
-        ))}
       </g>
-    </g>
-
-    <path
-      class="route-line scroll-draw"
-      pathLength="1"
-      d="M39 0C39 40 170 30 270 70C230 104 190 124 170 160C150 196 130 220 110 240C110 240 92 220 92 204A18 18 0 1 1 128 204C128 220 110 240 110 240C110 300 39 290 39 340"
-    />
-
-    <g data-enter>
-      <circle class="brass marker" cx="270" cy="70" r="6" />
       {origin && (
         <text class="map-label map-label--small" x="284" y="62">
           {origin}
         </text>
       )}
-    </g>
-    <g data-enter>
-      <circle class="brass marker" cx="110" cy="204" r="6" />
       {place && (
         <text class="map-label map-label--small" x="124" y="266">
           {place}
         </text>
       )}
     </g>
+
+    <path
+      class="route-line route-draw"
+      data-route
+      pathLength="1000"
+      d="M39 0C39 40 170 30 270 70C230 104 190 124 170 160C150 196 130 220 110 240C110 300 39 290 39 340"
+    />
+    <g data-marker class="pivot">
+      <circle class="fill-paper ink-line" cx="270" cy="70" r="6" />
+      <circle class="fill-route" cx="270" cy="70" r="2.5" />
+    </g>
+    <g data-halo>
+      <circle class="brass pivot idle-pulse" cx="110" cy="206" r="25" />
+    </g>
+    <g data-pin>
+      <Pin x={110} y={240} radius={18} />
+    </g>
   </svg>
 )}
 
 <style>
-  /* The share of the scene's scroll timeline each part of the line takes, in drawing
-     order and roughly in proportion to its length (see .scene-draw in route.css). */
-  .draw-in {
-    --from: 0;
-    --to: 0.1;
+  /* The ring of the key: a thick brass band between two ink outlines. */
+  .key-ring {
+    stroke: var(--color-brass);
+    stroke-width: 22;
   }
 
-  .key {
-    --from: 0.1;
-    --to: 0.31;
+  .fob-edge {
+    stroke: var(--color-paper);
+    stroke-width: 1.5;
+    opacity: 0.7;
   }
 
-  .draw-out {
-    --from: 0.31;
-    --to: 1;
+  /* Invisible shapes that only give a group the right bounding box or a handle. */
+  .balance {
+    stroke: none;
+    fill: none;
   }
 
-  /* While it is drawn, the key turns into place like a key in a lock. It pivots where
-     the incoming line meets the ring, so it never lets go of the route. */
-  .key {
+  .trail {
+    stroke: var(--color-ink-soft);
+    stroke-width: calc(
+      var(--route-detail-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+    stroke-dasharray: 14 12;
+  }
+
+  /* The scroll-drawn part of the route counts its length in 1000 steps (GSAP rounds
+     stroke-dashoffset to whole pixels). */
+  .route-draw {
+    stroke-dasharray: 1000;
+  }
+
+  /* The key and its fob swing from where they hang. */
+  .hang--desktop {
     transform-box: view-box;
-    transform-origin: 872px 300px;
+    transform-origin: 1040px 150px;
   }
 
-  @supports (animation-timeline: view()) {
-    :global(html[data-motion="on"]) .key {
-      --span: calc(100% - var(--scroll-draw-lead) - var(--scroll-draw-trail));
-
-      animation: turn linear both;
-      animation-timeline: --scene;
-      animation-range: cover
-        calc(var(--scroll-draw-lead) + var(--from) * var(--span)) cover
-        calc(var(--scroll-draw-lead) + var(--to) * var(--span));
-    }
+  .hang--phone {
+    transform-box: view-box;
+    transform-origin: 250px 70px;
   }
 
-  @keyframes turn {
+  .fob {
+    transform-box: view-box;
+    transform-origin: 1072px 222px;
+  }
+
+  .fleck {
+    opacity: 0.7;
+  }
+
+  /* Lamplight: the flecks rise a little and dim, each on its own rhythm. */
+  :global(html[data-motion="on"]) .fleck {
+    animation: drift var(--duration-drift) ease-in-out infinite alternate;
+  }
+
+  :global(html[data-motion="on"]) .fleck:nth-child(3n) {
+    animation-duration: calc(var(--duration-drift) * 1.4);
+    animation-delay: calc(var(--duration-drift) * -0.6);
+  }
+
+  :global(html[data-motion="on"]) .fleck:nth-child(3n + 1) {
+    animation-duration: calc(var(--duration-drift) * 0.8);
+    animation-delay: calc(var(--duration-drift) * -0.3);
+  }
+
+  @keyframes drift {
     from {
-      rotate: -40deg;
+      translate: 0 14px;
+      opacity: 0.25;
     }
+
+    to {
+      translate: 6px -18px;
+      opacity: 0.8;
+    }
+  }
+
+  /* Before the choreography reaches them, these are not on stage. With motion off they
+     are simply there (the flecks and the plane belong to the animated version only). */
+  :global(html[data-motion="on"]) .map,
+  :global(html[data-motion="on"]) .flecks,
+  :global(html[data-motion="on"]) .plane,
+  :global(html[data-motion="on"]) .trail {
+    opacity: 0;
+  }
+
+  :global(html[data-motion="on"]) .route-draw {
+    stroke-dashoffset: 1000;
+  }
+
+  :global(html:not([data-motion="on"])) .flecks,
+  :global(html:not([data-motion="on"])) .plane,
+  :global(html:not([data-motion="on"])) .trail {
+    display: none;
   }
 </style>

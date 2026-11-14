@@ -13,6 +13,9 @@ const chapters = defineCollection({
     stage: z.string().min(1),
     heading: z.string().min(1),
     body: z.array(z.string().min(1)).min(1),
+    // The body cut into short lines for a staged scene, grouped by the scene's moments.
+    // Same wording, no added facts (CLAUDE.md §4: text arrives in short beats).
+    beats: z.record(z.string(), z.array(z.string().min(1)).min(1)).optional(),
     organisation: z
       .strictObject({
         name: z.string().min(1),

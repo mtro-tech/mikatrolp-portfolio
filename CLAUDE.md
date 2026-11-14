@@ -17,8 +17,9 @@ Never delete or weaken a rule without Mika's explicit OK.
   (2) AI/tech people, innovators, investors and fellow students interested in Mika's AI work.
 - **Main action:** contact Mika through the contact form; links to LinkedIn and GitHub.
 - **Languages:** English and German (all copy, including the privacy notice).
-- **Mood:** calm, warm and editorial, with exactly 3 cinematic peaks (Arrival hero, flight to Hong Kong, transition to AI)
-  and small playful touches that match each chapter (e.g. cocktail glasses in "Behind the bar").
+- **Mood:** warm and professional, and spectacular to scroll through (changed 2026-11-14: "calm and editorial" proved too quiet).
+  Every chapter is a staged scene; the 3 cinematic peaks (Arrival hero, flight to Hong Kong, transition to AI) are the biggest.
+  Small playful touches match each chapter (e.g. cocktail glasses in "Behind the bar").
 - **Target launch:** before the Hong Kong internship starts (February 2027).
 - **Sources of truth:**
   - Facts about Mika: `src/content/` only, built from `docs/content-source.md`. Nothing else.
@@ -71,6 +72,8 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
 ## 4. Design rules
 
 - **Palette:** warm, comfortable and welcoming. Warm paper background, deep ink text, one warm accent. No neon colours, no dark mode.
+  Individual scenes may switch to a full background in another palette colour (pine ink, aperitivo red, darker paper)
+  for contrast (allowed 2026-11-14); text on them must still pass AA contrast.
   Tokens (text colours pass the axe contrast check on the paper background, 2026-11-14):
   `--color-paper #F2E6D3` (background) · `--color-paper-deep #E7D6BC` (map land, form surface) ·
   `--color-ink #1E2B26` (text) · `--color-ink-soft #55605A` (secondary text) ·
@@ -83,17 +86,29 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
 - **Layout:** desktop: the route wanders through a central band and each chapter's copy alternates sides of it;
   mobile: the route is a near-straight rail on the left edge with one stop marker per chapter.
   The header holds only the name, the current stage name, the language switch and the motion toggle.
-- **One pen line:** the route is the only illustration tool; every chapter drawing is made by that line
-  (chapter-by-chapter behaviour: see the approved step 1 plan in the Decision log).
-- **Illustrations:** code-drawn SVG line art only. One stroke width family, round line caps, the accent colour used sparingly.
+- **The route connects, objects are drawn properly** (changed 2026-11-14): the route line is the spine that links every scene,
+  but objects (a key, glasses, a skyline) are full line-art illustrations with several strokes and filled shapes in the palette,
+  so they read at a glance. The line's thickness on screen stays the same from the first scene to the last.
+- **Illustrations, the house style** (set 2026-11-14): code-drawn SVG only. Objects are flat fills in palette colours with a 2px ink outline,
+  round corners and joins: brass for metal, aperitivo red for accents and markers, the two paper tones for walls, roofs and ground;
+  a few small ink details, no shading or gradients. The route is the one exception: a plain red line with no outline, so it reads as
+  the thread between objects. Map ground (sheets, lakes, contours) stays flat and without outlines, behind the objects.
+  The key in Check-in is the reference drawing. Shared pieces live in `src/components/route/` (for example `Pin.astro`).
   No stock photos, no AI-generated images, no copied illustrations, no portrait photo (for now).
 - **Playful touches:** one small, theme-matching detail per chapter (e.g. cocktail glasses for the bar). Delight, not distraction.
 - **The route line** is the spine of the site: continuous, same style everywhere, never hidden for more than one viewport.
 - **Motion budget:**
-  - Exactly 3 cinematic peaks. Everything else is quiet: fades, line drawing, text reveals.
-  - Quiet motion: CSS scroll-driven animations. Peaks: GSAP. Don't mix both on the same element.
-  - No scroll-jacking outside the peaks; pinned sections must stay short enough not to frustrate.
-  - The flowing, continuous feel of deathbyscroll.com is the animation benchmark.
+  - **Staged chapters** (changed 2026-11-14): every chapter is a held scene, roughly two screens of scrolling, in which objects
+    build, move and turn into the next chapter. The 3 cinematic peaks (Arrival hero, flight to Hong Kong, transition to AI)
+    are the biggest of these, not the only ones.
+  - **Something is always alive:** each scene has a few small animations that run without scrolling
+    (a needle trembling, a pin pulsing, something drifting). Delight, not distraction; never behind body text.
+  - **Text arrives in short beats:** a few words or one sentence at a time, large, as the reader scrolls. Text never just sits
+    there finished when a scene opens. Beats are cut from the copy in `src/content/`; no facts are added.
+  - Held scenes and scroll-linked choreography: GSAP. Load and idle animations: CSS. Don't mix both on the same element.
+  - A held scene must always show progress: something visibly moves with every bit of scrolling, so it never feels stuck.
+  - With motion off, every scene is a normal scrolling section with all its content visible.
+  - deathbyscroll.com is the animation benchmark: one flowing whole, scenes that transform, constant life.
 - **No sound.**
 - **The contact form** is designed and animated as part of the Check-out chapter, not a generic form block.
 - **References are for principles only** (thewayapp.com, davidwhyte.com/experience, dieselfarm.com/en, deathbyscroll.com):
@@ -216,6 +231,13 @@ Add new entries at the top. Format: date · decision · why · decided by.
 
 | Date | Decision | Why | By |
 | --- | --- | --- | --- |
+| 2026-11-14 | One house style for all drawings (§4): filled shapes with an ink outline, the route a plain red line. The hero is redrawn in it: St. Gallen as small buildings that rise from the route as it passes, a solid red pin with a breathing brass ring, an outlined compass. Check-in gets the same pin on Lucerne, an outlined St. Gallen marker and outlined tags with brass eyelets. Favicon: the solid pin | Mika: the key was in a different style from the rest, and he prefers the key's style | Mika |
+| 2026-11-14 | Check-in is rebuilt as a staged scene (this replaces the scrolling Check-in two rows below): a drawn brass key with a red fob hangs from the route and sways; text arrives in beats; a paper plane crosses for Toronto; the key turns and the scene opens from the keyhole into pine ink for the hospitality lines, with lamplight flecks; it closes, a map sheet unfolds for the leg to Lucerne; the language tags drop onto their rail. Held for 4 screens on desktop, 3.5 on phones | Mika's review; plan approved | Claude, plan approved by Mika |
+| 2026-11-14 | How a staged chapter is built: one frame (`data-stage-frame`) with the drawings and a text slot; `holdStage` in `src/lib/motion/stage.ts` holds it and scrubs its timeline; timings live in `src/lib/motion/tokens.ts`. With motion off the same markup is a normal section with everything visible. Text beats live in the content file as `beats` | One system for all chapters; no second layout to maintain | Claude, plan approved by Mika |
+| 2026-11-14 | Stroke widths are screen pixels (route 2px), divided in CSS by `--route-scale` (page width / viewBox width, set by `src/lib/scroll.ts`) and `--zoom` (any extra scale on a scene). A test compares the line's thickness on screen in the hero, through its zoom, and in Check-in | Mika: the line changed thickness between scenes | Mika |
+| 2026-11-14 | Text in staged scenes is faded with opacity only, never `visibility` or `display`, and `public/motion-init.js` switches motion off if the animation script has not started after 5 seconds | Hidden beats must stay readable to screen readers, and no content may stay hidden if the script fails to load | Claude `[TODO: confirm]` |
+| 2026-11-14 | Idle details so far: hero (compass needle trembles, pin ring breathes, a boat crosses the lake); Check-in (key and fob sway, flecks drift, lakes shimmer, pin ring breathes, tags sway). Shared loops are in `src/styles/route.css` (`idle-sway`, `idle-pulse`, `idle-shimmer`) | "Something is always alive" (§4) | Claude, plan approved by Mika |
+| 2026-11-14 | New direction after the Check-in review: (1) staged chapters, every chapter a held scene of about two screens; (2) fuller line art, objects drawn properly with fills, the route still the spine; (3) individual scenes may use full palette-colour backgrounds; (4) text in short beats; (5) small idle animations in every scene; (6) the line keeps one thickness on screen throughout. §1 and §4 are rewritten to match; the earlier "exactly 3 peaks, everything else quiet" and "one pen line draws everything" rules are replaced | Mika: the hero-to-Check-in handover was boring, the text was already written, the key did not read as a key, the line changed thickness, and the site should be more spectacular, like Death by Scroll, with objects that move on their own | Mika |
 | 2026-11-14 | Check-in: the line draws a room key beside "How it began"; the hospitality sentence is set large; a map sheet (land in the darker paper tone, Lake Zurich and Lake Lucerne, contours) carries the leg from St. Gallen to Lucerne; the languages hang as brass key tags. Phones: the same pieces alternate with the copy along the left rail | Step 4 plan | Claude, plan approved by Mika |
 | 2026-11-14 | One coordinate system for the route: every drawing scales with the page width only (desktop viewBox 1440 wide, phones 390, switch at 60rem). Desktop chapters are one tall drawing with the copy laid over it in percentages; phone chapters alternate copy blocks (each carrying its piece of the rail at 10%) with short drawings | The line must meet exactly where chapters join, at every screen size | Claude, plan approved by Mika |
 | 2026-11-14 | Quiet chapter motion is CSS only, in `src/styles/route.css`: the route draws on a scroll timeline (`.scroll-draw`, or `.scene-draw` with `--from`/`--to` when several paths draw in order), copy uses `.scroll-reveal`, and `[data-enter]` elements play a short timed animation once in view. Browsers without scroll-driven animations show everything drawn | CLAUDE.md §4 motion budget | Claude, plan approved by Mika |
@@ -263,6 +285,13 @@ Add new entries at the top. Format: date · decision · why · decided by.
 Add an entry whenever a bug, a correction from Mika or a wrong assumption teaches something reusable.
 Format: date · what happened · the rule that prevents it next time.
 
+- 2026-11-14 · Pull request 6 was merged while I was still pushing more commits to its branch, and I reported it as "updated in place"; the staged Check-in never reached `main` · Before saying work is in a pull request, check that the pull request is still open (`gh pr view --json state`). After a merge, new work goes on a new branch and a new pull request.
+- 2026-11-14 · A shell command that built rulebook text contained backticks, so the shell ran the quoted words as commands and dropped them from the text · Edit the rulebook with the edit tool, not through shell strings; re-read any text a script wrote.
+- 2026-11-14 · With motion off, Check-in's route (drawn far beyond its frame to cover tall screens) ran straight up through the hero · Anything drawn beyond its section must be clipped by that section in every mode; check the join between chapters in the motion-off version too.
+- 2026-11-14 · Multi-line search-and-replace edits failed silently on files checked out with Windows line endings · Normalise line endings before scripted edits, and confirm each edit landed.
+- 2026-11-14 · Mika found the first Check-in boring even though it met every rule: the rules themselves ("3 peaks, everything else quiet", "one pen line") were holding the site back · When feedback contradicts a rule, say so, look at the reference he names, ask the few questions that settle the direction, and change the rule with his OK before building again.
+- 2026-11-14 · GSAP's `autoAlpha` sets `visibility: hidden`, which removed the chapter heading and beats from the accessibility tree (a heading-count test caught it) · Fade text with `opacity`; keep `autoAlpha` for decorative drawings.
+- 2026-11-14 · A hidden list still showed its brass rail, because only the list items were hidden · When hiding a component before its moment, hide the element that carries its borders and backgrounds too, and look for stray lines in the first frame.
 - 2026-11-14 · Map details drawn in the darker paper tone directly on the page were too faint to give a chapter presence; the same details on a filled map sheet worked at once · When a scene needs weight, give it a filled surface in `--color-paper-deep` and draw on it in the lighter tone, instead of adding more faint lines.
 - 2026-11-14 · Three paths that each drew on their own scroll timeline drew at the same time, so the key appeared before the line reached it · Paths that form one line share one named timeline (`.scroll-scene` + `.scene-draw`) and take consecutive `--from`/`--to` shares.
 - 2026-11-14 · Layout measurements taken after resizing a page mid-scroll with motion on were garbage and looked like bugs · Measure joins and overflow on a fresh load at each size with motion off; test resizing separately.

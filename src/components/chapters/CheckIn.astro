@@ -1,93 +1,118 @@
 ---
+// Check-in as a staged scene. One frame holds the drawings and a text slot.
+// - With motion on, the frame is held on screen and check-in.motion.ts plays the scene:
+//   key, door, map, languages; text arrives one beat at a time.
+// - With motion off (or no JavaScript) the same markup is a normal section: the
+//   drawings in their finished state and every line of text visible, stacked.
 import CheckInScene from "../route/CheckInScene.astro";
 import ChapterHeading from "./ChapterHeading.astro";
 
 interface Props {
   stage: string;
   heading: string;
-  /** Three paragraphs: how it began, what hospitality means, home and Lucerne. */
-  body: string[];
+  /** The copy in short lines: began, meaning, promise, leg. */
+  beats: Record<string, string[]>;
   items?: { label: string; values: string[] }[];
   /** Where the map leg ends (this chapter's place) and where it starts. */
   place?: string;
   origin?: string;
 }
 
-const { stage, heading, body, items = [], place, origin } = Astro.props;
-const [began, meaning, ...rest] = body;
+const { stage, heading, beats, items = [], place, origin } = Astro.props;
 ---
 
-<section class="check-in" data-stage-name={stage}>
-  <!-- Desktop: one tall drawing sets the section's height; the copy is laid over it. -->
-  <div class="scene scene--desktop scroll-scene">
-    <CheckInScene part="desktop" origin={origin} place={place} />
-  </div>
+<section class="check-in" data-check-in data-stage-name={stage}>
+  <div class="frame" data-stage-frame>
+    <div class="backdrop" data-backdrop></div>
 
-  <div class="block block--began scroll-rail">
-    <div class="scroll-reveal">
-      <ChapterHeading stage={stage} heading={heading} />
-      <p class="mt-4">{began}</p>
+    <div class="scene" data-stage-scene>
+      <div class="layer layer--desktop">
+        <CheckInScene part="desktop" origin={origin} place={place} />
+      </div>
+      <div class="layer layer--phone" data-key-layer>
+        <CheckInScene part="key" />
+      </div>
+      <div class="layer layer--phone" data-map-layer>
+        <CheckInScene part="map" origin={origin} place={place} />
+      </div>
     </div>
-  </div>
 
-  <div class="scene scene--phone">
-    <CheckInScene part="key" />
-  </div>
+    <div class="copy">
+      <div class="title" data-title>
+        <ChapterHeading stage={stage} heading={heading} />
+      </div>
 
-  <div class="block block--meaning scroll-rail">
-    <p class="quote font-display text-quote scroll-reveal">{meaning}</p>
-  </div>
-
-  <div class="scene scene--phone">
-    <CheckInScene part="map" origin={origin} place={place} />
-  </div>
-
-  <div class="block block--leg scroll-rail">
-    {rest.map((paragraph) => (
-      <p class="scroll-reveal">{paragraph}</p>
-    ))}
-  </div>
-
-  {items.map((item) => (
-    <div class="block block--tags scroll-rail">
-      <p class="font-semibold">{item.label}</p>
-      <ul class="tags" data-enter>
-        {item.values.map((value) => (
-          <li class="tag">{value}</li>
+      <div class="slot">
+        {beats.began?.map((line) => (
+          <p class="beat font-display text-quote" data-beat="began">
+            {line}
+          </p>
         ))}
-      </ul>
+        <div class="meaning font-display text-quote">
+          {beats.meaning?.map((line) => (
+            <p data-line>{line}</p>
+          ))}
+        </div>
+        {beats.promise?.map((line) => (
+          <p
+            class="beat beat--dark font-display text-quote"
+            data-beat="promise"
+          >
+            {line}
+          </p>
+        ))}
+        {beats.leg?.map((line) => (
+          <p class="beat beat--narrow font-display text-lead" data-beat="leg">
+            {line}
+          </p>
+        ))}
+      </div>
+
+      {items.map((item) => (
+        <div class="languages">
+          <p class="font-semibold" data-tags-label>
+            {item.label}
+          </p>
+          <ul class="tags">
+            {item.values.map((value) => (
+              <li data-tag>
+                <span class="tag">{value}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
-  ))}
+  </div>
 </section>
 
 <style>
-  .check-in {
+  /* ---- Shared by both modes ---------------------------------------------------- */
+  /* Clipped in both modes: the route is drawn far beyond the frame in both directions
+     (so tall frames are covered) and must not spill into the neighbouring chapters. */
+  .frame {
     position: relative;
+    overflow: clip;
   }
 
-  /* Phones: copy and drawings alternate in one column. Every copy block carries its
-     own piece of the rail at 10% (x = 39 of 390), where the drawings pick it up. */
-  .scene--desktop {
-    display: none;
-  }
-
-  .block {
-    position: relative;
-    padding: 1.5rem var(--spacing-page) 2.5rem calc(10% + 1.25rem);
-  }
-
-  .block::before {
+  /* The rail on phones: the route as a straight line at 10% (x = 39 of 390). */
+  .frame::before {
     content: "";
     position: absolute;
+    z-index: 1;
     inset-block: 0;
     left: 10%;
     width: calc(var(--route-stroke-width) * 1px);
     translate: -50% 0;
     background: var(--color-route);
-    transform-origin: top;
   }
 
-  .quote {
+  .layer--desktop {
+    display: none;
+  }
+
+  .beat,
+  .meaning {
     text-wrap: balance;
   }
 
@@ -100,16 +125,19 @@ const [began, meaning, ...rest] = body;
     flex-wrap: wrap;
     /* The row gap equals the string length: when tags wrap, each hangs from the one above. */
     gap: var(--string) 1rem;
-    margin-top: 1rem;
+    margin-top: 0.75rem;
     padding-top: var(--string);
-    border-top: var(--line) solid var(--color-brass);
+    border-top: calc(var(--line) * 2.5) solid var(--color-brass);
   }
 
   .tag {
+    display: block;
     position: relative;
     padding: 1.4rem 0.9rem 0.6rem;
-    border: var(--line) solid var(--color-brass);
-    border-radius: 0.5rem;
+    /* House style: a paper tag with an ink outline, like the key's fob. */
+    border: calc(var(--route-stroke-width) * 1px) solid var(--color-ink);
+    border-radius: 0.6rem;
+    background: var(--color-paper);
     /* Tags swing from the point where their string meets the rail. */
     transform-origin: 50% calc(var(--string) * -1);
   }
@@ -125,96 +153,199 @@ const [began, meaning, ...rest] = body;
     background: var(--color-brass);
   }
 
-  /* The punched hole. */
+  /* The brass eyelet. */
   .tag::after {
     content: "";
     position: absolute;
-    top: 0.4rem;
+    top: 0.35rem;
     left: 50%;
-    width: 0.5rem;
-    height: 0.5rem;
+    width: 0.65rem;
+    height: 0.65rem;
     translate: -50% 0;
-    border: var(--line) solid var(--color-brass);
+    border: calc(var(--line) * 2) solid var(--color-brass);
     border-radius: 50%;
+    background: var(--color-paper);
   }
 
-  /* On entering the view the tags swing once and come to rest, each a beat later,
-     as if the rail had just been hung up. */
-  :global(html[data-motion="on"]) .tags[data-inview] .tag {
-    animation: swing var(--duration-swing) var(--ease-settle) both;
+  /* Idle: the tags never hang quite still. */
+  :global(html[data-motion="on"]) .tag {
+    animation: tag-sway var(--duration-sway) ease-in-out infinite alternate;
   }
 
-  :global(html[data-motion="on"]) .tags[data-inview] .tag:nth-child(2) {
-    animation-delay: var(--delay-stagger);
+  :global(html[data-motion="on"]) li:nth-child(2) .tag {
+    animation-delay: calc(var(--duration-sway) * -0.35);
   }
 
-  :global(html[data-motion="on"]) .tags[data-inview] .tag:nth-child(3) {
-    animation-delay: calc(var(--delay-stagger) * 2);
+  :global(html[data-motion="on"]) li:nth-child(3) .tag {
+    animation-delay: calc(var(--duration-sway) * -0.7);
   }
 
-  @keyframes swing {
-    0% {
-      rotate: 9deg;
+  @keyframes tag-sway {
+    from {
+      rotate: -1.2deg;
     }
 
-    35% {
-      rotate: -5deg;
-    }
-
-    65% {
-      rotate: 2.5deg;
-    }
-
-    100% {
-      rotate: 0deg;
+    to {
+      rotate: 1.2deg;
     }
   }
 
-  /* Desktop: positions are percentages of the 1440 × 1860 drawing (CheckInScene.astro). */
+  /* ---- Motion off: a normal scrolling section ------------------------------------ */
+  .backdrop {
+    display: none;
+  }
+
+  .copy {
+    position: relative;
+    display: grid;
+    gap: 1.25rem;
+    padding: 1.5rem var(--spacing-page) 3rem calc(10% + 1.25rem);
+  }
+
+  .slot {
+    display: grid;
+    gap: 1rem;
+  }
+
   @media (width >= 60rem) {
-    .scene--desktop {
-      display: block;
-    }
-
-    .scene--phone {
-      display: none;
-    }
-
-    .block {
-      position: absolute;
-      padding: 0;
-    }
-
-    .block::before {
+    .frame::before {
       content: none;
     }
 
-    /* Left of the key (key spans x 744–1140, y 236–364). */
-    .block--began {
-      top: 8.5%;
-      left: 8.33%;
-      width: 36%;
+    .layer--desktop {
+      display: block;
     }
 
-    /* Left of the route as it runs down the right side (x ≈ 1185). */
-    .block--meaning {
-      top: 29%;
-      left: 8.33%;
-      width: 66%;
+    .layer--phone {
+      display: none;
     }
 
-    /* Right of the map leg, between St. Gallen (1040, 1000) and Lucerne (430, 1340). */
-    .block--leg {
-      top: 67%;
-      left: 55%;
-      width: 26%;
+    /* The drawing lies behind; the copy takes the column left of the map (x < 480). */
+    .frame {
+      min-height: 56.25vw;
     }
 
-    /* Right of the route's last straight (x = 720). */
-    .block--tags {
-      top: 85%;
-      left: 55%;
-      width: 38%;
+    .scene {
+      position: absolute;
+      inset: 0;
+    }
+
+    .copy {
+      width: 24%;
+      margin-left: 8.33%;
+      padding: 7vw 0 4rem;
+    }
+
+    /* Stacked, the large beat size would not fit the column beside the map. */
+    :global(html:not([data-motion="on"])) .beat,
+    :global(html:not([data-motion="on"])) .meaning {
+      font-size: var(--text-lead);
+      line-height: var(--text-lead--line-height);
+    }
+  }
+
+  /* ---- Motion on: the frame is one screen and the scene plays inside it ---------- */
+  :global(html[data-motion="on"]) .frame {
+    height: max(calc(100svh - var(--header-height)), 34rem);
+    overflow: clip;
+  }
+
+  /* A circle that grows from the keyhole until it covers the frame: the dark scene. */
+  :global(html[data-motion="on"]) .backdrop {
+    display: block;
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    margin: -50px 0 0 -50px;
+    border-radius: 50%;
+    background: var(--color-ink);
+    scale: 0;
+  }
+
+  /* Phones: drawings in the top 46% of the frame, the text slot below. The drawing
+     shrinks from the rail's top if the screen is short (--stage-fit, src/lib/scroll.ts). */
+  :global(html[data-motion="on"]) .scene {
+    --zoom: var(--stage-fit, 1);
+
+    position: absolute;
+    inset: 0 0 54% 0;
+    scale: var(--stage-fit, 1);
+    transform-origin: 10% 0;
+  }
+
+  :global(html[data-motion="on"]) .layer {
+    position: absolute;
+    inset: 0 0 auto 0;
+  }
+
+  :global(html[data-motion="on"]) .copy {
+    position: absolute;
+    inset: 46% 0 0 0;
+    display: block;
+    padding: 0.5rem var(--spacing-page) 1.5rem calc(10% + 1.25rem);
+  }
+
+  /* Beats share one place and replace each other. */
+  :global(html[data-motion="on"]) .slot {
+    display: grid;
+    gap: 0;
+    margin-top: 1rem;
+  }
+
+  :global(html[data-motion="on"]) .slot > * {
+    grid-area: 1 / 1;
+  }
+
+  :global(html[data-motion="on"]) .languages {
+    position: absolute;
+    inset: 1rem var(--spacing-page) auto calc(10% + 1.25rem);
+  }
+
+  /* Text on the dark scene is paper-coloured. */
+  :global(html[data-motion="on"]) .meaning,
+  :global(html[data-motion="on"]) .beat--dark {
+    color: var(--color-paper);
+  }
+
+  /* Nothing is on stage before its moment (check-in.motion.ts brings each one in). */
+  :global(html[data-motion="on"]) .title,
+  :global(html[data-motion="on"]) .beat,
+  :global(html[data-motion="on"]) [data-line],
+  :global(html[data-motion="on"]) [data-tags-label],
+  :global(html[data-motion="on"]) .tags,
+  :global(html[data-motion="on"]) [data-tag],
+  :global(html[data-motion="on"]) [data-map-layer] {
+    opacity: 0;
+  }
+
+  @media (width >= 60rem) {
+    :global(html[data-motion="on"]) .frame {
+      min-height: 0;
+    }
+
+    /* Desktop: the drawing fills the frame and shrinks from where the route enters. */
+    :global(html[data-motion="on"]) .scene {
+      inset: 0;
+      transform-origin: 72.22% 0;
+    }
+
+    :global(html[data-motion="on"]) .copy {
+      inset: 13% auto 0 8.33%;
+      width: 56%;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Beats beside the map stay left of it (the map starts at a third of the width). */
+    :global(html[data-motion="on"]) .beat--narrow,
+    :global(html[data-motion="on"]) .title {
+      max-width: 54%;
+    }
+
+    :global(html[data-motion="on"]) .languages {
+      inset: auto auto 9% 0;
+      width: 44%;
+      max-width: 21rem;
     }
   }
 </style>

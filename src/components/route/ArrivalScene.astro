@@ -1,12 +1,15 @@
 ---
-// The Arrival map scene. Two layers:
+// The Arrival map scene, in the house style (CLAUDE.md §4): objects are flat fills with
+// an ink outline; the route is a plain red line that connects them.
 // - the map ground (graticule, contour rings, lake) in the darker paper tone;
-// - the pen line, which arrives over the hills, traces St. Gallen's rooftops and the twin
-//   towers of the abbey cathedral in one stroke, loops into the pin and leaves as the route.
-// Desktop (1440 × 900) enters from the left and pins at x = 1040. Mobile (390 × 700) enters
-// from the right and pins on the left rail at x = 39. Arrival.astro positions the copy from
+// - the route, which runs in along the ground to the pin and leaves downward;
+// - St. Gallen standing on the route: a hill, houses, the abbey cathedral's twin towers;
+// - a solid pin, a compass and a boat.
+// Desktop (1440 × 900) enters from the left and pins at x = 1040. Phones (390 × 700) enter
+// from the right and pin on the left rail at x = 39. Arrival.astro positions the copy from
 // these numbers, and arrival.motion.ts zooms towards the pin.
 import { contours, graticule } from "./contours";
+import Pin from "./Pin.astro";
 
 interface Props {
   place?: string;
@@ -36,8 +39,60 @@ const mobile = {
   ],
 };
 
-// Four-point compass star; the north point is the long one.
+// The town, drawn once in desktop units standing on the ground line y = 700.
+// Each entry is one building, listed in the order the route passes them; it rises
+// from the ground in that order. `shapes` are [class, path] pairs.
+type Shape = [string, string];
+const house = (
+  left: number,
+  width: number,
+  wall: number,
+  roof: number,
+  roofClass = "fill-paper-deep",
+): Shape[] => {
+  const right = left + width;
+  const eave = 700 - wall;
+  const mid = left + width / 2;
+  return [
+    ["fill-paper ink-line", `M${left} 700V${eave}H${right}V700Z`],
+    [
+      `${roofClass} ink-line`,
+      `M${left - 4} ${eave}L${mid} ${eave - roof}L${right + 4} ${eave}Z`,
+    ],
+    ["ink-line", `M${mid} ${700 - wall * 0.62}v${wall * 0.3}`],
+  ];
+};
+const tower = (left: number): Shape[] => {
+  const mid = left + 15;
+  return [
+    ["fill-paper ink-line", `M${left} 700V600H${left + 30}V700Z`],
+    [
+      "fill-brass ink-line",
+      `M${left - 2} 600C${left - 2} 584 ${left + 8} 576 ${mid} 574C${left + 22} 576 ${left + 32} 584 ${left + 32} 600Z`,
+    ],
+    ["ink-line", `M${mid} 574V556`],
+    ["ink-line", `M${mid} 618v16M${mid} 650v12`],
+  ];
+};
+const town: Shape[][] = [
+  house(584, 40, 26, 20),
+  house(640, 48, 34, 22, "fill-route"),
+  // The nave of the cathedral, then its two towers and the link between them.
+  [
+    ["fill-paper ink-line", "M706 700V662H756V700Z"],
+    ["fill-paper-deep ink-line", "M702 662L720 642H756V662Z"],
+    ["ink-line", "M722 676v12M738 676v12"],
+  ],
+  tower(756),
+  [["fill-paper ink-line", "M786 700V640H806V700Z"]],
+  tower(806),
+  house(858, 36, 22, 16),
+  house(912, 32, 16, 13, "fill-route"),
+];
+
+// Four-point compass star; the north point is the long one and gets the red half.
 const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
+const north = "M0 -38L6 -6L-6 -6Z";
 ---
 
 <svg
@@ -62,19 +117,51 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
     ))}
   </g>
 
+  {/* A small boat crossing Lake Constance: one of the hero's idle details. */}
+  <g class="boat">
+    <g transform="translate(900 150)">
+      <path class="fill-paper ink-line" d="M-14 0h28l-5 7h-18z"></path>
+      <path class="fill-paper ink-line" d="M0 -2V-22L11 -5z"></path>
+    </g>
+  </g>
+
   <g class="compass" transform="translate(1310 372)">
-    <circle r="46"></circle>
-    <circle r="3"></circle>
-    <path class="needle" d={star}></path>
-    <text class="north" y="-56" text-anchor="middle">
+    <circle class="fill-paper ink-line" r="48"></circle>
+    <circle class="compass-band" r="39"></circle>
+    <g class="needle">
+      <path class="fill-paper-deep ink-line" d={star}></path>
+      <path class="fill-route ink-line" d={north}></path>
+      <circle class="fill-brass ink-line" r="4"></circle>
+    </g>
+    <text class="north" y="-58" text-anchor="middle">
       N
     </text>
+  </g>
+
+  {/* The town is drawn a little larger than its units: it is the heart of the scene. */}
+  <g
+    class="town-scale"
+    transform="translate(800 700) scale(1.3) translate(-800 -700)"
+  >
+    <path
+      class="fill-paper-deep ink-line hill"
+      d="M196 704C296 696 326 650 400 646C474 642 504 692 566 702Z"
+    ></path>
+    <g class="town">
+      {town.map((shapes) => (
+        <g class="building">
+          {shapes.map(([cls, d]) => (
+            <path class={cls} d={d} />
+          ))}
+        </g>
+      ))}
+    </g>
   </g>
 
   <path
     class="line skyline"
     pathLength="1"
-    d="M-40 706C60 698 140 712 230 702C300 694 330 650 400 646C470 642 500 690 560 700L584 700L584 676L604 660L624 676L624 700L640 701L640 668L664 650L688 668L688 700L706 700L706 662L722 644L756 644L756 600C756 586 764 578 770 576L770 558L772 576C778 578 786 586 786 600L786 640L806 640L806 600C806 586 814 578 820 576L820 558L822 576C828 578 836 586 836 600L836 700L858 701L858 678L876 664L894 678L894 700L912 700L912 684L928 672L944 684L944 700C980 703 1010 698 1040 700C1040 700 1006 664 1006 636A34 34 0 1 1 1074 636C1074 664 1040 700 1040 700C1039.6 712 1040.4 724 1040 736"
+    d="M-40 704C120 698 300 706 566 701L1040 700C1039.6 712 1040.4 724 1040 736"
   ></path>
   <path
     class="line route-start"
@@ -82,15 +169,19 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
     pathLength="1000"
     d="M1040 736C1039 790 1043 850 1040 920"
   ></path>
-  <circle class="ring" cx="1040" cy="636" r="10"></circle>
+
+  <circle class="ring" cx="1040" cy="636" r="46"></circle>
+  <g class="pin-drop">
+    <Pin x={1040} y={700} radius={34} />
+  </g>
 
   {place && (
-    <text class="place" x="1096" y="632">
+    <text class="place" x="1100" y="632">
       {place}
     </text>
   )}
   {coordinates && (
-    <text class="coordinates" x="1096" y="656">
+    <text class="coordinates" x="1100" y="656">
       {coordinates}
     </text>
   )}
@@ -112,18 +203,46 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
   </g>
 
   <g class="compass" transform="translate(292 82)">
-    <circle r="27"></circle>
-    <circle r="2"></circle>
-    <path class="needle" d={star} transform="scale(0.58)"></path>
-    <text class="north" y="-33" text-anchor="middle">
+    <circle class="fill-paper ink-line" r="28"></circle>
+    <circle class="compass-band compass-band--small" r="22.5"></circle>
+    <g class="needle">
+      <g transform="scale(0.58)" class="half-size">
+        <path class="fill-paper-deep ink-line" d={star}></path>
+        <path class="fill-route ink-line" d={north}></path>
+        <circle class="fill-brass ink-line" r="4"></circle>
+      </g>
+    </g>
+    <text class="north" y="-35" text-anchor="middle">
       N
     </text>
+  </g>
+
+  {
+    // The same town at half size, mirrored: on phones the route comes in from the right.
+  }
+  <g
+    class="half-size"
+    transform="translate(594 230) scale(-0.5 0.5) translate(0 -700)"
+  >
+    <path
+      class="fill-paper-deep ink-line hill"
+      d="M196 704C296 696 326 650 400 646C474 642 504 692 566 702Z"
+    ></path>
+    <g class="town">
+      {town.map((shapes) => (
+        <g class="building">
+          {shapes.map(([cls, d]) => (
+            <path class={cls} d={d} />
+          ))}
+        </g>
+      ))}
+    </g>
   </g>
 
   <path
     class="line skyline"
     pathLength="1"
-    d="M400 234C372 228 356 206 334 204C312 202 302 226 286 230L272 230L272 190C272 182 267 178 264 177L264 165L262.8 177C260 178 256 182 256 190L256 212L246 212L246 190C246 182 242 178 238 177L238 165L236.8 177C234 178 230 182 230 190L230 214L208 214L198 224L198 230L186 230L186 216L174 206L162 216L162 230L150 231L150 212L136 202L122 212L122 230C100 233 70 228 39 230C39 230 21 210 21 194A18 18 0 1 1 57 194C57 210 39 230 39 230C38.6 244 39.4 258 39 272"
+    d="M400 233C370 230 340 233 311 231L39 230C38.6 244 39.4 258 39 272"
   ></path>
   <path
     class="line route-start"
@@ -131,15 +250,19 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
     pathLength="1000"
     d="M39 272C38 500 40 900 39 1400"
   ></path>
-  <circle class="ring" cx="39" cy="194" r="5.5"></circle>
+
+  <circle class="ring" cx="39" cy="196" r="25"></circle>
+  <g class="pin-drop">
+    <Pin x={39} y={230} radius={18} />
+  </g>
 
   {place && (
-    <text class="place" x="66" y="172">
+    <text class="place" x="68" y="186">
       {place}
     </text>
   )}
   {coordinates && (
-    <text class="coordinates" x="66" y="187">
+    <text class="coordinates" x="68" y="201">
       {coordinates}
     </text>
   )}
@@ -181,11 +304,15 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
   }
 
   .grid {
-    stroke-width: var(--map-grid-stroke-width);
+    stroke-width: calc(
+      var(--map-grid-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
   }
 
   .contour {
-    stroke-width: var(--map-contour-stroke-width);
+    stroke-width: calc(
+      var(--map-contour-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
   }
 
   .water {
@@ -194,7 +321,9 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
 
   .line {
     stroke: var(--color-route);
-    stroke-width: var(--route-stroke-width);
+    stroke-width: calc(
+      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
     stroke-dasharray: 1;
   }
 
@@ -204,10 +333,35 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
     stroke-dasharray: 1000;
   }
 
-  .ring,
-  .compass {
+  /* Drawn at half size on phones: outlines inside are doubled, so they stay as thick
+     on screen as everywhere else (route.css divides stroke widths by --zoom). */
+  .half-size {
+    --zoom: 0.5;
+  }
+
+  .compass .half-size {
+    --zoom: 0.58;
+  }
+
+  .town-scale {
+    --zoom: 1.3;
+  }
+
+  .ring {
     stroke: var(--color-brass);
-    stroke-width: var(--route-detail-stroke-width);
+    stroke-width: calc(
+      var(--route-detail-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  /* The brass band of the compass, between its ink outline and the needle. */
+  .compass-band {
+    stroke: var(--color-brass);
+    stroke-width: 8;
+  }
+
+  .compass-band--small {
+    stroke-width: 5;
   }
 
   .place,
@@ -247,8 +401,16 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
     transform-origin: center;
   }
 
-  /* Load sequence (peak 1). The reader should feel a map being unrolled and a route
-     being inked onto it: ground first, then the line, then the pin lands.
+  /* Buildings and the hill grow out of the ground they stand on. */
+  .building,
+  .hill {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+  }
+
+  /* Load sequence (peak 1). The reader should feel a map being unrolled and a place
+     coming to life on it: the ground first, then the route running in along it, the
+     town rising house by house as the line passes, and last the pin landing.
      data-motion is set before first paint (Base.astro); without it everything is static. */
   :global(html[data-motion="on"]) .ground {
     animation: unroll var(--duration-ground) var(--ease-settle) both;
@@ -258,15 +420,67 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
     animation: draw var(--duration-draw) var(--ease-draw) var(--delay-draw) both;
   }
 
+  :global(html[data-motion="on"]) .hill {
+    animation: rise var(--duration-building) var(--ease-settle)
+      calc(var(--delay-town) - var(--delay-building) * 2) both;
+  }
+
+  :global(html[data-motion="on"]) .building {
+    animation: rise var(--duration-building) var(--ease-settle)
+      calc(var(--delay-town) + var(--i) * var(--delay-building)) both;
+  }
+
+  .building:nth-child(1) {
+    --i: 0;
+  }
+
+  .building:nth-child(2) {
+    --i: 1;
+  }
+
+  .building:nth-child(3) {
+    --i: 2;
+  }
+
+  .building:nth-child(4) {
+    --i: 3;
+  }
+
+  .building:nth-child(5) {
+    --i: 4;
+  }
+
+  .building:nth-child(6) {
+    --i: 5;
+  }
+
+  .building:nth-child(7) {
+    --i: 6;
+  }
+
+  .building:nth-child(8) {
+    --i: 7;
+  }
+
   /* The skyline path ends in a short stub below the pin. The rest of the route stays
      undrawn until the reader scrolls (arrival.motion.ts draws it; no CSS animation here). */
   :global(html[data-motion="on"]) .route-start {
     stroke-dashoffset: 1000;
   }
 
-  :global(html[data-motion="on"]) .ring {
-    animation: land var(--duration-land) var(--ease-settle) var(--delay-landed)
+  /* The pin drops onto the end of the line and settles. */
+  :global(html[data-motion="on"]) .pin-drop {
+    animation: drop var(--duration-land) var(--ease-settle) var(--delay-landed)
       both;
+  }
+
+  /* Around it a brass ring keeps breathing: the first of the idle details. */
+  :global(html[data-motion="on"]) .ring {
+    animation:
+      appear var(--duration-fade) var(--ease-settle)
+        calc(var(--delay-landed) + var(--duration-land)) both,
+      idle-pulse var(--duration-pulse) ease-in-out
+        calc(var(--delay-landed) + var(--duration-land)) infinite;
   }
 
   :global(html[data-motion="on"]) .place,
@@ -280,9 +494,20 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
       both;
   }
 
+  /* Once settled, the needle never rests completely. */
   :global(html[data-motion="on"]) .needle {
-    animation: settle var(--duration-needle) var(--ease-settle)
-      var(--delay-draw) both;
+    animation:
+      settle var(--duration-needle) var(--ease-settle) var(--delay-draw) both,
+      tremble var(--duration-tremble) ease-in-out
+        calc(var(--delay-draw) + var(--duration-needle)) infinite alternate;
+  }
+
+  /* The boat takes most of a minute to cross the lake, then turns back. */
+  :global(html[data-motion="on"]) .boat {
+    animation:
+      appear var(--duration-fade) var(--ease-settle) var(--delay-landed) both,
+      voyage var(--duration-voyage) ease-in-out var(--delay-landed) infinite
+        alternate;
   }
 
   @keyframes unroll {
@@ -304,11 +529,33 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
     }
   }
 
-  /* The brass ring arrives large and faint, then tightens onto the pin. */
-  @keyframes land {
+  @keyframes rise {
     from {
       opacity: 0;
-      scale: 3;
+      scale: 1 0;
+    }
+  }
+
+  @keyframes drop {
+    from {
+      opacity: 0;
+      translate: 0 -70px;
+    }
+  }
+
+  @keyframes tremble {
+    from {
+      rotate: -3deg;
+    }
+
+    to {
+      rotate: 3deg;
+    }
+  }
+
+  @keyframes voyage {
+    to {
+      translate: 420px 62px;
     }
   }
 

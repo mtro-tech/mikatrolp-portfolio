@@ -47,7 +47,11 @@ const { stage, heading, line, place, coordinates } = Astro.props;
     overflow: clip;
   }
 
+  /* --zoom is the scale the scroll scene puts on the drawing (arrival.motion.ts);
+     stroke widths are divided by it. */
   .scene-wrap {
+    --zoom: 1;
+
     position: absolute;
     inset: 0;
   }
