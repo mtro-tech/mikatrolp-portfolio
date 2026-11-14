@@ -62,6 +62,14 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
     ))}
   </g>
 
+  {/* A small boat crossing Lake Constance: one of the hero's idle details. */}
+  <g class="boat">
+    <g transform="translate(900 150)">
+      <path class="fill-paper ink-line" d="M-14 0h28l-5 7h-18z" />
+      <path class="fill-paper ink-line" d="M0 -2V-22L11 -5z" />
+    </g>
+  </g>
+
   <g class="compass" transform="translate(1310 372)">
     <circle r="46"></circle>
     <circle r="3"></circle>
@@ -181,11 +189,15 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
   }
 
   .grid {
-    stroke-width: var(--map-grid-stroke-width);
+    stroke-width: calc(
+      var(--map-grid-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
   }
 
   .contour {
-    stroke-width: var(--map-contour-stroke-width);
+    stroke-width: calc(
+      var(--map-contour-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
   }
 
   .water {
@@ -194,7 +206,9 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
 
   .line {
     stroke: var(--color-route);
-    stroke-width: var(--route-stroke-width);
+    stroke-width: calc(
+      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
     stroke-dasharray: 1;
   }
 
@@ -207,7 +221,9 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
   .ring,
   .compass {
     stroke: var(--color-brass);
-    stroke-width: var(--route-detail-stroke-width);
+    stroke-width: calc(
+      var(--route-detail-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
   }
 
   .place,
@@ -264,9 +280,12 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
     stroke-dashoffset: 1000;
   }
 
+  /* After landing, the ring keeps breathing: the first of the idle details. */
   :global(html[data-motion="on"]) .ring {
-    animation: land var(--duration-land) var(--ease-settle) var(--delay-landed)
-      both;
+    animation:
+      land var(--duration-land) var(--ease-settle) var(--delay-landed) both,
+      idle-pulse var(--duration-pulse) ease-in-out
+        calc(var(--delay-landed) + var(--duration-land)) infinite;
   }
 
   :global(html[data-motion="on"]) .place,
@@ -280,9 +299,20 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
       both;
   }
 
+  /* Once settled, the needle never rests completely. */
   :global(html[data-motion="on"]) .needle {
-    animation: settle var(--duration-needle) var(--ease-settle)
-      var(--delay-draw) both;
+    animation:
+      settle var(--duration-needle) var(--ease-settle) var(--delay-draw) both,
+      tremble var(--duration-tremble) ease-in-out
+        calc(var(--delay-draw) + var(--duration-needle)) infinite alternate;
+  }
+
+  /* The boat takes most of a minute to cross the lake, then turns back. */
+  :global(html[data-motion="on"]) .boat {
+    animation:
+      appear var(--duration-fade) var(--ease-settle) var(--delay-landed) both,
+      voyage var(--duration-voyage) ease-in-out var(--delay-landed) infinite
+        alternate;
   }
 
   @keyframes unroll {
@@ -309,6 +339,22 @@ const star = "M0 -38L6 -6L26 0L6 6L0 26L-6 6L-26 0L-6 -6Z";
     from {
       opacity: 0;
       scale: 3;
+    }
+  }
+
+  @keyframes tremble {
+    from {
+      rotate: -3deg;
+    }
+
+    to {
+      rotate: 3deg;
+    }
+  }
+
+  @keyframes voyage {
+    to {
+      translate: 420px 62px;
     }
   }
 

@@ -63,7 +63,7 @@ const formatDate = (value: string) =>
     <CheckIn
       stage={checkIn.data.stage}
       heading={checkIn.data.heading}
-      body={checkIn.data.body}
+      beats={checkIn.data.beats ?? {}}
       items={checkIn.data.items}
       place={checkIn.data.place}
       origin={arrival.data.place}

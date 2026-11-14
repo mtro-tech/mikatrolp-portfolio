@@ -6,6 +6,22 @@ body:
   - "Zur Hotellerie kam ich durch Zufall: Ich nahm einen Job in einem Restaurant an, um einen Sprachaufenthalt in Toronto zu finanzieren."
   - "Gute Gastfreundschaft heisst für mich: Ein Gast fühlt sich zu Hause, kann loslassen, geniesst den Moment und geht mit einem Lächeln. Dafür gehe ich den Schritt weiter."
   - St. Gallen ist mein Zuhause. Luzern ist ein Ort der Chancen und Verbindungen für die Zukunft.
+# The same copy as body, cut into short beats for the staged scene. No facts are added.
+beats:
+  began:
+    - "Zur Hotellerie kam ich durch Zufall."
+    - "Ein Job im Restaurant, um einen Sprachaufenthalt in Toronto zu finanzieren."
+  meaning:
+    - "Gute Gastfreundschaft heisst für mich:"
+    - "Ein Gast fühlt sich zu Hause,"
+    - "kann loslassen,"
+    - "geniesst den Moment"
+    - "und geht mit einem Lächeln."
+  promise:
+    - "Dafür gehe ich den Schritt weiter."
+  leg:
+    - "St. Gallen ist mein Zuhause."
+    - "Luzern ist ein Ort der Chancen und Verbindungen für die Zukunft."
 items:
   - label: Sprachen
     values:

@@ -32,6 +32,9 @@ function start(scenes: Scene[]) {
       for (const scene of scenes) scene({ isDesktop });
     },
   );
+
+  // Tells public/motion-init.js that the scenes are running (its fallback then stays off).
+  root.dataset.motionReady = "";
 }
 
 function stop() {

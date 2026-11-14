@@ -1,6 +1,12 @@
-/* Shared styles for chapter scenes: the route line, the map ground and quiet scroll motion.
-   Chapter drawings scale with the page width only (desktop viewBox 1440 wide, phones 390),
-   so the line meets exactly where one chapter hands over to the next. */
+/* Shared styles for chapter scenes: the route line, map pieces and idle motion.
+
+   Drawings scale with the page width only (desktop viewBox 1440 wide, phones 390), so the
+   line meets exactly where one chapter hands over to the next.
+
+   Stroke widths are given in screen pixels and divided by every scale the drawing is
+   under, so the line is the same thickness on screen everywhere (CLAUDE.md §4):
+   --route-scale: page width / viewBox width, set by src/lib/scroll.ts;
+   --zoom: any extra scale on the scene (a stage fitted to a short screen, the hero zoom). */
 
 .scene-svg {
   display: block;
@@ -14,8 +20,24 @@
 
 .route-line {
   stroke: var(--color-route);
-  stroke-width: var(--route-stroke-width);
-  stroke-dasharray: 1;
+  stroke-width: calc(
+    var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+  );
+}
+
+/* Outlines of drawn objects (the key, the plane): the same pen, in ink. */
+.ink-line {
+  stroke: var(--color-ink);
+  stroke-width: calc(
+    var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+  );
+}
+
+.brass {
+  stroke: var(--color-brass);
+  stroke-width: calc(
+    var(--route-detail-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+  );
 }
 
 .map-grid,
@@ -24,11 +46,15 @@
 }
 
 .map-grid {
-  stroke-width: var(--map-grid-stroke-width);
+  stroke-width: calc(
+    var(--map-grid-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+  );
 }
 
 .map-contour {
-  stroke-width: var(--map-contour-stroke-width);
+  stroke-width: calc(
+    var(--map-contour-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+  );
 }
 
 .map-water {
@@ -50,9 +76,20 @@
   fill: var(--color-paper);
 }
 
-.brass {
-  stroke: var(--color-brass);
-  stroke-width: var(--route-detail-stroke-width);
+.fill-brass {
+  fill: var(--color-brass);
+}
+
+.fill-route {
+  fill: var(--color-route);
+}
+
+.fill-paper {
+  fill: var(--color-paper);
+}
+
+.fill-paper-deep {
+  fill: var(--color-paper-deep);
 }
 
 .map-label {
@@ -67,96 +104,72 @@
   font-size: 15px;
 }
 
-/* Quiet motion. Two kinds, both only while <html data-motion="on">:
-   1. scroll-linked (CSS scroll-driven animations): the route draws at the reader's pace
-      and copy settles in as it enters. Browsers without support show everything at once.
-   2. on-enter: [data-enter] elements get data-inview once (src/lib/scroll.ts) and play
-      a short timed animation. Nothing is hidden while waiting for it. */
-@supports (animation-timeline: view()) {
-  html[data-motion="on"] .scroll-draw {
-    animation: route-draw linear both;
-    animation-timeline: view();
-    /* Keeps the tip of the line about two thirds down the screen while scrolling. */
-    animation-range: cover var(--scroll-draw-lead) cover
-      calc(100% - var(--scroll-draw-trail));
-  }
-
-  /* A drawing made of several paths draws them in order on one shared timeline:
-     the wrapper is .scroll-scene, and each path sets --from and --to (0 to 1). */
-  html[data-motion="on"] .scroll-scene {
-    view-timeline-name: --scene;
-  }
-
-  html[data-motion="on"] .scene-draw {
-    --span: calc(100% - var(--scroll-draw-lead) - var(--scroll-draw-trail));
-
-    animation: route-draw linear both;
-    animation-timeline: --scene;
-    animation-range: cover
-      calc(var(--scroll-draw-lead) + var(--from, 0) * var(--span)) cover
-      calc(var(--scroll-draw-lead) + var(--to, 1) * var(--span));
-  }
-
-  html[data-motion="on"] .scroll-reveal {
-    animation: scroll-reveal linear both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 80%;
-  }
-
-  html[data-motion="on"] .scroll-fade {
-    animation: scroll-fade linear both;
-    animation-timeline: view();
-    animation-range: entry 0% cover 30%;
-  }
-
-  /* The rail beside copy on phones grows downwards with the scroll. */
-  html[data-motion="on"] .scroll-rail::before {
-    animation: rail-grow linear both;
-    animation-timeline: view();
-    animation-range: cover var(--scroll-draw-lead) cover
-      calc(100% - var(--scroll-draw-trail));
-  }
-}
-
-@keyframes route-draw {
-  from {
-    stroke-dashoffset: 1;
-  }
-}
-
-@keyframes scroll-reveal {
-  from {
-    opacity: 0;
-    translate: 0 2rem;
-  }
-}
-
-@keyframes scroll-fade {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes rail-grow {
-  from {
-    scale: 1 0;
-  }
-}
-
-/* A place marker's brass ring arrives large and faint, then tightens onto its spot. */
-html[data-motion="on"] [data-inview] .marker,
-html[data-motion="on"] .marker[data-inview] {
-  animation: marker-land var(--duration-land) var(--ease-settle) both;
-}
-
-.marker {
+/* Idle motion: small loops that run without scrolling, only while <html data-motion="on">.
+   Each scene picks a few. GSAP never animates these same elements (it moves a wrapper). */
+.pivot {
   transform-box: fill-box;
   transform-origin: center;
 }
 
-@keyframes marker-land {
+.pivot-top {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+}
+
+/* Something hanging: a slow pendulum. */
+html[data-motion="on"] .idle-sway {
+  animation: idle-sway var(--duration-sway) ease-in-out infinite alternate;
+}
+
+html[data-motion="on"] .idle-sway--late {
+  animation-delay: calc(var(--duration-sway) * -0.4);
+}
+
+/* A marker that breathes. */
+html[data-motion="on"] .idle-pulse {
+  animation: idle-pulse var(--duration-pulse) ease-in-out infinite;
+}
+
+/* Water catching the light. */
+html[data-motion="on"] .idle-shimmer {
+  animation: idle-shimmer var(--duration-shimmer) ease-in-out infinite alternate;
+}
+
+html[data-motion="on"] .idle-shimmer--late {
+  animation-delay: calc(var(--duration-shimmer) * -0.5);
+}
+
+@keyframes idle-sway {
   from {
-    opacity: 0;
-    scale: 3;
+    rotate: -2.5deg;
+  }
+
+  to {
+    rotate: 2.5deg;
+  }
+}
+
+@keyframes idle-pulse {
+  0%,
+  100% {
+    scale: 1;
+    opacity: 1;
+  }
+
+  50% {
+    scale: 1.35;
+    opacity: 0.55;
+  }
+}
+
+@keyframes idle-shimmer {
+  from {
+    opacity: 0.25;
+    translate: -4px 0;
+  }
+
+  to {
+    opacity: 0.9;
+    translate: 4px 0;
   }
 }

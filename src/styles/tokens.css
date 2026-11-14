@@ -40,8 +40,8 @@
   /* The sticky header: two rows on phones, one row from 48rem (overridden below). */
   --header-height: 5.5rem;
 
-  /* The route line. Widths are in SVG units, close to CSS pixels at 1440px and 390px. */
-  --route-stroke-width: 1.75;
+  /* The route line. Widths are in screen pixels; route.css divides them by the drawing's scale. */
+  --route-stroke-width: 2;
   --route-detail-stroke-width: 1.25;
 
   /* Motion tokens for quiet CSS motion (the GSAP tokens for the peaks come in step 6). */
@@ -60,12 +60,13 @@
   --duration-needle: 2s;
   --duration-fade: 0.8s;
 
-  /* Chapters: on-enter animations and the scroll-drawn route. */
-  --duration-turn: 1.4s;
-  --duration-swing: 2.2s;
-  --delay-stagger: 0.12s;
-  --scroll-draw-lead: 35vh;
-  --scroll-draw-trail: 65vh;
+  /* Idle loops: slow enough to read as life, not as movement. */
+  --duration-sway: 3.2s;
+  --duration-pulse: 2.8s;
+  --duration-shimmer: 2.4s;
+  --duration-drift: 9s;
+  --duration-tremble: 3.6s;
+  --duration-voyage: 48s;
   --ease-draw: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
 }
