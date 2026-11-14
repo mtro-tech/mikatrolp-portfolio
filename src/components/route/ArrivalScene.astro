@@ -497,7 +497,8 @@ const north = "M0 -38L6 -6L-6 -6Z";
   /* Once settled, the needle never rests completely. */
   :global(html[data-motion="on"]) .needle {
     animation:
-      needle-settle var(--duration-needle) var(--ease-settle) var(--delay-draw) both,
+      needle-settle var(--duration-needle) var(--ease-settle) var(--delay-draw)
+        both,
       tremble var(--duration-tremble) ease-in-out
         calc(var(--delay-draw) + var(--duration-needle)) infinite alternate;
   }
