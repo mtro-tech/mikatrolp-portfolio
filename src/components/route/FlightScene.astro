@@ -120,15 +120,35 @@ const cities = [
   { at: 0.62, count: 8, extra: 0 },
   { at: 0.86, count: 11, extra: 44 },
 ].map(({ at, count, extra }) => {
-  const base = ground(L * at) + 8;
-  return Array.from({ length: count }, (_, i) => {
-    const w = 28 + ((i * 7) % 3) * 5;
-    const h = 62 + ((i * 37) % 5) * 22 + (i % 2 ? extra : 0);
-    const x = round(L * at + (i - count / 2) * 36);
-    return { x, w, h, base, deep: i % 3 === 0 };
-  });
+  // The blocks stand on the lowest ground under the city, so the meadow covers
+  // every foot.
+  const base =
+    Math.max(
+      ...Array.from({ length: count + 2 }, (_, i) =>
+        ground(L * at + (i - count / 2) * 36),
+      ),
+    ) + 8;
+  return {
+    centre: L * at,
+    reach: (count / 2) * 36 + 60,
+    blocks: Array.from({ length: count }, (_, i) => {
+      const w = 28 + ((i * 7) % 3) * 5;
+      const h = 62 + ((i * 37) % 5) * 22 + (i % 2 ? extra : 0);
+      const x = round(L * at + (i - count / 2) * 36);
+      // Windows sit on the part that shows above the meadow, never on the part the
+      // meadow is drawn over.
+      const top = base - h;
+      const shows =
+        Math.min(ground(x), ground(x + w / 2), ground(x + w)) - 8 - top;
+      const lights = (shows > 60 ? [0.3, 0.7] : shows > 26 ? [0.5] : []).map(
+        (share) => round(top + shows * share - 5),
+      );
+      return { x, w, h, base, deep: i % 3 === 0, lights };
+    }),
+  };
 });
-const built = [0.12, 0.22, 0.32, 0.62, 0.86];
+const blocks = cities.flatMap((city) => city.blocks);
+const built = [0.12, 0.22, 0.32];
 const trees = Array.from({ length: 30 }, (_, i) => ({
   share: (i * 0.618 + 0.05) % 1,
   fir: i % 3 === 0,
@@ -137,6 +157,11 @@ const trees = Array.from({ length: 30 }, (_, i) => ({
   // the night sky.
   .filter(({ share }) => share > 0.07 && share < 0.9)
   .filter(({ share }) => built.every((at) => Math.abs(share - at) > 0.045))
+  // And never in front of a city: its lit windows are a layer above the land, so a
+  // tree there would stand behind a window it should hide.
+  .filter(({ share }) =>
+    cities.every(({ centre, reach }) => Math.abs(L * share - centre) > reach),
+  )
   .map(({ share, fir }) => ({ ...stand(L * share), fir }));
 
 // Clouds: fixed in the frame, like the stars. Each starts off to the right and
@@ -275,6 +300,13 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
       class="fill-paper ink-line"
       d="M-64 0C-80 0 -80 -24 -58 -24C-56 -46 -22 -50 -12 -34C2 -58 44 -52 44 -26C70 -30 76 0 56 0Z"
     ></path>
+    {/* The same cloud in ink. It lies under each cloud, so that a cloud dimmed for
+         the night still hides the stars and the clouds behind it. */}
+    <path
+      id={`flight-cloud-shade-${part}`}
+      class="shade"
+      d="M-64 0C-80 0 -80 -24 -58 -24C-56 -46 -22 -50 -12 -34C2 -58 44 -52 44 -26C70 -30 76 0 56 0Z"
+    ></path>
   </defs>
 
   <g data-clouds="back" data-drift={drift.back}>
@@ -286,7 +318,8 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
         class:list={[!desktop && "small"]}
         transform={place_(x, y)}
       >
-        <use href={`#flight-cloud-${part}`} />
+        <use href={`#flight-cloud-shade-${part}`} />
+        <use data-cloud-day href={`#flight-cloud-${part}`} />
       </g>
     ))}
   </g>
@@ -345,13 +378,17 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
     {/* The land under the flight: a far ridge, then villages, cities and trees, then
          the meadow drawn over their feet, and a river with its bridge. */}
     {/* At night the land is dimmed by making it part see-through. This dark shape of
-         the same ground lies under it then, so the map's grid does not show through. */}
+         the same ground and blocks lies under it then, so neither the map's grid nor
+         the stars show through. */}
     <g data-land-shade>
       <g
         class:list={[!desktop && "small"]}
         transform={place_(g.land.x, g.land.y)}
       >
         <path class="shade" d={band(ridge, 160, L - 240)}></path>
+        {blocks.map(({ x, w, h, base }) => (
+          <rect class="shade" x={x} y={base - h} width={w} height={h} />
+        ))}
         <path class="shade" d={band(ground, 0, L)}></path>
       </g>
     </g>
@@ -361,7 +398,7 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
         transform={place_(g.land.x, g.land.y)}
       >
         <path class="map-water" d={band(ridge, 160, L - 240)}></path>
-        {cities.flat().map(({ x, w, h, base, deep }) => (
+        {blocks.map(({ x, w, h, base, deep }) => (
           <rect
             class:list={[deep ? "fill-paper-deep" : "fill-paper", "ink-line"]}
             x={x}
@@ -400,19 +437,17 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
         class:list={[!desktop && "small"]}
         transform={place_(g.land.x, g.land.y)}
       >
-        {cities
-          .flat()
-          .flatMap(({ x, w, h, base }, index) =>
-            [0.4, 0.75].map((share) => (
-              <rect
-                class:list={["fill-brass", "lit", index % 2 && "lit--late"]}
-                x={round(x + w / 2 - 4)}
-                y={round(base - h * share)}
-                width="8"
-                height="10"
-              />
-            )),
-          )}
+        {blocks.flatMap(({ x, w, lights }, index) =>
+          lights.map((y) => (
+            <rect
+              class:list={["fill-brass", "lit", index % 2 && "lit--late"]}
+              x={round(x + w / 2 - 4)}
+              y={y}
+              width="8"
+              height="10"
+            />
+          )),
+        )}
       </g>
     </g>
 
@@ -709,7 +744,8 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
         class:list={[!desktop && "small"]}
         transform={place_(x, y)}
       >
-        <use href={`#flight-cloud-${part}`} />
+        <use href={`#flight-cloud-shade-${part}`} />
+        <use data-cloud-day href={`#flight-cloud-${part}`} />
       </g>
     ))}
   </g>

@@ -168,13 +168,15 @@ export const flightScene: Scene = ({ isDesktop }) => {
           at.dusk,
         )
         // The land and the clouds go dark too, and the cities' windows come on.
+        // (Dimmed by opacity, over a dark copy of each: so nothing behind shows
+        // through a dimmed cloud or hill.)
         .to(
           land,
           { opacity: tokens.night.land, duration: tokens.night.duration },
           at.dusk,
         )
         .to(
-          all("[data-clouds]"),
+          all("[data-cloud-day]"),
           { opacity: tokens.night.clouds, duration: tokens.night.duration },
           at.dusk,
         )

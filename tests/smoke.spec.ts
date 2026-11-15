@@ -877,6 +877,36 @@ test("Next destination plays as a held scene, objects before text", async ({
   await expect(header).toHaveAttribute("data-tone", "ink");
   await shown("[data-city-lights]").toHaveCSS("opacity", "1");
   await expect(line("night")).toHaveCSS("opacity", "0");
+  // Layering: the lit windows are a layer above the land, so no tree may stand in
+  // front of a block (it would be behind a window it should hide), and every window
+  // lies on its block above the meadow.
+  const misplaced = await drawing.evaluate((svg) => {
+    const box = (el: Element) => el.getBoundingClientRect();
+    const meets = (a: DOMRect, b: DOMRect) =>
+      a.left < b.right &&
+      b.left < a.right &&
+      a.top < b.bottom &&
+      b.top < a.bottom;
+    const land = svg.querySelector("[data-land]")!;
+    const lights = [...svg.querySelectorAll("[data-city-lights] rect")].map(
+      box,
+    );
+    const trees = [...land.querySelectorAll("use")]
+      .filter((use) => /tree|fir/.test(use.getAttribute("href")!))
+      .map(box);
+    const blocks = [...land.querySelectorAll("rect")].map(box);
+    return lights.filter(
+      (light) =>
+        trees.some((tree) => meets(tree, light)) ||
+        !blocks.some(
+          (block) =>
+            block.left <= light.left &&
+            light.right <= block.right &&
+            block.top <= light.top,
+        ),
+    ).length;
+  });
+  expect(misplaced).toBe(0);
 
   // The night line rests, paper-coloured on ink and readable, while the map drifts on.
   await playFlight(page, 8.6);
