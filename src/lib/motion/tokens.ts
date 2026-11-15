@@ -217,6 +217,59 @@ export const bar = {
 } as const;
 
 /**
+ * Next destination: the flight to Hong Kong. Objects first, then the line, then a rest
+ * (CLAUDE.md §4); during the flight the map keeps drifting under a line that rests.
+ * One unit is about a quarter of a screen of scrolling.
+ */
+export const flight = {
+  /** Screens of scrolling the scene is held for. */
+  screens: { desktop: 7, phone: 6.5 },
+  /** On the way in (of stage.approach units): the map, the pin, the waiting plane. */
+  approach: { map: 0.6, pin: 1.6, plane: 2.3 },
+  /** When each thing starts, in units on the held scene's timeline. */
+  at: {
+    title: 0,
+    next: 0.3,
+    takeOff: 2.6,
+    dusk: 6.4,
+    benchmark: 7.6,
+    dawn: 12.4,
+    harbour: 12.8,
+    towers: 13.2,
+    landed: 15.6,
+    noBetter: 16.0,
+    pin: 17.8,
+    windows: 19.8,
+    learn1: 21.2,
+    learn2: 23.4,
+    route: 25.4,
+    end: 28,
+  },
+  map: { fromY: 40, duration: 0.7, ease: "power2.out" },
+  /** A pin drops and bounces to rest (the Lucerne one on the way in, then Hong Kong's). */
+  pin: { fromY: -90, duration: 0.55, ease: "bounce.out" },
+  /** The sky closes in to night, and opens again, over this long. */
+  /** In the dark the grid, the land and the clouds are dimmed to these opacities. */
+  night: {
+    duration: 0.9,
+    reachesHeader: 0.6,
+    grid: 0.18,
+    land: 0.4,
+    clouds: 0.5,
+  },
+  /** The whole flight is one even movement: slow off the pin, slow onto the quay. */
+  /** Over the last share of the way (levelOut) the plane turns level for landing. */
+  /** It waits a little way off the pin (start), where it can be seen. */
+  flight: { ease: "sine.inOut", levelOut: 0.05, start: 0.012 },
+  harbour: { fromY: 60, duration: 0.8, ease: "power2.out" },
+  /** The towers rise one after another, like the houses of St. Gallen in the hero. */
+  towers: { duration: 0.6, stagger: 0.07, ease: "power2.out" },
+  /** Windows light up one by one. */
+  windows: { duration: 0.2, stagger: 0.025 },
+  route: { duration: 1.2 },
+} as const;
+
+/**
  * Check-in: key, door, map, languages. Positions are units on the scene's timeline;
  * one unit is about a quarter of a screen of scrolling. Objects first, then the line,
  * then a rest (CLAUDE.md §4).

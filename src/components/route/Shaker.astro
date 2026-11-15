@@ -69,46 +69,51 @@ const cubes = [
       ></rect>
     </g>
 
-    {/* The ice, lying in the scoop. It turns with the scoop until it slides out. */}
-    <g data-scoop-move>
-      <g transform={`translate(${scoop.x} ${scoop.y})`}>
-        <g data-scoop-turn>
-          <rect class="unseen" {...box}></rect>
-          {cubes.map(({ x, y, dx, dy, turn }) => (
-            <g data-cube data-dx={dx} data-dy={dy}>
-              <rect
-                class="steel-light line"
-                x={x - 10}
-                y={y - 10}
-                width="20"
-                height="20"
-                rx="3"
-                transform={`rotate(${turn} ${x} ${y})`}
-              />
-            </g>
-          ))}
+    {/* The scoop and its ice arrive as one group. A group fades as one flattened
+         picture, so the scoop's wall hides the ice behind it even while both are
+         still half transparent. */}
+    <g data-scoop-enter>
+      {/* The ice, lying in the scoop. It turns with the scoop until it slides out. */}
+      <g>
+        <g transform={`translate(${scoop.x} ${scoop.y})`}>
+          <g data-scoop-turn>
+            <rect class="unseen" {...box}></rect>
+            {cubes.map(({ x, y, dx, dy, turn }) => (
+              <g data-cube data-dx={dx} data-dy={dy}>
+                <rect
+                  class="steel-light line"
+                  x={x - 10}
+                  y={y - 10}
+                  width="20"
+                  height="20"
+                  rx="3"
+                  transform={`rotate(${turn} ${x} ${y})`}
+                />
+              </g>
+            ))}
+          </g>
         </g>
       </g>
-    </g>
 
-    {/* The scoop, drawn over the ice: a bowl with a rounded back, open at the lip
+      {/* The scoop, drawn over the ice: a bowl with a rounded back, open at the lip
          on the right, on a brass handle. */}
-    <g data-scoop-move data-scoop>
-      <g transform={`translate(${scoop.x} ${scoop.y})`}>
-        <g data-scoop-turn data-scoop-wall data-tip={scoop.tip}>
-          <rect class="unseen" {...box}></rect>
-          <rect
-            class="brass line"
-            x="-140"
-            y="-30"
-            width="56"
-            height="12"
-            rx="6"
-          ></rect>
-          <path
-            class="steel-light line"
-            d="M0 0L-72 0Q-88 0 -88 -16L-88 -38Q-88 -44 -82 -44L-76 -44L0 -8Z"
-          ></path>
+      <g data-scoop>
+        <g transform={`translate(${scoop.x} ${scoop.y})`}>
+          <g data-scoop-turn data-scoop-wall data-tip={scoop.tip}>
+            <rect class="unseen" {...box}></rect>
+            <rect
+              class="brass line"
+              x="-140"
+              y="-30"
+              width="56"
+              height="12"
+              rx="6"
+            ></rect>
+            <path
+              class="steel-light line"
+              d="M0 0L-72 0Q-88 0 -88 -16L-88 -38Q-88 -44 -82 -44L-76 -44L0 -8Z"
+            ></path>
+          </g>
         </g>
       </g>
     </g>
@@ -195,7 +200,7 @@ const cubes = [
 
   /* Not on stage before their moments. */
   [data-measure],
-  [data-scoop-move],
+  [data-scoop-enter],
   [data-cap],
   [data-splash],
   [data-jigger] {

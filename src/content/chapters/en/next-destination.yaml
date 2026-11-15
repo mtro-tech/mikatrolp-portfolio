@@ -8,6 +8,19 @@ period:
   start: "2027-02-15"
   end: "2027-08-06"
 status: upcoming
+# The city, as the map label at the end of the flight.
+place: Hong Kong
 body:
   - Next, I will join Rosewood Hong Kong as a Guest Relations intern. I want to experience the benchmark of hospitality, and I see no better place for it.
   - "There I want to learn the art of rooms division and guest relations: understanding what guests need across the whole journey of a stay, and supporting them."
+# The same copy as body, cut into beats for the staged scene. No facts are added.
+beats:
+  next:
+    - "Next, I will join Rosewood Hong Kong as a Guest Relations intern."
+  night:
+    - "I want to experience the benchmark of hospitality,"
+  place:
+    - "and I see no better place for it."
+  learn:
+    - "There I want to learn the art of rooms division and guest relations:"
+    - "understanding what guests need across the whole journey of a stay, and supporting them."

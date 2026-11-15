@@ -99,6 +99,10 @@ test("the header shows the chapter being read", async ({ page }) => {
     .last()
     .scrollIntoViewIfNeeded();
   await expect(stage).toHaveText("The academy");
+  await page
+    .locator('[data-flight] [data-group="learn"]')
+    .scrollIntoViewIfNeeded();
+  await expect(stage).toHaveText("Next destination");
 });
 
 test("Check-in is complete and static without motion", async ({ page }) => {
@@ -162,6 +166,8 @@ const playFoundations = (page: Page, position: number) =>
   });
 const playBar = (page: Page, position: number) =>
   playStage(page, "[data-bar]", position / 37.4, { desktop: 9, phone: 8.5 });
+const playFlight = (page: Page, position: number) =>
+  playStage(page, "[data-flight]", position / 28, { desktop: 7, phone: 6.5 });
 const playAcademy = (page: Page, position: number) =>
   playStage(page, "[data-academy]", position / 14.8, {
     desktop: 3.7,
@@ -255,6 +261,10 @@ test("the route line keeps one thickness on screen", async ({ page }) => {
   await playAcademy(page, 1);
   await expect
     .poll(() => thickness("[data-academy] .route-line"))
+    .toBeCloseTo(atLoad, 1);
+  await playFlight(page, 1);
+  await expect
+    .poll(() => thickness("[data-flight] [data-flight-path]"))
     .toBeCloseTo(atLoad, 1);
 });
 
@@ -397,10 +407,6 @@ test("Behind the bar plays as a held scene, objects before text", async ({
   );
   await expect(shaker.locator("[data-jigger]")).toHaveCSS("opacity", "1");
 
-  // The scoop has come in, still level: the ice lies inside it, so the centre of every
-  // cube is covered by the scoop's wall.
-  await playBar(page, 12.15);
-  await expect(shaker.locator("[data-scoop]")).toHaveCSS("opacity", "1");
   const inScoop = () =>
     page.evaluate(() =>
       [...document.querySelectorAll("[data-shaker] [data-cube]")].every(
@@ -414,6 +420,20 @@ test("Behind the bar plays as a held scene, objects before text", async ({
         },
       ),
     );
+  // Halfway through the scoop's arrival: scoop and ice fade in as one group (the ice
+  // and the wall have no opacity of their own), so the ice never shows through.
+  await playBar(page, 11.85);
+  const fading = shaker.locator("[data-scoop-enter]");
+  await expect(fading).not.toHaveCSS("opacity", "0");
+  await expect(fading).not.toHaveCSS("opacity", "1");
+  await expect(shaker.locator("[data-scoop]")).toHaveCSS("opacity", "1");
+  await expect(shaker.locator("[data-cube]").first()).toHaveCSS("opacity", "1");
+  await expect.poll(inScoop).toBe(true);
+
+  // The scoop has come in, still level: the ice lies inside it, so the centre of every
+  // cube is covered by the scoop's wall.
+  await playBar(page, 12.15);
+  await expect(shaker.locator("[data-scoop-enter]")).toHaveCSS("opacity", "1");
   await expect.poll(inScoop).toBe(true);
 
   // The scoop has tipped all five cubes in; the shaker is not closed yet.
@@ -552,6 +572,11 @@ test("each chapter's place is built on the way in", async ({ page }) => {
       ["[data-ridge]", "[data-water]", "[data-tower]", "[data-span]"],
       "[data-line]",
     ],
+    [
+      "[data-flight]",
+      ["[data-origin-map]", "[data-land]", "[data-origin-pin]", "[data-plane]"],
+      "[data-line]",
+    ],
   ];
   for (const [chapter, parts, firstLine] of places) {
     const drawing = page.locator(`${chapter} svg:visible`);
@@ -627,8 +652,15 @@ test("the route meets between chapters on a short, wide window", async ({
   // Behind the bar hands the route on at a fixed place: 72.22% of the page width.
   expect(await exit("[data-bar]")).toBeCloseTo(width * 0.7222, 0);
   expect(await entry("[data-academy]")).toBeCloseTo(width * 0.7222, 0);
-  // The academy hands it on at a quarter of the page width.
+  // The academy hands it on at a quarter of the page width, where the flight's map
+  // takes it. (The map is a strip that slides: its entry is measured where the
+  // chapter starts and its exit where it ends.)
   expect(await exit("[data-academy]")).toBeCloseTo(width * 0.25, 0);
+  await playFlight(page, 0);
+  await expect.poll(() => entry("[data-flight]")).toBeCloseTo(width * 0.25, 0);
+  // Next destination hands it on in the middle of the page.
+  await playFlight(page, 27.9);
+  await expect.poll(() => exit("[data-flight]")).toBeCloseTo(width / 2, 0);
 });
 
 test("The academy is complete and static without motion", async ({ page }) => {
@@ -741,6 +773,186 @@ test("The academy plays as a held scene, objects before text", async ({
     .analyze();
   expect(contrast.violations).toEqual([]);
   await expect(line(2)).toHaveCSS("opacity", "0");
+  await expect(drawing.locator("[data-route]")).toHaveCSS(
+    "stroke-dashoffset",
+    "0px",
+  );
+});
+
+test("Next destination is complete and static without motion", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/en/");
+  const chapter = page.locator("[data-flight]");
+  const drawing = chapter.locator("svg:visible");
+  await expect(drawing).toHaveCount(1);
+  await expect(chapter.getByRole("heading", { level: 2 })).toHaveText(
+    "Next destination",
+  );
+  // Upcoming, never shown as done (CLAUDE.md §2.4).
+  await expect(chapter.locator("[data-title]")).toContainText("Upcoming");
+  await expect(page.locator(".pin-spacer")).toHaveCount(0);
+  // All five lines of the copy are on the page at once.
+  const lines = chapter.locator("[data-line]");
+  await expect(lines).toHaveCount(5);
+  for (const line of await lines.all()) {
+    await expect(line).toBeVisible();
+    await expect(line).toHaveCSS("opacity", "1");
+  }
+  // The skyline with its pin and the hotel's tower, named; the route drawn; no
+  // night sky and no clouds.
+  await expect(drawing.locator("[data-place-pin]")).toBeVisible();
+  await expect(drawing.locator("[data-tower]").first()).toBeVisible();
+  await expect(drawing.locator("[data-route]")).toHaveCSS(
+    "stroke-dashoffset",
+    "0px",
+  );
+  await expect(chapter.locator("[data-night]")).toBeHidden();
+  await expect(drawing.locator("[data-rosewood]")).toBeVisible();
+  await expect(drawing.locator("[data-rosewood-label]")).toHaveText(
+    "Rosewood Hong Kong",
+  );
+  await expect(drawing.locator("[data-clouds]").first()).toBeHidden();
+  // The small joints were taken out of the chapter (Mika, 2026-11-15).
+  await expect(chapter.locator("[data-joint]")).toHaveCount(0);
+  await expect(chapter).not.toContainText("small joints");
+  await expect(drawing).toHaveAttribute("aria-hidden", "true");
+});
+
+test("Next destination plays as a held scene, objects before text", async ({
+  page,
+}) => {
+  await page.goto("/de/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion-ready", "");
+  const chapter = page.locator("[data-flight]");
+  const drawing = chapter.locator("svg:visible");
+  const header = page.locator(".site-header");
+  const line = (moment: string, index = 0) =>
+    chapter.locator(`[data-group="${moment}"] [data-line]`).nth(index);
+  const shown = (part: string) => expect(drawing.locator(part).last());
+  const night = chapter.locator("[data-night]");
+  // How far the strip of map has slid, as a share of its whole way.
+  const slid = () =>
+    drawing.locator("[data-world]").evaluate((world: SVGGElement) => {
+      const x = Number(
+        /translate\((-?[\d.]+)/.exec(world.getAttribute("transform")!)![1],
+      );
+      return -x / Number(world.dataset.travel);
+    });
+
+  // Nothing is on stage before its moment.
+  await expect(line("next")).toHaveCSS("opacity", "0");
+  await shown("[data-plane]").toHaveCSS("opacity", "0");
+  await shown("[data-tower]").toHaveCSS("opacity", "0");
+
+  // Departure: the map, the pin and the plane were there on the way in; the first
+  // line rests, the plane has not left and the sky is still paper.
+  await playFlight(page, 1.6);
+  await expect(line("next")).toHaveCSS("opacity", "1");
+  await shown("[data-plane]").toHaveCSS("opacity", "1");
+  await expect(night).toHaveCSS("opacity", "0");
+  await expect(header).not.toHaveAttribute("data-tone");
+  await expect.poll(slid).toBeLessThan(0.02);
+
+  // The first stretch is flown by day: the plane is airborne over the land, the sky
+  // is still paper, and a cloud has drifted into the frame.
+  await playFlight(page, 5.6);
+  await expect.poll(slid).toBeGreaterThan(0.08);
+  await expect(night).toHaveCSS("opacity", "0");
+  await expect(header).not.toHaveAttribute("data-tone");
+  await shown("[data-land]").toHaveCSS("opacity", "1");
+  await shown("[data-city-lights]").toHaveCSS("opacity", "0");
+  const cloud = drawing.locator("[data-cloud]").first();
+  const cloudAt = async () => (await cloud.boundingBox())!.x;
+  const cloudBefore = await cloudAt();
+  expect(cloudBefore).toBeLessThan(page.viewportSize()!.width);
+  await playFlight(page, 6.2);
+  await expect.poll(cloudAt).toBeLessThan(cloudBefore);
+
+  // Just before the second line: the sky is dark, the header has turned with it,
+  // the cities' windows are lit, and the line is not up yet.
+  await playFlight(page, 7.5);
+  await expect(night).toHaveCSS("opacity", "1");
+  await expect(header).toHaveAttribute("data-tone", "ink");
+  await shown("[data-city-lights]").toHaveCSS("opacity", "1");
+  await expect(line("night")).toHaveCSS("opacity", "0");
+  // Layering: the lit windows are a layer above the land, so no tree may stand in
+  // front of a block (it would be behind a window it should hide), and every window
+  // lies on its block above the meadow.
+  const misplaced = await drawing.evaluate((svg) => {
+    const box = (el: Element) => el.getBoundingClientRect();
+    const meets = (a: DOMRect, b: DOMRect) =>
+      a.left < b.right &&
+      b.left < a.right &&
+      a.top < b.bottom &&
+      b.top < a.bottom;
+    const land = svg.querySelector("[data-land]")!;
+    const lights = [...svg.querySelectorAll("[data-city-lights] rect")].map(
+      box,
+    );
+    const trees = [...land.querySelectorAll("use")]
+      .filter((use) => /tree|fir/.test(use.getAttribute("href")!))
+      .map(box);
+    const blocks = [...land.querySelectorAll("rect")].map(box);
+    return lights.filter(
+      (light) =>
+        trees.some((tree) => meets(tree, light)) ||
+        !blocks.some(
+          (block) =>
+            block.left <= light.left &&
+            light.right <= block.right &&
+            block.top <= light.top,
+        ),
+    ).length;
+  });
+  expect(misplaced).toBe(0);
+
+  // The night line rests, paper-coloured on ink and readable, while the map drifts on.
+  await playFlight(page, 8.6);
+  await expect(line("night")).toHaveCSS("opacity", "1");
+  await expect(header).toHaveCSS("background-color", "rgb(30, 43, 38)");
+  const dark = await new AxeBuilder({ page })
+    .include("[data-flight]")
+    .include(".site-header")
+    .withRules(["color-contrast"])
+    .analyze();
+  expect(dark.violations).toEqual([]);
+  const before = await slid();
+  await playFlight(page, 9.4);
+  await expect.poll(slid).toBeGreaterThan(before);
+
+  // Just before the third line: the sky is paper again, the plane has landed, the
+  // whole skyline stands, and the line is not up yet.
+  await playFlight(page, 15.9);
+  await expect(night).toHaveCSS("opacity", "0");
+  await expect(header).not.toHaveAttribute("data-tone");
+  await expect.poll(slid).toBeCloseTo(1, 2);
+  await shown("[data-tower]").toHaveCSS("opacity", "1");
+  await shown("[data-rosewood]").toHaveCSS("opacity", "1");
+  await shown("[data-rosewood-label]").toHaveCSS("opacity", "1");
+  await shown("[data-land]").toHaveCSS("opacity", "1");
+  await expect(line("place")).toHaveCSS("opacity", "0");
+  await shown("[data-place-pin]").toHaveCSS("opacity", "0");
+
+  // The pin has landed with its name before the windows light up.
+  await playFlight(page, 19.6);
+  await shown("[data-place-pin]").toHaveCSS("opacity", "1");
+  await shown("[data-place-labels]").toHaveCSS("opacity", "1");
+  await expect(drawing.locator("[data-place-labels]")).toContainText(
+    "Hongkong",
+  );
+  await shown("[data-window]").toHaveCSS("opacity", "0");
+
+  // Just before the fourth line: every window is lit.
+  await playFlight(page, 21.1);
+  await shown("[data-window]").toHaveCSS("opacity", "1");
+  await expect(line("learn")).toHaveCSS("opacity", "0");
+
+  // The end: the last line is up, the one before it gone, the route has run on.
+  await playFlight(page, 27.9);
+  await expect(line("learn", 1)).toHaveCSS("opacity", "1");
+  await expect(line("learn")).toHaveCSS("opacity", "0");
   await expect(drawing.locator("[data-route]")).toHaveCSS(
     "stroke-dashoffset",
     "0px",
