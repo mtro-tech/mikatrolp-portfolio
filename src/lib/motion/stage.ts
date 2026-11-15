@@ -84,6 +84,18 @@ export function beatMoves(timeline: gsap.core.Timeline) {
   return { beatIn, beatOut };
 }
 
+/**
+ * For a route drawn in two goes (first a stretch that belongs to an object, later the
+ * rest): the dash offset, of 1000, at which the first stretch is done. The path gives
+ * that stretch's length as data-edge-length; 0 means the whole path is the first stretch.
+ * Measured when asked, because an exit path bends with the window (src/lib/scroll.ts).
+ */
+export function undrawnAfter(route: SVGPathElement | null) {
+  const length = Number(route?.dataset.edgeLength ?? 0);
+  const total = route?.getTotalLength() ?? 0;
+  return length && total ? 1000 * (1 - length / total) : 0;
+}
+
 /** The drawing shown at the current screen size (each scene has a desktop and a phone one). */
 export function visible<T extends Element>(root: ParentNode, selector: string) {
   return [...root.querySelectorAll<T>(selector)].find(

@@ -71,6 +71,41 @@ export const foundations = {
 } as const;
 
 /**
+ * The academy: Lucerne's waterfront, the school, where I am now, the modules. Objects
+ * first, then the line, then a rest (CLAUDE.md §4). One unit is about a quarter of a
+ * screen of scrolling.
+ */
+export const academy = {
+  /** Screens of scrolling the scene is held for. */
+  screens: { desktop: 4, phone: 3.5 },
+  /** When each thing starts, in units on the scene's timeline. */
+  at: {
+    town: 0,
+    water: 0.3,
+    tower: 0.9,
+    bridge: 1.4,
+    programme: 3.6,
+    flowers: 5.3,
+    school: 6.5,
+    pin: 8.2,
+    now: 8.9,
+    books: 10.6,
+    bookStep: 1.3,
+    route: 14.4,
+    end: 16.4,
+  },
+  ridge: { fromY: 40, duration: 0.6, ease: "power2.out" },
+  water: { fromY: 50, duration: 0.7, ease: "power2.out" },
+  tower: { fromY: 60, duration: 0.6, ease: "back.out(1.4)" },
+  /** The bridge's sections arrive one after another, from the bank the route is on. */
+  spans: { fromY: -30, duration: 0.4, stagger: 0.25, ease: "power2.out" },
+  flowers: { duration: 0.3, stagger: 0.12, ease: "back.out(3)" },
+  pin: { fromY: -90, duration: 0.55, ease: "bounce.out" },
+  book: { fromY: -60, duration: 0.5, ease: "bounce.out" },
+  route: { duration: 1.2 },
+} as const;
+
+/**
  * Behind the bar: the room, the house, the pour, responsibility and growth, learning
  * the new. In every moment the objects move first, then the line arrives, then it
  * rests (CLAUDE.md §4). One unit is about a quarter of a screen of scrolling.

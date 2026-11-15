@@ -1,0 +1,189 @@
+---
+// The academy as a staged scene (the frame is .stage-frame in src/styles/route.css).
+// - With motion on, the frame is held on screen and academy.motion.ts plays the scene:
+//   Lucerne's waterfront builds, the bridge blooms, the pin lands, three books stack.
+// - With motion off (or no JavaScript) the same markup is a normal section: the drawing
+//   in its finished state and every line of text visible.
+import AcademyScene from "../route/AcademyScene.astro";
+import ChapterHeading from "./ChapterHeading.astro";
+
+interface Props {
+  stage: string;
+  heading: string;
+  /** The dates of the programme, already formatted for the language. */
+  meta?: string;
+  start?: string;
+  end?: string;
+  /** The copy in lines, grouped by moment (here one group: studying). */
+  beats: Record<string, string[]>;
+  /** The favourite modules, as a labelled list. */
+  items?: { label: string; values: string[] }[];
+}
+
+const { stage, heading, meta, start, end, beats, items = [] } = Astro.props;
+---
+
+<section class="academy" data-academy data-stage-name={stage}>
+  <div class="stage-frame" data-stage-frame>
+    <div class="scene" data-stage-scene>
+      <div class="layer layer--desktop">
+        <AcademyScene part="desktop" start={start} end={end} />
+      </div>
+      <div class="layer layer--phone">
+        <AcademyScene part="phone" />
+      </div>
+    </div>
+
+    <div class="copy">
+      <div class="stage-slot">
+        {Object.entries(beats).map(([moment, lines], index) => (
+          <div class="group" data-group={moment}>
+            {/* The heading belongs to the first moment, so later ones start at the top. */}
+            {index === 0 && (
+              <div class="title" data-title>
+                <ChapterHeading stage={stage} heading={heading} />
+                {meta && <p class="mt-1 text-ink-soft">{meta}</p>}
+              </div>
+            )}
+            <div class="lines font-display text-quote">
+              {lines.map((line) => (
+                <p data-line>{line}</p>
+              ))}
+            </div>
+          </div>
+        ))}
+        {items.map((item) => (
+          <div class="group modules" data-group="modules">
+            <p class="font-semibold" data-modules-label>
+              {item.label}
+            </p>
+            <ul class="font-display text-lead">
+              {item.values.map((value) => (
+                <li data-module>{value}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .layer--desktop {
+    display: none;
+  }
+
+  .lines {
+    display: grid;
+    gap: 0.5rem;
+    text-wrap: balance;
+  }
+
+  .title {
+    margin-bottom: 1rem;
+  }
+
+  /* The modules: a short list, each with a brass dot. */
+  .modules li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+  }
+
+  .modules li::before {
+    content: "";
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-brass);
+  }
+
+  /* ---- Motion off: a normal scrolling section ------------------------------------ */
+  .copy {
+    position: relative;
+    padding: 1.5rem var(--spacing-page) 3rem calc(10% + 1.25rem);
+  }
+
+  @media (width >= 60rem) {
+    .layer--desktop {
+      display: block;
+    }
+
+    .layer--phone {
+      display: none;
+    }
+
+    /* Without motion the whole text is shown at once, which the shore beside the bridge
+       has no room for: the drawing comes first and the copy follows below it, right
+       of the route on its way out (x = 360 of 1440). */
+    .copy {
+      width: 50%;
+      margin-left: 30%;
+      padding: 1rem 0 4rem;
+    }
+
+    /* Stacked, the large beat size would not fit the column. */
+    :global(html:not([data-motion="on"])) .lines {
+      font-size: var(--text-lead);
+      line-height: var(--text-lead--line-height);
+    }
+  }
+
+  /* ---- Motion on: the scene plays inside the held frame -------------------------- */
+  /* Phones: the drawing in the top 46% of the frame, the text below. The drawing
+     shrinks from the rail's top if the screen is short (--stage-fit, src/lib/scroll.ts). */
+  :global(html[data-motion="on"]) .scene {
+    --zoom: var(--stage-fit, 1);
+
+    position: absolute;
+    inset: 0 0 54% 0;
+    scale: var(--stage-fit, 1);
+    transform-origin: 10% 0;
+  }
+
+  :global(html[data-motion="on"]) .layer {
+    position: absolute;
+    inset: 0 0 auto 0;
+  }
+
+  :global(html[data-motion="on"]) .copy {
+    position: absolute;
+    inset: 46% 0 0 0;
+    padding: 0.5rem var(--spacing-page) 1.5rem calc(10% + 1.25rem);
+  }
+
+  /* The lines of a moment replace each other, so they share one place. */
+  :global(html[data-motion="on"]) .lines {
+    gap: 0;
+  }
+
+  :global(html[data-motion="on"]) .lines > * {
+    grid-area: 1 / 1;
+  }
+
+  /* Nothing is on stage before its moment (academy.motion.ts brings each one in). */
+  :global(html[data-motion="on"]) .title,
+  :global(html[data-motion="on"]) [data-line],
+  :global(html[data-motion="on"]) [data-modules-label],
+  :global(html[data-motion="on"]) [data-module] {
+    opacity: 0;
+  }
+
+  @media (width >= 60rem) {
+    /* Desktop: the drawing fills the frame and shrinks from where the route enters. */
+    :global(html[data-motion="on"]) .scene {
+      inset: 0;
+      transform-origin: 72.22% 0;
+    }
+
+    :global(html[data-motion="on"]) .copy {
+      inset: 13% auto 0 8.33%;
+      width: 31%;
+      margin: 0;
+      padding: 0;
+    }
+  }
+</style>

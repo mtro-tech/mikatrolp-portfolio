@@ -1,0 +1,378 @@
+---
+// The academy: Lucerne's waterfront, once for desktop and once for phones.
+// A mountain ridge behind, the lake, the stone water tower, and the covered wooden
+// bridge, whose walkway is the route. The pin stands on the bridge for where Mika is
+// now, with a small room key for Rooms Division; three books are the favourite modules.
+// My own drawing of the landmark in the house style, not copied from a photo.
+// Everything is drawn in its finished place, which is what the motion-off version shows.
+// academy.motion.ts brings the pieces in.
+import Pin from "./Pin.astro";
+
+interface Props {
+  part: "desktop" | "phone";
+  /** The dates at the two ends of the bridge (desktop only), already formatted. */
+  start?: string;
+  end?: string;
+}
+
+const { part, start, end } = Astro.props;
+
+type Point = [number, number];
+
+const g =
+  part === "desktop"
+    ? {
+        view: [1440, 810],
+        ridge:
+          "M620 330L720 250L800 290L930 150L1030 236L1120 190L1270 284L1380 214L1440 250L1440 330Z",
+        water:
+          "M660 330L1440 330L1440 810L470 810C450 720 560 600 600 480C620 420 640 370 660 330Z",
+        waves: [
+          "M760 560h70",
+          "M980 640h90",
+          "M1180 520h80",
+          "M700 720h80",
+          "M1240 720h70",
+        ],
+        // The bridge: from the right bank, a kink in the middle, onto the left shore.
+        bridge: [
+          [1040, 380],
+          [800, 455],
+          [545, 610],
+        ] as Point[],
+        spans: [3, 4],
+        scale: 1,
+        tower: { x: 742, y: 452, scale: 1 },
+        routeIn: "M1040 -1200L1040 380",
+        // Across the bridge, off its end and (bent by src/lib/scroll.ts when the drawing
+        // is shrunk) down to its exit at x = 360. The drawing shrinks around x = 1040.
+        routeDrawn:
+          "M1040 380L800 455L545 610C480 650 {x} 640 {x} 720L{x} 2000",
+        exit: { x: 360, origin: 1040 },
+        swan: { x: 1010, y: 600, scale: 1 },
+        books: { x: 130, y: 770, scale: 1 },
+        labels: { start: [1064, 368], end: [528, 584] },
+      }
+    : {
+        view: [390, 340],
+        ridge: "M150 112L196 72L226 90L270 42L310 80L344 62L390 94L390 112Z",
+        water:
+          "M152 112L390 112L390 340L112 340C106 300 134 240 142 190C146 160 150 132 152 112Z",
+        waves: ["M190 190h30", "M290 260h36", "M330 170h30", "M200 300h34"],
+        bridge: [
+          [118, 208],
+          [236, 238],
+          [372, 204],
+        ] as Point[],
+        spans: [2, 3],
+        scale: 0.5,
+        tower: { x: 262, y: 232, scale: 0.5 },
+        routeIn: "M39 0L39 160",
+        routeDrawn: "M39 160C39 196 70 204 118 208L236 238L372 204",
+        exit: undefined,
+        swan: { x: 250, y: 290, scale: 0.6 },
+        books: { x: 84, y: 330, scale: 0.42 },
+        labels: undefined,
+      };
+
+const round = (n: number) => Math.round(n * 10) / 10;
+const k = g.scale;
+const at = ([x, y]: Point, lift = 0) => `${round(x)} ${round(y - lift * k)}`;
+const place = (x: number, y: number, scale: number) =>
+  `translate(${x} ${y}) scale(${scale})`;
+
+// The bridge in sections, each between two posts: roof, posts, a wooden parapet, a pile into the
+// water, and a flower box on the railing.
+const sections = g.bridge.slice(0, -1).flatMap((from, leg) => {
+  const to = g.bridge[leg + 1];
+  const count = g.spans[leg];
+  return Array.from({ length: count }, (_, i) => {
+    const point = (t: number): Point => [
+      from[0] + (to[0] - from[0]) * t,
+      from[1] + (to[1] - from[1]) * t,
+    ];
+    const a = point(i / count);
+    const b = point((i + 1) / count);
+    const middle = point((i + 0.5) / count);
+    return {
+      roof: `M${at(a, 40)}L${at(b, 40)}L${at(b, 62)}L${at(a, 62)}Z`,
+      posts: `M${at(a)}L${at(a, 40)}M${at(b)}L${at(b, 40)}`,
+      parapet: `M${at(a)}L${at(b)}L${at(b, 16)}L${at(a, 16)}Z`,
+      pile: `M${at(middle)}L${at(middle, -30)}`,
+      flower: { x: round(middle[0]), y: round(middle[1] - 18 * k) },
+    };
+  });
+});
+
+// How long the bridge is: the first stretch of the drawn route (0 on phones, where the
+// whole drawn path is the bridge and its approach).
+const length = g.exit
+  ? round(
+      g.bridge
+        .slice(1)
+        .reduce(
+          (sum, point, i) =>
+            sum +
+            Math.hypot(point[0] - g.bridge[i][0], point[1] - g.bridge[i][1]),
+          0,
+        ),
+    )
+  : 0;
+
+// The pin stands on the roof about a third of the way along the first leg. Not an exact
+// measure of progress: the content gives the semester, not how many there are.
+const [first, second] = g.bridge;
+const pin: Point = [
+  round(first[0] + (second[0] - first[0]) * 0.7),
+  round(first[1] + (second[1] - first[1]) * 0.7 - 62 * k),
+];
+
+const books = ["fill-route", "fill-brass", "fill-paper-deep"];
+---
+
+<svg
+  class="scene-svg"
+  viewBox={`0 0 ${g.view[0]} ${g.view[1]}`}
+  aria-hidden="true"
+  focusable="false"
+>
+  {/* The mountain ridge behind the town. */}
+  <g data-ridge>
+    <path class="fill-paper ink-line" d={g.ridge}></path>
+  </g>
+
+  {/* The lake: flat, like the water on the earlier maps, with light on it. */}
+  <g data-water>
+    <path class="map-water" d={g.water}></path>
+    {g.waves.map((d, index) => (
+      <path
+        class:list={["wave idle-shimmer", index % 2 && "idle-shimmer--late"]}
+        d={d}
+      />
+    ))}
+    {/* A swan gliding across (CSS). */}
+    <g class="swan">
+      <g transform={place(g.swan.x, g.swan.y, g.swan.scale)}>
+        <path
+          class="fill-paper ink-line"
+          d="M-28 0C-32 -14 -8 -20 2 -10C0 -22 2 -34 12 -36C21 -37 23 -28 17 -27C11 -26 9 -18 12 -9C14 -3 10 0 6 0Z"
+        ></path>
+        <path class="fill-brass" d="M18 -30L27 -27L17 -26Z"></path>
+      </g>
+    </g>
+  </g>
+
+  {/* The stone water tower, standing in the lake behind the bridge. */}
+  <g data-tower>
+    <g transform={place(g.tower.x, g.tower.y, g.tower.scale)}>
+      <path
+        class="fill-paper ink-line"
+        d="M-34 0L-30 -150L30 -150L34 0Z"
+      ></path>
+      <path
+        class="fill-paper-deep ink-line"
+        d="M-40 -150L0 -214L40 -150Z"
+      ></path>
+      <path
+        class="ink-line"
+        d="M-6 -96L-6 -112L6 -112L6 -96ZM-6 -40L-6 -56L6 -56L6 -40Z"
+      ></path>
+    </g>
+  </g>
+
+  <path class="route-line" d={g.routeIn}></path>
+
+  {/* The bridge, section by section, on its piles. */}
+  {sections.map(({ pile }) => (
+    <path class="ink-line" data-pile d={pile} />
+  ))}
+  {sections.map(({ roof, posts, parapet, flower }) => (
+    <g data-span>
+      <path class="ink-line" d={posts} />
+      <path class="fill-brass ink-line" d={parapet} />
+      <path class="fill-paper ink-line" d={roof} />
+      <g data-flower>
+        <ellipse
+          class="fill-route ink-line nod"
+          cx={flower.x}
+          cy={flower.y}
+          rx={round(9 * k)}
+          ry={round(6 * k)}
+        />
+      </g>
+    </g>
+  ))}
+
+  {/* The walkway: the route, drawn over the bridge so it is never covered. */}
+  <path
+    class="route-line route-draw"
+    data-route
+    data-edge-length={length}
+    data-exit={g.exit?.x}
+    data-origin={g.exit?.origin}
+    data-template={g.exit && g.routeDrawn}
+    pathLength="1000"
+    d={g.routeDrawn.replaceAll("{x}", String(g.exit?.x))}
+  ></path>
+
+  {/* The dates at the two ends of the bridge. */}
+  {g.labels && (
+    <g data-dates>
+      {start && (
+        <text class="map-label" x={g.labels.start[0]} y={g.labels.start[1]}>
+          {start}
+        </text>
+      )}
+      {end && (
+        <text
+          class="map-label"
+          x={g.labels.end[0]}
+          y={g.labels.end[1]}
+          text-anchor="end"
+        >
+          {end}
+        </text>
+      )}
+    </g>
+  )}
+
+  {/* Where Mika is now: the route pin, with a room key for Rooms Division. */}
+  <g data-pin>
+    <Pin x={pin[0]} y={pin[1]} radius={round(24 * k)} />
+    <g transform={place(pin[0], pin[1], k)}>
+      <g class="dangle">
+        <path class="brass" d="M16 -52C30 -52 34 -40 34 -30"></path>
+        <circle class="key-ring" cx="34" cy="-22" r="7"></circle>
+        <path class="key-bit" d="M34 -15L34 8M34 0L41 0M34 6L40 6"></path>
+      </g>
+    </g>
+  </g>
+
+  {/* The favourite modules: three books, stacked on the shore. */}
+  {books.map((fill, index) => (
+    <g data-book>
+      <g
+        transform={`${place(g.books.x, g.books.y - index * 30 * g.books.scale, g.books.scale)} rotate(${[0, -3, 2][index]})`}
+      >
+        <rect
+          class:list={[fill, "ink-line"]}
+          x={-70 + [0, 8, -6][index]}
+          y="-28"
+          width="140"
+          height="28"
+          rx="4"
+        />
+        <path
+          class="page"
+          d={`M${-58 + [0, 8, -6][index]} -14h${[96, 80, 104][index]}`}
+        />
+      </g>
+    </g>
+  ))}
+</svg>
+
+<style>
+  .wave {
+    stroke: var(--color-paper);
+    stroke-width: calc(
+      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  .page {
+    stroke: var(--color-paper);
+    stroke-width: calc(
+      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  .key-ring,
+  .key-bit {
+    stroke: var(--color-brass);
+    stroke-width: calc(
+      var(--route-stroke-width) * 1.5 / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  /* Scroll-drawn paths count their length in 1000 steps (GSAP rounds stroke-dashoffset
+     to whole pixels). */
+  .route-draw {
+    stroke-dasharray: 1000;
+  }
+
+  .dangle {
+    transform-box: fill-box;
+    transform-origin: 0% 0%;
+  }
+
+  .nod {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+  }
+
+  /* Idle: the swan glides, the key sways, the flowers nod (the water shimmers with the
+     shared loop). */
+  :global(html[data-motion="on"]) .swan {
+    animation: swan-glide var(--duration-voyage) linear infinite alternate;
+  }
+
+  :global(html[data-motion="on"]) .dangle {
+    animation: key-dangle var(--duration-sway) ease-in-out infinite alternate;
+  }
+
+  :global(html[data-motion="on"]) .nod {
+    animation: flower-nod var(--duration-pulse) ease-in-out infinite alternate;
+  }
+
+  :global(html[data-motion="on"]) [data-span]:nth-of-type(2n) .nod {
+    animation-delay: calc(var(--duration-pulse) * -0.5);
+  }
+
+  @keyframes swan-glide {
+    from {
+      translate: -6% 0;
+    }
+
+    to {
+      translate: 16% 0;
+    }
+  }
+
+  @keyframes key-dangle {
+    from {
+      rotate: -5deg;
+    }
+
+    to {
+      rotate: 5deg;
+    }
+  }
+
+  @keyframes flower-nod {
+    from {
+      rotate: -8deg;
+    }
+
+    to {
+      rotate: 8deg;
+    }
+  }
+
+  /* Before the choreography reaches them, these are not on stage. With motion off they
+     are simply there, in their finished places. */
+  :global(html[data-motion="on"]) [data-ridge],
+  :global(html[data-motion="on"]) [data-water],
+  :global(html[data-motion="on"]) [data-tower],
+  :global(html[data-motion="on"]) [data-pile],
+  :global(html[data-motion="on"]) [data-span],
+  :global(html[data-motion="on"]) [data-flower],
+  :global(html[data-motion="on"]) [data-dates],
+  :global(html[data-motion="on"]) [data-pin],
+  :global(html[data-motion="on"]) [data-book] {
+    opacity: 0;
+  }
+
+  :global(html[data-motion="on"]) .route-draw {
+    stroke-dashoffset: 1000;
+  }
+</style>
