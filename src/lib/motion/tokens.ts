@@ -80,7 +80,7 @@ export const foundations = {
  */
 export const academy = {
   /** Screens of scrolling the scene is held for. */
-  screens: { desktop: 3.9, phone: 3.5 },
+  screens: { desktop: 3.7, phone: 3.3 },
   /** On the way in (of stage.approach units): the town builds, from the top down. */
   approach: { town: 0.4, water: 0.8, tower: 1.3, bridge: 1.7 },
   /** When each thing starts, in units on the held scene's timeline. */
@@ -92,13 +92,13 @@ export const academy = {
     pin: 4.9,
     now: 5.6,
     books: 7.3,
-    // The three books are dropped first, then opened one by one.
+    // One book: it drops, it opens, then the names are written in one by one.
     drop: 7.6,
-    dropStep: 0.5,
-    open: 9.3,
-    openStep: 1.3,
-    route: 13.4,
-    end: 15.4,
+    open: 8.4,
+    names: 9.4,
+    nameStep: 1.1,
+    route: 12.9,
+    end: 14.8,
   },
   ridge: { fromY: 40, duration: 0.6, ease: "power2.out" },
   water: { fromY: 50, duration: 0.7, ease: "power2.out" },
@@ -194,7 +194,7 @@ export const bar = {
     ease: "power2.out",
   },
   /** The scoop comes in from the side with its cubes, and tips over the rim. */
-  scoop: { fromX: -120, duration: 0.5, tip: 28, ease: "power2.out" },
+  scoop: { fromX: -120, duration: 0.5, ease: "power2.out" },
   /** The cubes tumble in one after another. */
   cube: { duration: 0.5, stagger: 0.32, turn: 120 },
   cap: { fromY: -90, duration: 0.4, ease: "back.out(1.2)" },
@@ -202,7 +202,7 @@ export const bar = {
   shake: { lean: 28, travel: 22, swings: 16, duration: 3.5, settle: 0.2 },
   /** Over the last glass: smaller, tipped so the drink leaves from the rim's corner. */
   serve: {
-    scale: 0.6,
+    scale: 0.45,
     duration: 0.8,
     tip: 118,
     fill: 0.7,

@@ -99,12 +99,13 @@ export const barScene: Scene = ({ isDesktop }) => {
       );
 
   // How far the shaker must move so that, tipped over the last glass, the low corner
-  // of its rim is exactly where the stream into the glass starts. Measured on screen
+  // of its rim is exactly where the stream into the glass comes out of it. Measured on screen
   // when asked, so it is right at every window size.
   const toGlass = () => {
     const matrix = serve?.getScreenCTM();
     if (!shaker || !serve || !matrix) return { x: 0, y: 0 };
-    const start = serve.getPointAtLength(0);
+    // The stream starts a little way up inside the tin; it comes out at the corner.
+    const start = serve.getPointAtLength(number(serve, "inside"));
     const box = frame.getBoundingClientRect();
     const streamX = matrix.a * start.x + matrix.c * start.y + matrix.e;
     const streamY = matrix.b * start.x + matrix.d * start.y + matrix.f;
@@ -289,21 +290,19 @@ export const barScene: Scene = ({ isDesktop }) => {
           at.jiggerLeave,
         );
 
-      //    The scoop comes in from the side with five cubes, tips over the rim, and
-      //    the cubes tumble in one after another. Then it leaves.
-      const scoop = piece("[data-scoop]");
-      const scoopTip = piece("[data-scoop-tip]");
-      arrive(
-        [...scoop, ...cubes],
-        { x: tokens.scoop.fromX },
-        tokens.scoop,
-        at.scoop,
-      );
+      //    The scoop comes in from the side with five cubes lying in it, and tips
+      //    over the rim; the ice turns with it. Then the cubes slide out through the
+      //    lip one after another and drop into the tin's mouth. The scoop leaves.
+      const scoopMove = piece("[data-scoop-move]");
+      const scoopTurn = piece("[data-scoop-turn]");
+      const scoopWall = piece("[data-scoop-wall]");
+      const tipped = scoopWall[0] ? number(scoopWall[0], "tip") : 0;
+      arrive(scoopMove, { x: tokens.scoop.fromX }, tokens.scoop, at.scoop);
       timeline.to(
-        scoopTip,
+        scoopTurn,
         {
-          rotation: tokens.scoop.tip,
-          // Its lip (Shaker.astro draws it at the bottom right).
+          rotation: tipped,
+          // The lip: the same corner of the scoop and of its load (Shaker.astro).
           transformOrigin: "100% 100%",
           duration: tokens.scoop.duration,
           ease: "power1.inOut",
@@ -313,7 +312,7 @@ export const barScene: Scene = ({ isDesktop }) => {
       cubes.forEach((cube, index) => {
         const falls = at.cubes + index * tokens.cube.stagger;
         timeline
-          // Sideways at an even pace, downwards speeding up: a small arc off the lip.
+          // Along the scoop first, then down: out through the lip and into the tin.
           .to(
             cube,
             {
@@ -335,9 +334,10 @@ export const barScene: Scene = ({ isDesktop }) => {
             falls,
           );
       });
+      // Only the scoop goes: the ice stays where it fell, inside the tin.
       timeline
         .to(
-          scoopTip,
+          scoopWall,
           {
             rotation: 0,
             duration: tokens.scoop.duration,
@@ -346,7 +346,7 @@ export const barScene: Scene = ({ isDesktop }) => {
           at.scoopLeave,
         )
         .to(
-          scoop,
+          piece("[data-scoop]"),
           {
             autoAlpha: 0,
             x: tokens.scoop.fromX,
