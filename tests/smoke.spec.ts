@@ -33,9 +33,12 @@ test("the hero line is decorative and static under reduced motion", async ({
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/en/");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
-  // Two drawings exist (desktop and mobile); exactly one is shown per width.
-  const scene = page.locator("svg.scene:visible");
-  await expect(scene).toHaveCount(1);
+  // Two drawings exist (desktop and mobile); one is shown per width, in two layers:
+  // the map ground, and the objects on it.
+  const layers = page.locator("svg.scene:visible");
+  await expect(layers).toHaveCount(2);
+  const scene = layers.last();
+  await expect(layers.first()).toHaveAttribute("aria-hidden", "true");
   await expect(scene).toHaveAttribute("aria-hidden", "true");
   await expect(scene.locator(".skyline")).toHaveCSS("animation-name", "none");
   // Without motion the whole route is drawn and nothing gets pinned.
@@ -175,8 +178,10 @@ test("Check-in plays as a held scene, one beat at a time", async ({ page }) => {
   // Nothing is written before its moment.
   await expect(began.first()).toHaveCSS("opacity", "0");
 
+  const header = page.locator(".site-header");
   await playCheckIn(page, 1.5);
   await expect(began.first()).toHaveCSS("opacity", "1");
+  await expect(header).not.toHaveAttribute("data-tone");
   await expect(began.last()).toHaveCSS("opacity", "0");
   await expect(meaning.first()).toHaveCSS("opacity", "0");
 
@@ -184,14 +189,19 @@ test("Check-in plays as a held scene, one beat at a time", async ({ page }) => {
   await playCheckIn(page, 11.4);
   await expect(meaning.last()).toHaveCSS("opacity", "1");
   await expect(began.first()).toHaveCSS("opacity", "0");
+  // The header has joined the dark scene (pine ink), and its text is still readable.
+  await expect(header).toHaveAttribute("data-tone", "ink");
+  await expect(header).toHaveCSS("background-color", "rgb(30, 43, 38)");
   const dark = await new AxeBuilder({ page })
     .include("[data-check-in]")
+    .include(".site-header")
     .withRules(["color-contrast"])
     .analyze();
   expect(dark.violations).toEqual([]);
 
   // Objects before text: the route has reached Lucerne before its line arrives.
   await playCheckIn(page, 17.5);
+  await expect(header).not.toHaveAttribute("data-tone");
   await expect(chapter.locator("[data-route]:visible")).toHaveCSS(
     "stroke-dashoffset",
     "0px",
@@ -310,14 +320,20 @@ test("Behind the bar plays as a held scene, objects before text", async ({
   // The red moment: paper-coloured text on the flood, readable.
   await playBar(page, 10.8);
   await expect(line("today")).toHaveCSS("opacity", "1");
+  // The header has turned red with the flood, and its text is still readable.
+  const header = page.locator(".site-header");
+  await expect(header).toHaveAttribute("data-tone", "red");
+  await expect(header).toHaveCSS("background-color", "rgb(166, 52, 27)");
   const red = await new AxeBuilder({ page })
     .include("[data-bar]")
+    .include(".site-header")
     .withRules(["color-contrast"])
     .analyze();
   expect(red.violations).toEqual([]);
 
   // Responsibility: the tray is there with its line; the drinks are not finished yet.
   await playBar(page, 14.5);
+  await expect(header).not.toHaveAttribute("data-tone");
   await expect(line("responsibility")).toHaveCSS("opacity", "1");
   await shown("[data-tray]").toHaveCSS("opacity", "1");
   await shown('[data-garnish="ice"]').toHaveCSS("opacity", "0");
@@ -353,7 +369,7 @@ test("the route meets between chapters on a short, wide window", async ({
     page.evaluate(
       ({ chapter, path, end }) => {
         const drawing = [...document.querySelectorAll(`${chapter} svg`)].find(
-          (svg) => svg.getClientRects().length > 0,
+          (svg) => svg.getClientRects().length > 0 && svg.querySelector(path),
         )!;
         const route = drawing.querySelector<SVGPathElement>(path)!;
         const point = route.getPointAtLength(
@@ -366,6 +382,21 @@ test("the route meets between chapters on a short, wide window", async ({
     );
   const entry = (chapter: string) => onScreen(chapter, ".route-line", "start");
   const exit = (chapter: string) => onScreen(chapter, "[data-route]", "end");
+
+  // The hero hands the route to Check-in at 72.22% of the page width, at any moment
+  // of its zoom: its route is exactly vertical from the pin down.
+  for (const share of [0, 0.5, 0.95]) {
+    await page.evaluate(
+      (y) => window.scrollTo(0, window.innerHeight * y),
+      share,
+    );
+    for (const end of ["start", "end"] as const) {
+      await expect
+        .poll(() => onScreen("[data-arrival]", "[data-route-start]", end))
+        .toBeCloseTo(width * 0.7222, 0);
+    }
+  }
+  expect(await entry("[data-check-in]")).toBeCloseTo(width * 0.7222, 0);
 
   // Foundations sits in the middle of the page, and Check-in's route bends to meet it.
   expect(await entry("[data-foundations]")).toBeCloseTo(width / 2, 0);

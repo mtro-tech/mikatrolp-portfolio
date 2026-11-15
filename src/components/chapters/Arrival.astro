@@ -18,8 +18,14 @@ const { stage, heading, line, place, coordinates } = Astro.props;
   data-stage-name={stage}
   aria-labelledby="arrival-title"
 >
+  {/* The map ground on its own, so it can fade out towards Check-in. */}
+  <div class="ground-fade">
+    <div class="scene-wrap" data-arrival-scene>
+      <ArrivalScene layer="ground" />
+    </div>
+  </div>
   <div class="scene-wrap" data-arrival-scene>
-    <ArrivalScene place={place} coordinates={coordinates} />
+    <ArrivalScene layer="objects" place={place} coordinates={coordinates} />
   </div>
 
   <div class="copy" data-arrival-copy>
@@ -54,6 +60,16 @@ const { stage, heading, line, place, coordinates } = Astro.props;
 
     position: absolute;
     inset: 0;
+  }
+
+  /* The map runs out like the edge of a printed sheet instead of being cut off where
+     the hero ends. The fade is on this outer box, which does not zoom, so it stays in
+     place while the map moves through it. (black and transparent are mask values,
+     not colours on screen.) */
+  .ground-fade {
+    position: absolute;
+    inset: 0;
+    mask-image: linear-gradient(to bottom, black 62%, transparent 96%);
   }
 
   /* Phones: the copy sits below the skyline (y = 230), right of the rail (x = 39). */

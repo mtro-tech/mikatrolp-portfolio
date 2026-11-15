@@ -18,10 +18,11 @@ export const arrivalScene: Scene = ({ isDesktop }) => {
   const stage = document.querySelector<HTMLElement>("[data-arrival]");
   if (!stage) return;
 
-  const scene = stage.querySelector("[data-arrival-scene]");
+  // Two layers, zoomed as one: the map ground and the objects on it (Arrival.astro).
+  const scene = stage.querySelectorAll("[data-arrival-scene]");
   const copy = stage.querySelector("[data-arrival-copy]");
   const route = visible(stage, "[data-route-start]");
-  if (!scene || !copy || !route) return;
+  if (!scene.length || !copy || !route) return;
 
   if (!isDesktop) {
     // Phones: the hero is not held. The rail simply draws as the hero scrolls away.

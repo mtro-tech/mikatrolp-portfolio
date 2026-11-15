@@ -12,6 +12,7 @@ import type { Scene } from "../../lib/motion";
 import {
   beatMoves,
   holdStage,
+  toneHeader,
   undrawnAfter,
   visible,
 } from "../../lib/motion/stage";
@@ -140,6 +141,14 @@ export const barScene: Scene = ({ isDesktop }) => {
           ease: tokens.flood.ease,
         },
         at.flood,
+      );
+      // The header turns red once the flood has risen to it, and back as it drains.
+      const reach = tokens.flood.duration * tokens.flood.reachesHeader;
+      toneHeader(
+        timeline,
+        "red",
+        at.flood + reach,
+        at.drain + tokens.flood.duration - reach,
       );
       beatIn(today, at.today);
       // Under cover of the flood the other two drinks are poured.
