@@ -1,7 +1,8 @@
 ---
 // The academy as a staged scene (the frame is .stage-frame in src/styles/route.css).
 // - With motion on, the frame is held on screen and academy.motion.ts plays the scene:
-//   Lucerne's waterfront builds, the bridge blooms, the pin lands, three books stack.
+//   Lucerne's waterfront builds, the bridge blooms, the pin lands, and three books
+//   drop into the text column and open on the favourite modules.
 // - With motion off (or no JavaScript) the same markup is a normal section: the drawing
 //   in its finished state and every line of text visible.
 import AcademyScene from "../route/AcademyScene.astro";
@@ -57,9 +58,18 @@ const { stage, heading, meta, start, end, beats, items = [] } = Astro.props;
             <p class="font-semibold" data-modules-label>
               {item.label}
             </p>
-            <ul class="font-display text-lead">
+            {/* Each module is a book: its name is on the page, the cover and the inside
+                of the cover are decoration. Drawn open; academy.motion.ts closes each
+                one and opens it at its moment. */}
+            <ul class="books font-display text-lead">
               {item.values.map((value) => (
-                <li data-module>{value}</li>
+                <li class="book" data-book>
+                  <span class="inside" data-book-inside aria-hidden="true" />
+                  <span class="page" data-module>
+                    {value}
+                  </span>
+                  <span class="cover" data-book-cover aria-hidden="true" />
+                </li>
               ))}
             </ul>
           </div>
@@ -84,21 +94,89 @@ const { stage, heading, meta, start, end, beats, items = [] } = Astro.props;
     margin-bottom: 1rem;
   }
 
-  /* The modules: a short list, each with a brass dot. */
-  .modules li {
-    display: flex;
-    align-items: baseline;
-    gap: 0.6rem;
-    margin-top: 0.5rem;
+  /* The modules: three open books in the house style (flat fills, an ink outline).
+     --spine is where the book is bound: the page lies right of it, the opened cover
+     left of it. */
+  .books {
+    --spine: 22%;
+    --line: calc(var(--route-stroke-width) * 1px);
+
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+    /* Narrower than the column, so the books stay clear of the bridge on short screens. */
+    max-width: min(27rem, 94%);
   }
 
-  .modules li::before {
+  .book {
+    --cover: var(--color-route);
+
+    position: relative;
+    display: block;
+    padding-left: var(--spine);
+  }
+
+  .book:nth-child(3n + 2) {
+    --cover: var(--color-brass);
+  }
+
+  .book:nth-child(3n) {
+    --cover: var(--color-paper-deep);
+  }
+
+  .page {
+    display: flex;
+    align-items: center;
+    position: relative;
+    min-height: 5.5rem;
+    padding: 0.75rem 1.75rem 0.75rem 1.1rem;
+    border: var(--line) solid var(--color-ink);
+    border-radius: 0 0.5rem 0.5rem 0;
+    background: var(--color-paper);
+    text-wrap: balance;
+  }
+
+  /* The edges of the pages behind the open one. */
+  .page::after {
     content: "";
-    flex: none;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--color-brass);
+    position: absolute;
+    inset: 0 0.4rem 0 auto;
+    width: 0.3rem;
+    border-inline: var(--line) solid var(--color-paper-deep);
+  }
+
+  /* The opened cover, seen from inside, left of the spine. */
+  .inside,
+  .cover {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border: var(--line) solid var(--color-ink);
+    background: var(--cover);
+  }
+
+  .inside {
+    left: 0;
+    width: calc(var(--spine) + var(--line));
+    border-radius: 0.5rem 0 0 0.5rem;
+  }
+
+  /* The closed cover lies over the page; only the animated version shows it. */
+  .cover {
+    display: none;
+    left: var(--spine);
+    right: 0;
+    border-radius: 0 0.5rem 0.5rem 0;
+  }
+
+  /* A title band on the cover. */
+  .cover::after {
+    content: "";
+    position: absolute;
+    inset: 32% 16% auto 12%;
+    height: calc(var(--line) * 2);
+    border-radius: var(--line);
+    background: var(--color-paper);
   }
 
   /* ---- Motion off: a normal scrolling section ------------------------------------ */
@@ -168,8 +246,12 @@ const { stage, heading, meta, start, end, beats, items = [] } = Astro.props;
   :global(html[data-motion="on"]) .title,
   :global(html[data-motion="on"]) [data-line],
   :global(html[data-motion="on"]) [data-modules-label],
-  :global(html[data-motion="on"]) [data-module] {
+  :global(html[data-motion="on"]) [data-book] {
     opacity: 0;
+  }
+
+  :global(html[data-motion="on"]) .cover {
+    display: block;
   }
 
   @media (width >= 60rem) {

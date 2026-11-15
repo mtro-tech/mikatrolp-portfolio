@@ -2,7 +2,7 @@
 // What the reader should feel: arriving in Lucerne as the town assembles itself, the
 // bridge growing across the water under the route; a moment of bloom for the school;
 // the pin landing as a plain "I am here"; and the favourite modules arriving one at a
-// time, as books worth picking up.
+// time, as books worth picking up: each drops into the text column and opens.
 // Pace (CLAUDE.md §4): in every moment the objects move first, then the line arrives,
 // then it rests before anything else starts.
 // Idle motion (the water, the swan, the flowers, the key) is CSS, on inner elements.
@@ -39,13 +39,14 @@ export const academyScene: Scene = ({ isDesktop }) => {
   const flowers = all("[data-flower]");
   const dates = one("[data-dates]");
   const pin = one("[data-pin]");
-  const books = all("[data-book]");
   const route = one<SVGPathElement>("[data-route]");
 
   const title = frame.querySelector("[data-title]");
   const [programme, school, now] = text("[data-line]");
   const modulesLabel = frame.querySelector("[data-modules-label]");
-  const modules = text("[data-module]");
+  const books = text("[data-book]");
+  const covers = text("[data-book-cover]");
+  const insides = text("[data-book-inside]");
 
   const { at } = tokens;
   const out = stage.beatOut.duration;
@@ -121,12 +122,49 @@ export const academyScene: Scene = ({ isDesktop }) => {
       beatIn(now, at.now);
       beatOut([title, now], at.books - out);
 
-      // 4. Favourite modules: each book lands, then its name appears. The list gathers.
+      // 4. Favourite modules: each book drops into the column closed, then opens: the
+      //    cover narrows away at the spine and its inside grows out on the other side.
+      //    One book at a time, so each name gets its own moment.
       beatIn(modulesLabel, at.books);
+      const half = tokens.open.duration / 2;
       books.forEach((book, index) => {
-        const start = at.books + index * at.bookStep;
-        arrive(book, { y: tokens.book.fromY }, tokens.book, start);
-        beatIn(modules[index], start + tokens.book.duration + 0.1);
+        const lands = at.books + tokens.open.afterLabel + index * at.bookStep;
+        const opens = lands + tokens.book.duration + tokens.open.afterLanding;
+        timeline
+          // Opacity, not visibility: the name stays available to screen readers.
+          .fromTo(
+            book,
+            { opacity: 0, y: tokens.book.fromY },
+            {
+              opacity: 1,
+              y: 0,
+              duration: tokens.book.duration,
+              ease: tokens.book.ease,
+            },
+            lands,
+          )
+          .fromTo(
+            covers[index],
+            { scaleX: 1 },
+            {
+              scaleX: 0,
+              transformOrigin: "0% 50%",
+              duration: half,
+              ease: "power1.in",
+            },
+            opens,
+          )
+          .fromTo(
+            insides[index],
+            { scaleX: 0 },
+            {
+              scaleX: 1,
+              transformOrigin: "100% 50%",
+              duration: half,
+              ease: "power1.out",
+            },
+            opens + half,
+          );
       });
 
       // The route steps off the bridge and runs on towards the next chapter.
