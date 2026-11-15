@@ -293,11 +293,16 @@ export const barScene: Scene = ({ isDesktop }) => {
       //    The scoop comes in from the side with five cubes lying in it, and tips
       //    over the rim; the ice turns with it. Then the cubes slide out through the
       //    lip one after another and drop into the tin's mouth. The scoop leaves.
-      const scoopMove = piece("[data-scoop-move]");
       const scoopTurn = piece("[data-scoop-turn]");
       const scoopWall = piece("[data-scoop-wall]");
       const tipped = scoopWall[0] ? number(scoopWall[0], "tip") : 0;
-      arrive(scoopMove, { x: tokens.scoop.fromX }, tokens.scoop, at.scoop);
+      // Scoop and ice fade in as one group, so the ice never shows through the wall.
+      arrive(
+        piece("[data-scoop-enter]"),
+        { x: tokens.scoop.fromX },
+        tokens.scoop,
+        at.scoop,
+      );
       timeline.to(
         scoopTurn,
         {

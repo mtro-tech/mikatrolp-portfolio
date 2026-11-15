@@ -397,10 +397,6 @@ test("Behind the bar plays as a held scene, objects before text", async ({
   );
   await expect(shaker.locator("[data-jigger]")).toHaveCSS("opacity", "1");
 
-  // The scoop has come in, still level: the ice lies inside it, so the centre of every
-  // cube is covered by the scoop's wall.
-  await playBar(page, 12.15);
-  await expect(shaker.locator("[data-scoop]")).toHaveCSS("opacity", "1");
   const inScoop = () =>
     page.evaluate(() =>
       [...document.querySelectorAll("[data-shaker] [data-cube]")].every(
@@ -414,6 +410,20 @@ test("Behind the bar plays as a held scene, objects before text", async ({
         },
       ),
     );
+  // Halfway through the scoop's arrival: scoop and ice fade in as one group (the ice
+  // and the wall have no opacity of their own), so the ice never shows through.
+  await playBar(page, 11.85);
+  const fading = shaker.locator("[data-scoop-enter]");
+  await expect(fading).not.toHaveCSS("opacity", "0");
+  await expect(fading).not.toHaveCSS("opacity", "1");
+  await expect(shaker.locator("[data-scoop]")).toHaveCSS("opacity", "1");
+  await expect(shaker.locator("[data-cube]").first()).toHaveCSS("opacity", "1");
+  await expect.poll(inScoop).toBe(true);
+
+  // The scoop has come in, still level: the ice lies inside it, so the centre of every
+  // cube is covered by the scoop's wall.
+  await playBar(page, 12.15);
+  await expect(shaker.locator("[data-scoop-enter]")).toHaveCSS("opacity", "1");
   await expect.poll(inScoop).toBe(true);
 
   // The scoop has tipped all five cubes in; the shaker is not closed yet.
