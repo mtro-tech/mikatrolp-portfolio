@@ -132,8 +132,10 @@ export const flightScene: Scene = ({ isDesktop }) => {
           at.takeOff,
         )
         // The map's grid would glare on the dark sky: it dims to a faint chart.
+        // (So does the country around Lucerne, whose lakes and label are drawn for
+        // paper: it is left behind in the dusk.)
         .to(
-          grid,
+          [grid, one("[data-origin-map]")],
           { opacity: tokens.night.grid, duration: tokens.night.duration },
           at.takeOff,
         );
