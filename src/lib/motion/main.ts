@@ -5,6 +5,7 @@ import { arrivalScene } from "../../components/chapters/arrival.motion";
 import { barScene } from "../../components/chapters/behind-the-bar.motion";
 import { checkInScene } from "../../components/chapters/check-in.motion";
 import { foundationsScene } from "../../components/chapters/foundations.motion";
+import { flightScene } from "../../components/chapters/next-destination.motion";
 import { runMotion } from "./index";
 
 runMotion([
@@ -13,4 +14,5 @@ runMotion([
   foundationsScene,
   barScene,
   academyScene,
+  flightScene,
 ]);

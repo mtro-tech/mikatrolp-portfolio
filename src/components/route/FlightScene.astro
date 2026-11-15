@@ -1,0 +1,529 @@
+---
+// Next destination: the flight to Hong Kong, once for desktop and once for phones.
+// One long strip of map (the "world") lies under the frame. It starts at the Lucerne pin,
+// where the route arrives and the paper plane waits, and ends at the Hong Kong skyline.
+// next-destination.motion.ts slides the strip to the left while the plane follows the
+// flight path, so the plane stays in view and the world passes underneath.
+// - The map is borderless: a grid and terrain rings only. No countries, no borders.
+// - Along the way lie small joints with a lit window: the hidden detail, with its
+//   sentence beside one of them.
+// - The skyline is my own drawing of generic towers, flat and side-on, like St. Gallen
+//   in the hero but far taller. No real building is copied and there is no logo.
+// The strip is drawn in its finished place (slid to the skyline), which is what the
+// motion-off version shows.
+import { contours, graticule } from "./contours";
+import Pin from "./Pin.astro";
+import Plane from "./Plane.astro";
+
+interface Props {
+  part: "desktop" | "phone";
+  /** Where the flight starts and ends, as on the earlier maps. */
+  origin?: string;
+  place?: string;
+  /** The first day in Hong Kong, already formatted. */
+  date?: string;
+  /** The hidden detail's sentence. */
+  hidden?: string;
+}
+
+const { part, origin, place, date, hidden } = Astro.props;
+const desktop = part === "desktop";
+
+const g = desktop
+  ? {
+      view: [1440, 810],
+      // How far the strip slides: the skyline's part of it starts this far along.
+      travel: 3600,
+      // Pieces are drawn in desktop units and placed at this size.
+      k: 1,
+      spacing: 180,
+      // The Lucerne pin, where the route arrives from The academy (x = 360).
+      from: [360, 440],
+      routeIn: "M360 -1200L360 440",
+      // The flight: up from Lucerne, over, and down to where the plane lands.
+      flight: "M360 440C1300 20 3300 40 4240 560",
+      landing: [4240, 560],
+      // The Hong Kong pin, at the water's edge.
+      pin: [4320, 560],
+      // From the landing along the quay to the pin, then down and out. The frame's
+      // drawing shrinks around x = 360 (src/lib/scroll.ts bends the exit to 50%).
+      exit: "M4240 560L4320 560C4320 640 {x} 640 {x} 720L{x} 2000",
+      exitAt: { x: 4320, origin: 3960 },
+      quay: 80,
+      joints: { y: 700, at: [1150, 1750, 2350, 2950, 3450] },
+    }
+  : {
+      view: [390, 340],
+      travel: 1000,
+      k: 0.45,
+      spacing: 110,
+      from: [39, 150],
+      routeIn: "M39 0L39 150",
+      flight: "M39 150C320 0 900 10 1190 250",
+      landing: [1190, 250],
+      pin: [1230, 250],
+      // Back to the rail on the left edge (x = 39 once the strip has slid).
+      exit: "M1190 250L1230 250C1230 310 1039 290 1039 340",
+      exitAt: undefined,
+      quay: 40,
+      joints: { y: 318, at: [330, 520, 700, 880, 1040] },
+    };
+
+const [width, height] = g.view;
+const round = (n: number) => Math.round(n * 10) / 10;
+const place_ = (x: number, y: number) => `translate(${x} ${y}) scale(${g.k})`;
+
+// Wider than the frame at its end, for the same reason.
+const reach = round(width * 1.7);
+const grid = graticule(g.travel + reach, height, g.spacing);
+
+// Terrain around Lucerne, in desktop units from the pin.
+const terrain = [
+  ...contours(40, -30, { first: 44, step: 46, count: 4 }),
+  ...contours(-260, 150, { first: 30, step: 36, count: 3, seed: 2 }),
+];
+
+// The skyline, in desktop units from the Hong Kong pin: where each tower stands, how
+// wide and tall it is, and what it ends in. The lower ones are in the middle, where
+// the text is shown. It runs on past the frame's right edge: on a short screen the
+// drawing is shrunk, and more of it comes into view.
+type Top = "flat" | "step" | "spire";
+const towers: [number, number, number, Top][] = [
+  [-400, 54, 150, "flat"],
+  [-336, 46, 230, "step"],
+  [-280, 60, 320, "spire"],
+  [-208, 50, 210, "flat"],
+  [-150, 44, 160, "step"],
+  [-96, 56, 120, "flat"],
+  [-30, 48, 160, "step"],
+  [30, 52, 130, "flat"],
+  [92, 60, 170, "step"],
+  [162, 50, 140, "flat"],
+  [222, 64, 170, "flat"],
+  [296, 56, 150, "step"],
+  [362, 62, 170, "flat"],
+  [436, 58, 170, "flat"],
+  [506, 70, 150, "step"],
+  [590, 56, 170, "flat"],
+  [658, 60, 300, "spire"],
+  [730, 54, 210, "flat"],
+  [796, 60, 270, "step"],
+  [870, 52, 220, "flat"],
+  [934, 64, 320, "spire"],
+  [1010, 56, 200, "flat"],
+  [1080, 60, 250, "step"],
+];
+// Every second tower has rooms that light up: three windows, one above the other.
+const windows = towers.flatMap(([x, w, h], index) =>
+  index % 2 === 0
+    ? [0.28, 0.5, 0.72].map((share) => ({
+        x: round(x + w / 2 - 5),
+        y: round(-h * share),
+      }))
+    : [],
+);
+
+// Stars over the flight: fixed in the frame, not on the strip. Deterministic.
+const stars = Array.from({ length: 14 }, (_, i) => ({
+  x: round(((i * 0.618 + 0.11) % 1) * width),
+  y: round((((i * 0.371 + 0.07) % 1) * 0.5 + 0.04) * height),
+  r: round((1.4 + (i % 3) * 0.7) * (desktop ? 1 : 0.6)),
+}));
+---
+
+<svg
+  class="scene-svg"
+  viewBox={`0 0 ${width} ${height}`}
+  aria-hidden="true"
+  focusable="false"
+>
+  <g data-stars>
+    {stars.map(({ x, y, r }, index) => (
+      <circle
+        class:list={["star", index % 2 && "star--late"]}
+        cx={x}
+        cy={y}
+        r={r}
+      />
+    ))}
+  </g>
+
+  {
+    /* Without motion the strip is not slid, so the route from The academy could not
+       reach the flight path: this stretch joins them at the frame's left edge. */
+    desktop && (
+      <path
+        class="route-line connector"
+        d="M360 -20L360 140C360 260 160 250 -10 316"
+      />
+    )
+  }
+
+  {/* The strip of map. Its finished place: slid all the way to the skyline. */}
+  <g
+    data-world
+    data-travel={g.travel}
+    data-rise={round(240 * g.k)}
+    transform={`translate(${-g.travel} 0)`}
+  >
+    <g data-grid>
+      {grid.map((d) => (
+        <path class="map-grid" d={d} />
+      ))}
+    </g>
+
+    {/* Where it starts: the country around Lucerne, as on the map in Check-in. */}
+    <g data-origin-map>
+      <g
+        class:list={[!desktop && "small"]}
+        transform={place_(g.from[0], g.from[1])}
+      >
+        {terrain.map((d) => (
+          <path class="map-contour" d={d} />
+        ))}
+        <path
+          class="map-water"
+          d="M70 70C130 46 214 78 200 122C160 144 88 132 70 70Z"
+        ></path>
+        <path
+          class="map-water"
+          d="M-230 -110C-176 -144 -96 -124 -106 -90C-150 -66 -218 -78 -230 -110Z"
+        ></path>
+        {origin && (
+          <text class="map-label" x="46" y="-44">
+            {origin}
+          </text>
+        )}
+      </g>
+    </g>
+
+    <path class="route-line" d={g.routeIn}></path>
+
+    {/* The small joints along the way: a wall, an awning, one lit window, a stool.
+         The hidden detail: its sentence stands beside the middle one. */}
+    {g.joints.at.map((x, index) => (
+      <g data-joint>
+        <g class:list={[!desktop && "small"]} transform={place_(x, g.joints.y)}>
+          <rect
+            class="fill-paper ink-line"
+            x="-22"
+            y="-30"
+            width="44"
+            height="30"
+          />
+          <path
+            class:list={[index % 2 ? "fill-brass" : "fill-route", "ink-line"]}
+            d="M-28 -30L28 -30L22 -42L-22 -42Z"
+          />
+          <rect
+            class:list={["fill-brass", "lit", index % 2 && "lit--late"]}
+            x="-7"
+            y="-23"
+            width="14"
+            height="13"
+          />
+          <path class="ink-line" d="M36 0L36 -11M31 -11L41 -11" />
+          {index === 2 && hidden && (
+            <text
+              class="map-label map-label--small hidden-detail"
+              x="52"
+              y="-12"
+            >
+              {hidden}
+            </text>
+          )}
+        </g>
+      </g>
+    ))}
+
+    {/* The flight, drawn behind the plane as it goes. It lies under the skyline, so
+         the line passes behind the towers on its way down, not across them. */}
+    <path
+      class="route-line route-draw"
+      data-flight-path
+      pathLength="1000"
+      d={g.flight}
+    ></path>
+
+    {/* Where it ends: hills behind, the skyline, the harbour's water, a ferry.
+         The water is drawn over the towers' feet, so the towers rise out from behind
+         the waterline. */}
+    <g data-hills>
+      <g
+        class:list={[!desktop && "small"]}
+        transform={place_(g.pin[0], g.pin[1])}
+      >
+        <path
+          class="ink-line"
+          d="M-470 0C-300 -150 -180 -60 -40 -110C120 -190 260 -70 420 -150C560 -230 680 -100 800 -130C940 -170 1040 -60 1180 -110L1240 0"
+        ></path>
+      </g>
+    </g>
+    {towers.map(([x, w, h, top], index) => (
+      <g data-tower>
+        <g
+          class:list={[!desktop && "small"]}
+          transform={place_(g.pin[0], g.pin[1])}
+        >
+          <rect
+            class:list={[
+              index % 3 ? "fill-paper" : "fill-paper-deep",
+              "ink-line",
+            ]}
+            x={x}
+            y={-h}
+            width={w}
+            height={h}
+          />
+          {top === "step" && (
+            <rect
+              class="fill-paper ink-line"
+              x={round(x + w * 0.2)}
+              y={-h - 26}
+              width={round(w * 0.6)}
+              height="26"
+            />
+          )}
+          {top === "spire" && (
+            <>
+              <path
+                class="fill-brass ink-line"
+                d={`M${x} ${-h}L${round(x + w / 2)} ${-h - 44}L${x + w} ${-h}Z`}
+              />
+              <path
+                class="ink-line"
+                d={`M${round(x + w / 2)} ${-h - 44}L${round(x + w / 2)} ${-h - 70}`}
+              />
+            </>
+          )}
+        </g>
+      </g>
+    ))}
+    <g data-harbour>
+      <path
+        class="map-water"
+        d={`M${g.travel - 260 * g.k} ${g.pin[1]}L${g.travel + reach} ${g.pin[1]}L${g.travel + reach} ${height + 40}L${g.travel - 460 * g.k} ${height + 40}Z`}
+      ></path>
+      <g
+        class:list={[!desktop && "small"]}
+        transform={place_(g.pin[0], g.pin[1])}
+      >
+        <path class="quay" d="M-470 0L1240 0"></path>
+        <path class="wave idle-shimmer" d="M-380 60h70M-120 120h90"></path>
+        <path
+          class="wave idle-shimmer idle-shimmer--late"
+          d="M300 90h80M520 150h70M80 180h60"
+        ></path>
+      </g>
+    </g>
+    <g
+      class:list={[!desktop && "small"]}
+      transform={place_(g.pin[0], g.pin[1])}
+    >
+      {windows.map(({ x, y }, index) => (
+        <g data-window>
+          <rect
+            class:list={["fill-brass", "lit", index % 2 && "lit--late"]}
+            x={x}
+            y={y}
+            width="10"
+            height="13"
+          />
+        </g>
+      ))}
+    </g>
+    <g data-ferry>
+      <g
+        class:list={[!desktop && "small"]}
+        transform={place_(g.pin[0], g.pin[1])}
+      >
+        <g class="ferry">
+          <g transform="translate(260 96)">
+            <path class="fill-paper ink-line" d="M-26 0h52l-8 11h-36z"></path>
+            <path class="fill-route ink-line" d="M-14 0v-12h28v12z"></path>
+          </g>
+        </g>
+      </g>
+    </g>
+
+    {/* Along the quay to the pin, then on towards the next chapter. */}
+    <path
+      class="route-line route-draw"
+      data-route
+      data-edge-length={g.quay}
+      data-exit={g.exitAt?.x}
+      data-origin={g.exitAt?.origin}
+      data-template={g.exitAt && g.exit}
+      pathLength="1000"
+      d={g.exit.replaceAll("{x}", String(g.exitAt?.x))}
+    ></path>
+
+    <g data-origin-pin>
+      <Pin x={g.from[0]} y={g.from[1]} radius={round(26 * g.k)} />
+    </g>
+
+    {/* The plane. The outer group is placed along the flight by the scene; the inner
+         one bobs on its own (CSS). Parked where it lands, in the finished drawing. */}
+    <g
+      data-plane
+      transform={`translate(${g.landing[0]} ${g.landing[1] - 16 * g.k})`}
+    >
+      <g class:list={["bob", !desktop && "small"]} transform={`scale(${g.k})`}>
+        <Plane />
+      </g>
+    </g>
+
+    <g data-place-pin>
+      <Pin x={g.pin[0]} y={g.pin[1]} radius={round(30 * g.k)} />
+    </g>
+    <g data-place-labels>
+      <g
+        class:list={[!desktop && "small"]}
+        transform={place_(g.pin[0], g.pin[1])}
+      >
+        {place && (
+          <text class="map-label" x="44" y="40">
+            {place}
+          </text>
+        )}
+        {date && (
+          <text class="map-label map-label--small" x="44" y="64">
+            {date}
+          </text>
+        )}
+      </g>
+    </g>
+  </g>
+</svg>
+
+<style>
+  /* Pieces drawn at 45% on phones: outlines inside are scaled back up, so they stay
+     as thick on screen as everywhere else (route.css divides stroke widths by --zoom). */
+  .small {
+    --zoom: calc(0.45 * var(--stage-fit, 1));
+  }
+
+  .star {
+    fill: var(--color-paper);
+  }
+
+  /* The quay's edge: the ink line the towers stand on, drawn over the water. */
+  .quay {
+    stroke: var(--color-ink);
+    stroke-width: calc(
+      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  /* The hidden sentence is tiny by design, but still legible on a phone. */
+  .small .hidden-detail {
+    font-size: 26px;
+  }
+
+  .wave {
+    stroke: var(--color-paper);
+    stroke-width: calc(
+      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  /* Scroll-drawn paths count their length in 1000 steps (GSAP rounds stroke-dashoffset
+     to whole pixels). */
+  .route-draw {
+    stroke-dasharray: 1000;
+  }
+
+  /* Idle: stars twinkle, lit windows flicker a little, the plane bobs, the ferry
+     crosses the harbour. */
+  :global(html[data-motion="on"]) .star {
+    animation: star-twinkle var(--duration-pulse) ease-in-out infinite alternate;
+  }
+
+  :global(html[data-motion="on"]) .star--late {
+    animation-delay: calc(var(--duration-pulse) * -0.6);
+  }
+
+  :global(html[data-motion="on"]) .lit {
+    animation: window-flicker var(--duration-tremble) ease-in-out infinite
+      alternate;
+  }
+
+  :global(html[data-motion="on"]) .lit--late {
+    animation-delay: calc(var(--duration-tremble) * -0.45);
+  }
+
+  :global(html[data-motion="on"]) .bob {
+    animation: plane-bob var(--duration-sway) ease-in-out infinite alternate;
+  }
+
+  :global(html[data-motion="on"]) .ferry {
+    animation: ferry-cross var(--duration-voyage) ease-in-out infinite alternate;
+  }
+
+  @keyframes star-twinkle {
+    from {
+      opacity: 0.35;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes window-flicker {
+    from {
+      opacity: 0.75;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes plane-bob {
+    from {
+      translate: 0 -3px;
+    }
+
+    to {
+      translate: 0 3px;
+    }
+  }
+
+  @keyframes ferry-cross {
+    to {
+      translate: -340px 30px;
+    }
+  }
+
+  /* During the flight the sky is pine ink: the hidden sentence is paper-coloured
+     there. Without motion the page stays paper, and it keeps the map's soft ink. */
+  :global(html[data-motion="on"]) .hidden-detail {
+    fill: var(--color-paper);
+  }
+
+  /* Before the choreography reaches them, these are not on stage. With motion off they
+     are simply there, in their finished places (the stars belong to the night flight). */
+  :global(html[data-motion="on"]) [data-stars],
+  :global(html[data-motion="on"]) [data-origin-map],
+  :global(html[data-motion="on"]) [data-origin-pin],
+  :global(html[data-motion="on"]) [data-plane],
+  :global(html[data-motion="on"]) [data-hills],
+  :global(html[data-motion="on"]) [data-harbour],
+  :global(html[data-motion="on"]) [data-tower],
+  :global(html[data-motion="on"]) [data-window],
+  :global(html[data-motion="on"]) [data-ferry],
+  :global(html[data-motion="on"]) [data-place-pin],
+  :global(html[data-motion="on"]) [data-place-labels] {
+    opacity: 0;
+  }
+
+  :global(html[data-motion="on"]) .route-draw {
+    stroke-dashoffset: 1000;
+  }
+
+  :global(html:not([data-motion="on"])) [data-stars],
+  :global(html[data-motion="on"]) .connector {
+    display: none;
+  }
+</style>

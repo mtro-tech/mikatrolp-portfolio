@@ -1,0 +1,219 @@
+---
+// Next destination as a staged scene (the frame is .stage-frame in src/styles/route.css):
+// the flight to Hong Kong, the second of the page's three big moments.
+// - With motion on, the frame is held on screen and next-destination.motion.ts plays the
+//   scene: the plane takes off from Lucerne, the sky turns to night, the map slides past
+//   underneath, the skyline rises, the pin lands, windows light up.
+// - With motion off (or no JavaScript) the same markup is a normal section: the skyline
+//   in its finished state and every line of text visible, with the hidden detail as a
+//   small note under the copy.
+import FlightScene from "../route/FlightScene.astro";
+import ChapterHeading from "./ChapterHeading.astro";
+
+interface Props {
+  stage: string;
+  heading: string;
+  /** Role, dates and status, already formatted for the language. */
+  meta?: string;
+  /** The copy in lines, grouped by moment: next, night, place, learn. */
+  beats: Record<string, string[]>;
+  /** Where the flight starts and ends. */
+  origin?: string;
+  place?: string;
+  /** The first day in Hong Kong, already formatted. */
+  date?: string;
+  /** The hidden detail's sentence. */
+  hidden?: string;
+}
+
+const { stage, heading, meta, beats, origin, place, date, hidden } =
+  Astro.props;
+const drawing = { origin, place, date, hidden };
+---
+
+<section class="flight" data-flight data-stage-name={stage}>
+  <div class="stage-frame" data-stage-frame>
+    {/* The night sky of the flight: decorative, animated version only. */}
+    <div class="night" data-night aria-hidden="true"></div>
+
+    <div class="scene" data-stage-scene>
+      <div class="layer layer--desktop">
+        <FlightScene part="desktop" {...drawing} />
+      </div>
+      <div class="layer layer--phone">
+        <FlightScene part="phone" {...drawing} />
+      </div>
+    </div>
+
+    <div class="copy">
+      <div class="stage-slot">
+        {Object.entries(beats).map(([moment, lines], index) => (
+          <div class="group" data-group={moment}>
+            {/* The heading belongs to the first moment, so later ones start at the top. */}
+            {index === 0 && (
+              <div class="title" data-title>
+                <ChapterHeading stage={stage} heading={heading} />
+                {meta && <p class="mt-1 text-ink-soft">{meta}</p>}
+              </div>
+            )}
+            <div class="lines font-display text-quote">
+              {lines.map((line) => (
+                <p data-line>{line}</p>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      {
+        /* The hidden detail as text. In the animated version it is on the map (drawn,
+           and not read out there), so here it is kept for screen readers only; without
+           motion it is a small note under the copy. */
+        hidden && (
+          <p class="aside text-ink-soft italic font-display">{hidden}</p>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .layer--desktop {
+    display: none;
+  }
+
+  .lines {
+    display: grid;
+    gap: 0.5rem;
+    text-wrap: balance;
+  }
+
+  .title {
+    margin-bottom: 1rem;
+  }
+
+  .aside {
+    margin-top: 1.5rem;
+  }
+
+  /* ---- Motion off: a normal scrolling section ------------------------------------ */
+  .night {
+    display: none;
+  }
+
+  .copy {
+    position: relative;
+    padding: 1.5rem var(--spacing-page) 3rem calc(10% + 1.25rem);
+  }
+
+  @media (width >= 60rem) {
+    .layer--desktop {
+      display: block;
+    }
+
+    .layer--phone {
+      display: none;
+    }
+
+    /* Without motion the whole text is shown at once, which the sky above the skyline
+       has no room for: the drawing comes first and the copy follows below it, right
+       of the route on its way out (the middle of the page). */
+    .copy {
+      width: 40%;
+      margin-left: 54%;
+      padding: 4rem 0 4rem;
+    }
+
+    /* Stacked, the large beat size would not fit the column. */
+    :global(html:not([data-motion="on"])) .lines {
+      font-size: var(--text-lead);
+      line-height: var(--text-lead--line-height);
+    }
+  }
+
+  /* ---- Motion on: the scene plays inside the held frame -------------------------- */
+  /* The night sky lies under the drawing and the text. */
+  :global(html[data-motion="on"]) .night {
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: var(--color-ink);
+    opacity: 0;
+  }
+
+  /* Phones: the drawing in the top 46% of the frame, the text below. The drawing
+     shrinks from the rail's top if the screen is short (--stage-fit, src/lib/scroll.ts). */
+  :global(html[data-motion="on"]) .scene {
+    --zoom: var(--stage-fit, 1);
+
+    position: absolute;
+    inset: 0 0 54% 0;
+    scale: var(--stage-fit, 1);
+    transform-origin: 10% 0;
+  }
+
+  :global(html[data-motion="on"]) .layer {
+    position: absolute;
+    inset: 0 0 auto 0;
+  }
+
+  :global(html[data-motion="on"]) .copy {
+    position: absolute;
+    inset: 46% 0 0 0;
+    padding: 0.5rem var(--spacing-page) 1.5rem calc(10% + 1.25rem);
+  }
+
+  /* The lines of a moment replace each other, so they share one place. */
+  :global(html[data-motion="on"]) .lines {
+    gap: 0;
+  }
+
+  :global(html[data-motion="on"]) .lines > * {
+    grid-area: 1 / 1;
+  }
+
+  /* The line that is read during the night flight is paper-coloured. */
+  :global(html[data-motion="on"]) [data-group="night"] {
+    color: var(--color-paper);
+  }
+
+  /* On the map in the animated version; here for screen readers only. */
+  :global(html[data-motion="on"]) .aside {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* Nothing is on stage before its moment (next-destination.motion.ts brings each in). */
+  :global(html[data-motion="on"]) .title,
+  :global(html[data-motion="on"]) [data-line] {
+    opacity: 0;
+  }
+
+  @media (width >= 60rem) {
+    /* Desktop: the drawing fills the frame and shrinks from where the route enters. */
+    :global(html[data-motion="on"]) .scene {
+      inset: 0;
+      transform-origin: 25% 0;
+    }
+
+    /* On a short screen the large beat size would run into the skyline. */
+    @media (height < 52rem) {
+      :global(html[data-motion="on"]) .lines {
+        font-size: var(--text-lead);
+        line-height: var(--text-lead--line-height);
+      }
+    }
+
+    /* The text stands right of the route, above the lower towers of the skyline. */
+    :global(html[data-motion="on"]) .copy {
+      inset: 13% auto 0 44%;
+      width: 36%;
+      margin: 0;
+      padding: 0;
+    }
+  }
+</style>

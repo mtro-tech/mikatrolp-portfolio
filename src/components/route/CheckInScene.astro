@@ -8,6 +8,7 @@
 // data-* attributes are the handles the choreography animates.
 import { contours, graticule } from "./contours";
 import Pin from "./Pin.astro";
+import Plane from "./Plane.astro";
 
 interface Props {
   part: "desktop" | "key" | "map";
@@ -196,8 +197,7 @@ const ground =
             : "translate(30 330) rotate(-67.6) scale(0.7)"
         }
       >
-        <path class="fill-paper ink-line" d="M22 0L-22 -15L-12 0L-22 15Z" />
-        <path class="ink-line" d="M22 0L-12 0" />
+        <Plane />
       </g>
     </g>
 
