@@ -5,25 +5,44 @@
 // the pieces move on their own.
 // The tin stands on (0, 0); its mouth is at (0, -170), the point the whole shaker
 // turns around (BehindTheBar.astro sets that as the transform origin).
-// Pieces that end up inside the tin are drawn before it, so they vanish behind its rim.
-// Every pour leaves from the lowest lip of its tipped vessel: the jigger turns around
-// the corner of its rim, and the measure falls from exactly there.
+// Vessels have a drawn mouth, and what goes in or comes out passes through it:
+// - the tin's mouth is drawn first and its front wall last, so the measure and the ice
+//   are seen entering the mouth and then vanish behind the wall;
+// - a stream starts a little way inside the vessel it comes from, which is drawn over
+//   it, so the stream's top end is never seen;
+// - the ice lies inside the scoop: the scoop's wall is drawn over the cubes.
 // behind-the-bar.motion.ts brings the pieces in.
 
-// The scoop's lip, where it rests over the tin's rim before it tips.
-const scoop = { x: -42, y: -200 };
-// Five cubes: where each lies on the scoop (from its lip) and where it ends up inside
-// the tin, in the order they tumble in. `turn` is how each is drawn turned.
+// The corner of the jigger's rim once it has tipped: where the measure leaves it.
+const pour = { x: -28, y: -204 };
+// The scoop's lip, where it rests over the tin's rim, and how far it tips (degrees).
+const scoop = { x: -42, y: -200, tip: 22 };
+// Scoop and load turn around the lip. Both carry the same unseen box, so "the lip" is
+// the same corner (100% 100%) of each for GSAP, whatever else they hold.
+const box = { x: -144, y: -72, width: 144, height: 72 };
+// Five cubes: where each lies in the scoop (from its lip: a rising row, each centre
+// behind the scoop's wall, so only the tops show) and where it ends up inside the tin,
+// in the order they slide out. `turn` is how each is drawn turned.
+// The cubes turn with the scoop, so their way into the tin is given in the tipped
+// scoop's own directions.
+const radians = (scoop.tip * Math.PI) / 180;
+const round = (n: number) => Math.round(n * 10) / 10;
 const cubes = [
-  { from: [-22, -24], to: [-26, -118], turn: -10 },
-  { from: [-34, -48], to: [22, -108], turn: 14 },
-  { from: [-44, -30], to: [-4, -138], turn: 24 },
-  { from: [-56, -54], to: [32, -138], turn: -18 },
-  { from: [-66, -36], to: [-30, -146], turn: 8 },
+  { from: [-18, -14], to: [-26, -118], turn: -10 },
+  { from: [-32, -20], to: [22, -108], turn: 14 },
+  { from: [-46, -26], to: [-4, -138], turn: 24 },
+  { from: [-60, -32], to: [32, -138], turn: -18 },
+  { from: [-74, -36], to: [-30, -146], turn: 8 },
 ].map(({ from, to, turn }) => {
-  const x = scoop.x + from[0];
-  const y = scoop.y + from[1];
-  return { x, y, dx: to[0] - x, dy: to[1] - y, turn };
+  const x = to[0] - scoop.x;
+  const y = to[1] - scoop.y;
+  return {
+    x: from[0],
+    y: from[1],
+    dx: round(x * Math.cos(radians) + y * Math.sin(radians) - from[0]),
+    dy: round(-x * Math.sin(radians) + y * Math.cos(radians) - from[1]),
+    turn,
+  };
 });
 ---
 
@@ -35,51 +54,65 @@ const cubes = [
 >
   {/* Everything that shakes together. */}
   <g data-shake>
-    {/* The measure: it grows down from the jigger's lip, then its tail runs out. */}
+    {/* The tin's mouth: its inside, seen a little from above. */}
+    <ellipse class="inside line" cx="0" cy="-170" rx="58" ry="12"></ellipse>
+
+    {/* The measure: one band from inside the jigger's cup down into the tin. It
+         grows from the top, and when the pouring stops its tail runs out downward. */}
     <g data-measure>
       <rect
         class="brass"
         data-measure-tail
-        x="-31.5"
-        y="-204"
+        x={pour.x - 3.5}
+        y={pour.y - 16}
         width="7"
-        height="54"
-        rx="3.5"
+        height="66"
       ></rect>
     </g>
 
-    {/* The scoop: a small steel trough with a brass handle, lip to the right. */}
-    <g data-scoop>
+    {/* The ice, lying in the scoop. It turns with the scoop until it slides out. */}
+    <g data-scoop-move>
       <g transform={`translate(${scoop.x} ${scoop.y})`}>
-        <g data-scoop-tip>
+        <g data-scoop-turn>
+          <rect class="unseen" {...box}></rect>
+          {cubes.map(({ x, y, dx, dy, turn }) => (
+            <g data-cube data-dx={dx} data-dy={dy}>
+              <rect
+                class="steel-light line"
+                x={x - 10}
+                y={y - 10}
+                width="20"
+                height="20"
+                rx="3"
+                transform={`rotate(${turn} ${x} ${y})`}
+              />
+            </g>
+          ))}
+        </g>
+      </g>
+    </g>
+
+    {/* The scoop, drawn over the ice: a bowl with a rounded back, open at the lip
+         on the right, on a brass handle. */}
+    <g data-scoop-move data-scoop>
+      <g transform={`translate(${scoop.x} ${scoop.y})`}>
+        <g data-scoop-turn data-scoop-wall data-tip={scoop.tip}>
+          <rect class="unseen" {...box}></rect>
           <rect
             class="brass line"
-            x="-142"
+            x="-140"
             y="-30"
-            width="52"
+            width="56"
             height="12"
             rx="6"
           ></rect>
           <path
             class="steel-light line"
-            d="M0 0L-86 0Q-94 0 -94 -8L-94 -40L-84 -40L0 -10Z"
+            d="M0 0L-72 0Q-88 0 -88 -16L-88 -38Q-88 -44 -82 -44L-76 -44L0 -8Z"
           ></path>
         </g>
       </g>
     </g>
-    {cubes.map(({ x, y, dx, dy, turn }) => (
-      <g data-cube data-dx={dx} data-dy={dy}>
-        <rect
-          class="steel-light line"
-          x={x - 10}
-          y={y - 10}
-          width="20"
-          height="20"
-          rx="3"
-          transform={`rotate(${turn} ${x} ${y})`}
-        />
-      </g>
-    ))}
 
     <g data-cap>
       <path
@@ -87,11 +120,15 @@ const cubes = [
         d="M-52 -150L-40 -262Q-39 -270 -31 -270L31 -270Q39 -270 40 -262L52 -150Z"
       ></path>
     </g>
+    {/* The tin's front wall, from the front of its rim down. */}
     <path
       class="steel-dark line"
-      d="M-58 -170L-46 -8Q-45 0 -37 0L37 0Q45 0 46 -8L58 -170Z"
+      d="M-58 -170A58 12 0 0 0 58 -170L46 -8Q45 0 37 0L-37 0Q-45 0 -46 -8Z"
     ></path>
-    <path class="line" d="M-56 -146L56 -146M-49 -30L49 -30"></path>
+    <path
+      class="line"
+      d="M-56.3 -146A58 12 0 0 0 56.3 -146M-49 -30L49 -30"
+    ></path>
     <path
       class="mark"
       data-splash="top"
@@ -104,14 +141,15 @@ const cubes = [
     ></path>
   </g>
 
-  {/* The jigger: an hourglass-shaped measure, drawn with the corner of its rim on
-       (0, 0). GSAP moves the outer group and turns the inner one around that corner,
-       so the corner is where the measure leaves it. */}
+  {/* The jigger: a steel measure with its mouth showing, drawn with the corner of its
+       rim on (0, 0) and over the measure. GSAP moves the outer group and turns the
+       inner one around that corner, so the measure comes out of the cup there. */}
   <g data-jigger>
-    <g transform="translate(-28 -204) scale(1.3)">
+    <g transform={`translate(${pour.x} ${pour.y}) scale(1.3)`}>
       <g data-jigger-tip>
-        <path class="brass line" d="M-40 0L0 0L-14 34L-26 34Z"></path>
-        <path class="brass line" d="M-26 34L-14 34L-6 56L-34 56Z"></path>
+        <path class="steel-light line" d="M-40 0L0 0L-14 34L-26 34Z"></path>
+        <path class="steel-light line" d="M-26 34L-14 34L-6 56L-34 56Z"></path>
+        <ellipse class="inside line" cx="-20" cy="0" rx="20" ry="4.5"></ellipse>
       </g>
     </g>
   </g>
@@ -151,14 +189,24 @@ const cubes = [
     fill: var(--color-paper-deep);
   }
 
+  /* The inside of a vessel, seen through its mouth. */
+  .inside {
+    fill: var(--color-ink-soft);
+  }
+
   .brass {
     fill: var(--color-brass);
   }
 
+  /* Only there to give two groups the same box (see `box` above). */
+  .unseen {
+    fill: none;
+    stroke: none;
+  }
+
   /* Not on stage before their moments. */
   [data-measure],
-  [data-scoop],
-  [data-cube],
+  [data-scoop-move],
   [data-cap],
   [data-splash],
   [data-jigger] {

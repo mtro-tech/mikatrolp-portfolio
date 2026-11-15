@@ -58,29 +58,24 @@ const { stage, heading, meta, start, end, beats, items = [] } = Astro.props;
             <p class="font-semibold" data-modules-label>
               {item.label}
             </p>
-            {/* Each module is an open book of two equal pages: its name is on the
-                right page; the left page, the binding and the cover are decoration.
-                Drawn open; academy.motion.ts closes each one and opens it at its
-                moment. */}
-            <ul class="books font-display">
-              {item.values.map((value) => (
-                <li class="book" data-book>
-                  <span
-                    class="half half--left"
-                    data-book-left
-                    aria-hidden="true"
-                  >
-                    <span class="leaf leaf--left" />
-                  </span>
-                  <span class="half half--right">
-                    <span class="leaf leaf--right" data-module>
-                      {value}
-                    </span>
-                  </span>
-                  <span class="cover" data-book-cover aria-hidden="true" />
-                </li>
-              ))}
-            </ul>
+            {/* One open book for the modules. The names are a real list, laid over
+                the book's two pages: the first two on the left page, the third on the
+                right. The pages, the binding and the cover are decoration. Drawn open;
+                academy.motion.ts closes it and opens it at its moment. */}
+            <div class="book" data-book>
+              <span class="half half--left" data-book-left aria-hidden="true">
+                <span class="leaf leaf--left" />
+              </span>
+              <span class="half half--right" aria-hidden="true">
+                <span class="leaf leaf--right" />
+              </span>
+              <ul class="names font-display">
+                {item.values.map((value) => (
+                  <li data-module>{value}</li>
+                ))}
+              </ul>
+              <span class="cover" data-book-cover aria-hidden="true" />
+            </div>
           </div>
         ))}
       </div>
@@ -103,33 +98,25 @@ const { stage, heading, meta, start, end, beats, items = [] } = Astro.props;
     margin-bottom: 1rem;
   }
 
-  /* The modules: three open books in the house style (flat fills, an ink outline).
-     Two equal halves meet at the spine; each is the cover's board with a page on it. */
-  .books {
-    --line: calc(var(--route-stroke-width) * 1px);
-    --board: 0.3rem;
-
-    display: grid;
-    gap: 0.65rem;
-    margin-top: 0.9rem;
-    font-size: 1rem;
-    line-height: 1.35;
-  }
-
+  /* The modules: one open book in the house style (flat fills, an ink outline).
+     Two equal halves meet at the spine; each is the cover's board with a page on it.
+     The list of names lies over both pages. */
   .book {
+    --line: calc(var(--route-stroke-width) * 1px);
+    --board: 0.35rem;
     --cover: var(--color-route);
 
     position: relative;
     display: grid;
     grid-template-columns: 1fr 1fr;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.35;
   }
 
-  .book:nth-child(3n + 2) {
-    --cover: var(--color-brass);
-  }
-
-  .book:nth-child(3n) {
-    --cover: var(--color-paper-deep);
+  .half,
+  .names {
+    grid-row: 1;
   }
 
   .half {
@@ -140,42 +127,29 @@ const { stage, heading, meta, start, end, beats, items = [] } = Astro.props;
   }
 
   .half--left {
+    grid-column: 1;
     padding-right: 0;
     border-right: 0;
     border-radius: 0.5rem 0 0 0.5rem;
   }
 
   .half--right {
+    grid-column: 2;
     padding-left: 0;
     border-radius: 0 0.5rem 0.5rem 0;
   }
 
   .leaf {
-    display: flex;
-    align-items: center;
     position: relative;
-    min-height: 4rem;
-    padding: 0.5rem 0.75rem;
     border: var(--line) solid var(--color-ink);
     background: var(--color-paper);
-    text-wrap: balance;
-    overflow-wrap: anywhere;
-    hyphens: auto;
   }
 
-  /* The left page: a few ruled lines, like a page of notes, and a brass ribbon. */
   .leaf--left {
     border-radius: 0.3rem 0 0 0.3rem;
-    background:
-      linear-gradient(var(--color-paper-deep), var(--color-paper-deep)) 35%
-        34% / 55% var(--line) no-repeat,
-      linear-gradient(var(--color-paper-deep), var(--color-paper-deep)) 35%
-        50% / 55% var(--line) no-repeat,
-      linear-gradient(var(--color-paper-deep), var(--color-paper-deep)) 28%
-        66% / 40% var(--line) no-repeat,
-      var(--color-paper);
   }
 
+  /* A brass ribbon marks the page. */
   .leaf--left::after {
     content: "";
     position: absolute;
@@ -190,6 +164,35 @@ const { stage, heading, meta, start, end, beats, items = [] } = Astro.props;
   .leaf--right {
     border-left: 0;
     border-radius: 0 0.3rem 0.3rem 0;
+  }
+
+  /* The names, over the two pages: they fill the left page from the top, and the last
+     one takes the right page. */
+  .names {
+    grid-column: 1 / -1;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-flow: column;
+    grid-template-rows: auto auto;
+    align-content: center;
+    row-gap: 0.75rem;
+    min-height: 10rem;
+    padding: calc(var(--board) + 1.6rem) 0 calc(var(--board) + 1rem);
+  }
+
+  .names li {
+    /* Whole words only: a name is never hyphenated (anywhere is the last resort on
+       very narrow screens). */
+    padding-inline: calc(var(--board) + 0.65rem);
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+
+  .names li:last-child {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: center;
   }
 
   /* The closed cover lies over the right half; only the animated version shows it. */
@@ -279,7 +282,8 @@ const { stage, heading, meta, start, end, beats, items = [] } = Astro.props;
   :global(html[data-motion="on"]) .title,
   :global(html[data-motion="on"]) [data-line],
   :global(html[data-motion="on"]) [data-modules-label],
-  :global(html[data-motion="on"]) [data-book] {
+  :global(html[data-motion="on"]) [data-book],
+  :global(html[data-motion="on"]) [data-module] {
     opacity: 0;
   }
 
@@ -301,12 +305,16 @@ const { stage, heading, meta, start, end, beats, items = [] } = Astro.props;
       padding: 0;
     }
 
-    /* The text has gone when the books come, so they may be a little wider than the
-       column and their names a size larger. */
-    .books {
+    /* The text has gone when the book comes, so it may be a little wider than the
+       column and its names a size larger. */
+    .book {
       width: 108%;
       max-width: 31rem;
-      font-size: 1.125rem;
+      font-size: 1.25rem;
+    }
+
+    .names li {
+      padding-inline: calc(var(--board) + 1rem);
     }
   }
 </style>

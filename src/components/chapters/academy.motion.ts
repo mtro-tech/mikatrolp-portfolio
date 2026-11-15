@@ -2,7 +2,8 @@
 // What the reader should feel: arriving in Lucerne as the town assembles itself, the
 // bridge growing across the water under the route; a moment of bloom for the school;
 // the pin landing as a plain "I am here"; and the favourite modules arriving as books
-// worth picking up: three are dropped into the text column, then opened one by one.
+// worth picking up: one book is dropped into the text column and opens, and the three
+// names are written onto its pages one by one.
 // The town builds while the chapter scrolls into view, so the route never arrives at
 // an empty page; once the frame is held, the text can begin.
 // Pace (CLAUDE.md §4): in every moment the objects move first, then the line arrives,
@@ -46,9 +47,10 @@ export const academyScene: Scene = ({ isDesktop }) => {
   const title = frame.querySelector("[data-title]");
   const [programme, school, now] = text("[data-line]");
   const modulesLabel = frame.querySelector("[data-modules-label]");
-  const books = text("[data-book]");
-  const covers = text("[data-book-cover]");
-  const leftHalves = text("[data-book-left]");
+  const book = frame.querySelector("[data-book]");
+  const cover = frame.querySelector("[data-book-cover]");
+  const leftHalf = frame.querySelector("[data-book-left]");
+  const names = text("[data-module]");
 
   const { at, approach } = tokens;
   const out = stage.beatOut.duration;
@@ -109,66 +111,58 @@ export const academyScene: Scene = ({ isDesktop }) => {
       beatIn(now, at.now);
       beatOut([title, now], at.books - out);
 
-      // 4. Favourite modules. First all three books are dropped into the column,
-      //    closed, one after another: a small pile of things worth opening.
+      // 4. Favourite modules. A closed book is dropped into the column: as wide as
+      //    one page, lying in the middle of its open width.
       beatIn(modulesLabel, at.books);
-      books.forEach((book, index) => {
-        timeline
-          // Closed, a book is as wide as one page and lies in the middle of its place.
-          .set(book, { xPercent: tokens.book.closedShift }, 0)
-          // Opacity, not visibility: the name stays available to screen readers.
-          .fromTo(
-            book,
-            { opacity: 0, y: tokens.book.fromY },
-            {
-              opacity: 1,
-              y: 0,
-              duration: tokens.book.duration,
-              ease: tokens.book.ease,
-            },
-            at.drop + index * at.dropStep,
-          );
-      });
+      timeline.set(book, { xPercent: tokens.book.closedShift }, 0).fromTo(
+        book,
+        { opacity: 0, y: tokens.book.fromY },
+        {
+          opacity: 1,
+          y: 0,
+          duration: tokens.book.duration,
+          ease: tokens.book.ease,
+        },
+        at.drop,
+      );
 
-      //    Then they are opened one after another, each with a rest for its name:
-      //    the book slides to its place while the cover turns away at the spine, and
-      //    the left page unfolds on the other side.
+      //    It opens: the book slides to its place while the cover turns away at the
+      //    spine, and the left page unfolds on the other side.
       const half = tokens.open.duration / 2;
-      books.forEach((book, index) => {
-        const opens = at.open + index * at.openStep;
-        timeline
-          .to(
-            book,
-            {
-              xPercent: 0,
-              duration: tokens.open.duration,
-              ease: "power1.inOut",
-            },
-            opens,
-          )
-          .fromTo(
-            covers[index],
-            { scaleX: 1 },
-            {
-              scaleX: 0,
-              transformOrigin: "0% 50%",
-              duration: half,
-              ease: "power1.in",
-            },
-            opens,
-          )
-          .fromTo(
-            leftHalves[index],
-            { scaleX: 0 },
-            {
-              scaleX: 1,
-              transformOrigin: "100% 50%",
-              duration: half,
-              ease: "power1.out",
-            },
-            opens + half,
-          );
-      });
+      timeline
+        .to(
+          book,
+          { xPercent: 0, duration: tokens.open.duration, ease: "power1.inOut" },
+          at.open,
+        )
+        .fromTo(
+          cover,
+          { scaleX: 1 },
+          {
+            scaleX: 0,
+            transformOrigin: "0% 50%",
+            duration: half,
+            ease: "power1.in",
+          },
+          at.open,
+        )
+        .fromTo(
+          leftHalf,
+          { scaleX: 0 },
+          {
+            scaleX: 1,
+            transformOrigin: "100% 50%",
+            duration: half,
+            ease: "power1.out",
+          },
+          at.open + half,
+        );
+
+      //    Then the names are written onto its pages one after another, each with a
+      //    rest: objects first, then the text.
+      names.forEach((name, index) =>
+        beatIn(name, at.names + index * at.nameStep),
+      );
 
       // The route steps off the bridge and runs on towards the next chapter.
       timeline.to(

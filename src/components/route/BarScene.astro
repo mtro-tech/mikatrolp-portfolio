@@ -74,6 +74,9 @@ const g =
 const round = (n: number) => Math.round(n * 10) / 10;
 // How far the pouring bottle leans from straight down, in degrees.
 const bottleLean = 48;
+// A stream starts this far up inside its vessel, which is drawn over it, so the
+// stream's top end is never seen.
+const inside = 9;
 const place = (x: number, y: number, scale: number) =>
   `translate(${x} ${y}) scale(${scale})`;
 
@@ -439,7 +442,7 @@ const glasses = [
     class="pour"
     data-pour
     pathLength="1000"
-    d={`M${g.bottle.x} ${g.bottle.y}L${g.bottle.x} ${g.counter.top - 58 * g.glasses.scale}`}
+    d={`M${g.bottle.x} ${g.bottle.y - inside * g.bottle.scale}L${g.bottle.x} ${g.counter.top - 58 * g.glasses.scale}`}
   ></path>
   <g data-bottle>
     {/* The bottle is drawn with the low corner of its mouth on (0, 0), so that corner
@@ -461,12 +464,14 @@ const glasses = [
     </g>
   </g>
   {/* Last: the drink strained from the shaker (Shaker.astro) into the third glass.
-      The stream starts where the low corner of the shaker's rim will be. */}
+      The stream comes out where the low corner of the shaker's rim will be; it
+      starts a little above that, hidden by the shaker, which lies over the drawing. */}
   <path
     class="pour pour--brass"
     data-serve
+    data-inside={round(inside * g.glasses.scale)}
     pathLength="1000"
-    d={`M${g.glasses.x[2]} ${g.counter.top - 150 * g.glasses.scale}L${g.glasses.x[2]} ${g.counter.top - 14 * g.glasses.scale}`}
+    d={`M${g.glasses.x[2]} ${g.counter.top - (150 + inside) * g.glasses.scale}L${g.glasses.x[2]} ${g.counter.top - 14 * g.glasses.scale}`}
   ></path>
 
   {glasses.map(({ name, inside, level, liquid }, index) => (
