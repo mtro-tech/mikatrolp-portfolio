@@ -51,7 +51,7 @@ export const barScene: Scene = ({ isDesktop }) => {
   const depth = (liquid: Element) =>
     Number((liquid as SVGElement).dataset.depth);
 
-  holdStage(
+  return holdStage(
     frame,
     isDesktop ? tokens.screens.desktop : tokens.screens.phone,
     (timeline) => {

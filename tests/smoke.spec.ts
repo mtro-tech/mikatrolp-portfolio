@@ -267,14 +267,7 @@ test("Behind the bar plays as a held scene, one moment at a time", async ({
   for (const part of ["[data-counter]", "[data-shelf]", "[data-lamp]"]) {
     await expect(drawing.locator(part)).toHaveCSS("opacity", "0");
   }
-  // The flood waits below the frame, which clips it.
-  const below = await chapter.locator("[data-flood]").evaluate((flood) => {
-    const frame = flood.closest("[data-stage-frame]")!;
-    return (
-      flood.getBoundingClientRect().top - frame.getBoundingClientRect().bottom
-    );
-  });
-  expect(below).toBeGreaterThanOrEqual(0);
+  await expect(chapter.locator("[data-flood]")).toHaveCSS("opacity", "0");
 
   // The counter is set; the lines replace each other.
   await playBar(page, 2.0);
@@ -352,7 +345,7 @@ test("Foundations plays as a held scene, one moment at a time", async ({
   for (const part of ["[data-ruler]", "[data-ground]", "[data-numeral]"]) {
     await expect(drawing.locator(part)).toHaveCSS("opacity", "0");
   }
-  await expect(lastPeg).toHaveAttribute("transform", /scale\(0\)/);
+  await expect(drawing.locator("[data-pegs]")).toHaveCSS("opacity", "0");
 
   // All 60 are counted; the lesson has not started.
   await playFoundations(page, 2.6);
@@ -381,6 +374,8 @@ test("Foundations plays as a held scene, one moment at a time", async ({
   await expect(numeral).not.toHaveText("60");
   await page.getByRole("button", { name: /Bewegung/ }).click();
   await expect(numeral).toHaveText("60");
+  // Lines the scene had faded out are back, too (its tweens were built after load).
+  await expect(lines("lesson").first()).toHaveCSS("opacity", "1");
   await expect(lastPeg).toHaveAttribute(
     "transform",
     new RegExp(`^${drawnPlace.replace(/[()]/g, "\\$&")} `),

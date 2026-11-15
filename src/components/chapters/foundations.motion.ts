@@ -51,7 +51,7 @@ export const foundationsScene: Scene = () => {
   const placed: Element[] = [];
   const drawn = pegs.map((peg) => peg.getAttribute("transform") ?? "");
 
-  holdStage(frame, tokens.screens, (timeline) => {
+  const release = holdStage(frame, tokens.screens, (timeline) => {
     const { beatIn, beatOut } = beatMoves(timeline);
 
     // 1. Order arrives: the ruler slides in beside the route. The leader is already
@@ -237,6 +237,7 @@ export const foundationsScene: Scene = () => {
   // GSAP cannot put back what it did not write: when motion is switched off, show the
   // full count and stand every peg in its drawn place again.
   return () => {
+    release();
     if (numeral) numeral.textContent = total;
     placed.forEach((peg) =>
       peg.setAttribute("transform", drawn[pegs.indexOf(peg)]),

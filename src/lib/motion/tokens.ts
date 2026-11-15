@@ -7,6 +7,8 @@ export const DESKTOP = "(width >= 60rem)";
 export const stage = {
   /** Seconds the scene trails the scrollbar, so motion glides instead of ticking. */
   scrub: 0.6,
+  /** A scene's timeline is built once its frame is within this many screen heights. */
+  buildAhead: 1,
   /** How a text beat arrives and leaves: it rises into place, then lifts away. */
   beatIn: { duration: 0.5, ease: "power2.out", y: 28 },
   beatOut: { duration: 0.35, ease: "power1.in", y: -20 },

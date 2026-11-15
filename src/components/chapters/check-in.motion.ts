@@ -65,7 +65,7 @@ export const checkInScene: Scene = ({ isDesktop }) => {
     return { x, y, scale: (reach / 50) * 1.05 };
   };
 
-  holdStage(
+  return holdStage(
     frame,
     isDesktop ? tokens.screens.desktop : tokens.screens.phone,
     (timeline) => {
