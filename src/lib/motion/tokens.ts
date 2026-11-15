@@ -28,6 +28,37 @@ export const arrival = {
   routeDuration: 0.75,
 } as const;
 
+/** Foundations: the ruler, 60 pegs, one goes first, carried on. A short stop. */
+export const foundations = {
+  /** Screens of scrolling the scene is held for, on every screen size. */
+  screens: 2.5,
+  /** When each moment starts, in units on the scene's timeline. */
+  at: {
+    title: 0,
+    ruler: 0.1,
+    rank: 0.3,
+    count: 1.2,
+    lesson: 3.1,
+    follow: 3.6,
+    arcs: 5.0,
+    carry: 6.4,
+    ride: 6.9,
+    end: 8.6,
+  },
+  ruler: { fromX: -80, duration: 0.6, ease: "power2.out" },
+  /** The pegs pop up on the ticks one by one while the numeral counts with them. */
+  count: { duration: 1.2, pop: 0.15, popEase: "back.out(3)", dot: 0.42 },
+  ground: { duration: 0.6, ease: "power2.out", fromScale: 0.9 },
+  /** The leader steps out first; the others follow one after another. */
+  step: { duration: 0.6, ease: "back.out(1.4)" },
+  follow: { span: 1.2, duration: 0.5, ease: "power2.inOut" },
+  /** One arc each way, the second a moment after the first. */
+  arcs: { duration: 0.6, gap: 0.5, head: 0.2 },
+  /** Back onto the route, then down it and out of the frame. */
+  exit: { duration: 0.5, ease: "power2.inOut" },
+  ride: { duration: 1.3, ease: "power1.in" },
+} as const;
+
 /** Check-in: key, door, map, languages. Positions are units on the scene's timeline. */
 export const checkIn = {
   /** Screens of scrolling the scene is held for. */

@@ -22,7 +22,7 @@ const { stage, heading, beats, items = [], place, origin } = Astro.props;
 ---
 
 <section class="check-in" data-check-in data-stage-name={stage}>
-  <div class="frame" data-stage-frame>
+  <div class="stage-frame" data-stage-frame>
     <div class="backdrop" data-backdrop></div>
 
     <div class="scene" data-stage-scene>
@@ -42,7 +42,7 @@ const { stage, heading, beats, items = [], place, origin } = Astro.props;
         <ChapterHeading stage={stage} heading={heading} />
       </div>
 
-      <div class="slot">
+      <div class="stage-slot">
         {beats.began?.map((line) => (
           <p class="beat font-display text-quote" data-beat="began">
             {line}
@@ -88,25 +88,6 @@ const { stage, heading, beats, items = [], place, origin } = Astro.props;
 
 <style>
   /* ---- Shared by both modes ---------------------------------------------------- */
-  /* Clipped in both modes: the route is drawn far beyond the frame in both directions
-     (so tall frames are covered) and must not spill into the neighbouring chapters. */
-  .frame {
-    position: relative;
-    overflow: clip;
-  }
-
-  /* The rail on phones: the route as a straight line at 10% (x = 39 of 390). */
-  .frame::before {
-    content: "";
-    position: absolute;
-    z-index: 1;
-    inset-block: 0;
-    left: 10%;
-    width: calc(var(--route-stroke-width) * 1px);
-    translate: -50% 0;
-    background: var(--color-route);
-  }
-
   .layer--desktop {
     display: none;
   }
@@ -202,16 +183,7 @@ const { stage, heading, beats, items = [], place, origin } = Astro.props;
     padding: 1.5rem var(--spacing-page) 3rem calc(10% + 1.25rem);
   }
 
-  .slot {
-    display: grid;
-    gap: 1rem;
-  }
-
   @media (width >= 60rem) {
-    .frame::before {
-      content: none;
-    }
-
     .layer--desktop {
       display: block;
     }
@@ -221,10 +193,6 @@ const { stage, heading, beats, items = [], place, origin } = Astro.props;
     }
 
     /* The drawing lies behind; the copy takes the column left of the map (x < 480). */
-    .frame {
-      min-height: 56.25vw;
-    }
-
     .scene {
       position: absolute;
       inset: 0;
@@ -244,12 +212,7 @@ const { stage, heading, beats, items = [], place, origin } = Astro.props;
     }
   }
 
-  /* ---- Motion on: the frame is one screen and the scene plays inside it ---------- */
-  :global(html[data-motion="on"]) .frame {
-    height: max(calc(100svh - var(--header-height)), 34rem);
-    overflow: clip;
-  }
-
+  /* ---- Motion on: the scene plays inside the held frame (route.css: .stage-frame) -- */
   /* A circle that grows from the keyhole until it covers the frame: the dark scene. */
   :global(html[data-motion="on"]) .backdrop {
     display: block;
@@ -285,17 +248,6 @@ const { stage, heading, beats, items = [], place, origin } = Astro.props;
     padding: 0.5rem var(--spacing-page) 1.5rem calc(10% + 1.25rem);
   }
 
-  /* Beats share one place and replace each other. */
-  :global(html[data-motion="on"]) .slot {
-    display: grid;
-    gap: 0;
-    margin-top: 1rem;
-  }
-
-  :global(html[data-motion="on"]) .slot > * {
-    grid-area: 1 / 1;
-  }
-
   :global(html[data-motion="on"]) .languages {
     position: absolute;
     inset: 1rem var(--spacing-page) auto calc(10% + 1.25rem);
@@ -319,10 +271,6 @@ const { stage, heading, beats, items = [], place, origin } = Astro.props;
   }
 
   @media (width >= 60rem) {
-    :global(html[data-motion="on"]) .frame {
-      min-height: 0;
-    }
-
     /* Desktop: the drawing fills the frame and shrinks from where the route enters. */
     :global(html[data-motion="on"]) .scene {
       inset: 0;

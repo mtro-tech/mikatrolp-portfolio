@@ -173,3 +173,56 @@ html[data-motion="on"] .idle-shimmer--late {
     translate: 4px 0;
   }
 }
+
+/* Staged chapters (CLAUDE.md §4): the frame every chapter scene is built in.
+   With motion on it is one screen tall and held; with motion off it is a normal section. */
+
+/* Clipped in both modes: routes are drawn far beyond the frame in both directions
+   (so tall frames are covered) and must not spill into the neighbouring chapters. */
+.stage-frame {
+  position: relative;
+  overflow: clip;
+}
+
+/* The rail on phones: the route as a straight line at 10% (x = 39 of 390). */
+.stage-frame::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset-block: 0;
+  left: 10%;
+  width: calc(var(--route-stroke-width) * 1px);
+  translate: -50% 0;
+  background: var(--color-route);
+}
+
+html[data-motion="on"] .stage-frame {
+  height: max(calc(100svh - var(--header-height)), 34rem);
+}
+
+/* The text slot: stacked lines without motion; with motion, beats share one place
+   and replace each other. */
+.stage-slot {
+  display: grid;
+  gap: 1rem;
+}
+
+html[data-motion="on"] .stage-slot {
+  gap: 0;
+  margin-top: 1rem;
+}
+
+html[data-motion="on"] .stage-slot > * {
+  grid-area: 1 / 1;
+}
+
+@media (width >= 60rem) {
+  .stage-frame::before {
+    content: none;
+  }
+
+  /* Without motion the drawing lies behind the copy and sets the section's height. */
+  html:not([data-motion="on"]) .stage-frame {
+    min-height: 56.25vw;
+  }
+}

@@ -6,7 +6,7 @@
 // Idle motion (the key swaying, flecks, shimmer) is CSS, on inner elements.
 import { gsap } from "gsap";
 import type { Scene } from "../../lib/motion";
-import { holdStage, visible } from "../../lib/motion/stage";
+import { beatMoves, holdStage, visible } from "../../lib/motion/stage";
 import { checkIn as tokens, stage } from "../../lib/motion/tokens";
 
 // Scroll-drawn paths declare pathLength="1000" (CheckInScene.astro).
@@ -69,31 +69,7 @@ export const checkInScene: Scene = ({ isDesktop }) => {
     frame,
     isDesktop ? tokens.screens.desktop : tokens.screens.phone,
     (timeline) => {
-      // Text fades with opacity only (never visibility), so every line stays available
-      // to screen readers the whole time, whatever is on stage.
-      const beatIn = (target: gsap.TweenTarget, position: number) =>
-        timeline.fromTo(
-          target,
-          { opacity: 0, y: stage.beatIn.y },
-          {
-            opacity: 1,
-            y: 0,
-            duration: stage.beatIn.duration,
-            ease: stage.beatIn.ease,
-          },
-          position,
-        );
-      const beatOut = (target: gsap.TweenTarget, position: number) =>
-        timeline.to(
-          target,
-          {
-            opacity: 0,
-            y: stage.beatOut.y,
-            duration: stage.beatOut.duration,
-            ease: stage.beatOut.ease,
-          },
-          position,
-        );
+      const { beatIn, beatOut } = beatMoves(timeline);
 
       // 1. How it began. The key is already hanging there as the scene arrives.
       beatIn(title, at.title);

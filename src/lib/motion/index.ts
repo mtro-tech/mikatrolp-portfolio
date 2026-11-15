@@ -9,8 +9,11 @@ import { DESKTOP } from "./tokens";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/** A chapter's scroll scene. Runs inside gsap.matchMedia(), so it is reverted for us. */
-export type Scene = (context: { isDesktop: boolean }) => void;
+/**
+ * A chapter's scroll scene. Runs inside gsap.matchMedia(), so its tweens are reverted
+ * for us; it may return a cleanup for anything GSAP cannot revert (such as text it wrote).
+ */
+export type Scene = (context: { isDesktop: boolean }) => void | (() => void);
 
 const STORAGE_KEY = "motion";
 const root = document.documentElement;
@@ -29,7 +32,8 @@ function start(scenes: Scene[]) {
     { isDesktop: DESKTOP, isPhone: `not all and ${DESKTOP}` },
     (context) => {
       const isDesktop = Boolean(context.conditions?.isDesktop);
-      for (const scene of scenes) scene({ isDesktop });
+      const cleanups = scenes.map((scene) => scene({ isDesktop }));
+      return () => cleanups.forEach((cleanup) => cleanup?.());
     },
   );
 

@@ -4,4 +4,16 @@ heading: Lieutenant, Swiss Infantry
 organisation:
   name: Swiss Armed Forces
 body:
-  - "As a lieutenant in the Swiss Infantry, I led and trained 60 people. It taught me that leading by example, with integrity and fairness, creates respect that is earned both ways. I carry that work ethic into hospitality: going the extra mile, for the result and for the people I lead."
+  - "As a lieutenant in the Swiss Infantry, I led and trained 60 people. It taught me that leading by example, with integrity and fairness, creates respect that is earned both ways. I carry that work ethic into hospitality, for the result and for the people I lead."
+# The same copy as body, cut into short beats for the staged scene. No facts are added.
+beats:
+  rank:
+    - "As a lieutenant in the Swiss Infantry,"
+    - "I led and trained 60 people."
+  lesson:
+    - "It taught me that leading by example,"
+    - "with integrity and fairness,"
+    - "creates respect that is earned both ways."
+  carry:
+    - "I carry that work ethic into hospitality,"
+    - "for the result and for the people I lead."
