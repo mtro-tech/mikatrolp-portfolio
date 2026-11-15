@@ -1,10 +1,11 @@
 // Next destination, staged: the flight to Hong Kong, the page's second big moment.
 // What the reader should feel: setting off. The plane that once flew to Toronto lifts
-// off again, the cabin lights go down (the frame turns to night, the header with it),
-// and for a long stretch the reader's own scrolling flies the plane while the world
-// slides past underneath, with small lit joints far below. Then the sky opens and a
-// skyline rises tower by tower, the way St. Gallen rose in the hero, but far taller: the
-// same journey, a much bigger place. The pin lands; rooms light up one by one.
+// off again, and for a long stretch the reader's own scrolling flies it while the land
+// slides past underneath: meadows, villages and a river by day, clouds drifting by.
+// Then the cabin lights go down (the frame turns to night, the header with it) and
+// cities pass below with their windows lit. The sky opens and Hong Kong's harbour
+// front rises tower by tower, the way St. Gallen rose in the hero, but far taller,
+// the Rosewood tower last. The pin lands; rooms light up one by one, the hotel's first.
 // The map and the plane are ready when the chapter scrolls into view, so the route
 // never arrives at an empty page.
 // Pace (CLAUDE.md §4): in every moment the objects move first, then the line arrives,
@@ -45,7 +46,23 @@ export const flightScene: Scene = ({ isDesktop }) => {
   const night = frame.querySelector("[data-night]");
   const towers = all("[data-tower]");
   const grid = one("[data-grid]");
+  const land = one("[data-land]");
+  const cityLights = one("[data-city-lights]");
   if (!world || !path || !plane) return;
+
+  // Clouds are fixed in the frame and drift left as the flight goes on, each layer at
+  // its own speed. The scene writes their place itself, like the strip's.
+  const clouds = all("[data-cloud]").map((node) => {
+    const drawn = node.getAttribute("transform") ?? "";
+    return {
+      node,
+      x: Number((node as SVGGElement).dataset.x),
+      y: Number((node as SVGGElement).dataset.y),
+      drift: Number((node.parentNode as SVGGElement).dataset.drift),
+      // Whatever follows the place (the size it is drawn at) is kept.
+      rest: drawn.slice(drawn.indexOf(")") + 1),
+    };
+  });
 
   const title = frame.querySelector("[data-title]");
   const [next] = lines("next");
@@ -80,12 +97,22 @@ export const flightScene: Scene = ({ isDesktop }) => {
     const heading =
       ((Math.atan2(ahead.y - behind.y, ahead.x - behind.x) * 180) / Math.PI) *
       level;
-    world.setAttribute("transform", `translate(${-travel * flown.share} 0)`);
+    // The strip stays put until the plane has left its waiting place, so the route
+    // that arrives from above stays exactly where the chapter before handed it over.
+    const slid =
+      Math.max(0, flown.share - tokens.flight.start) /
+      (1 - tokens.flight.start);
+    world.setAttribute("transform", `translate(${-travel * slid} 0)`);
     plane.setAttribute(
       "transform",
       `translate(${here.x} ${here.y}) rotate(${heading})`,
     );
     path.style.strokeDashoffset = String(DRAWN * (1 - flown.share));
+    for (const { node, x, y, drift, rest } of clouds)
+      node.setAttribute(
+        "transform",
+        `translate(${x - drift * flown.share} ${y})${rest}`,
+      );
   };
 
   // An object arriving: it fades in while it moves the last bit into place.
@@ -116,20 +143,21 @@ export const flightScene: Scene = ({ isDesktop }) => {
       beatIn(next, at.next);
       beatOut([title, next], at.takeOff - out);
 
-      // 2. Take-off: the sky closes in to night, a few stars come out, and the
-      //    header turns with it.
+      // 2. Dusk, a screen into the flight (the first stretch is flown by day, over
+      //    meadows and villages): the sky closes in to night, a few stars come out,
+      //    and the header turns with it.
       timeline
         .fromTo(
           night,
           { opacity: 0 },
           { opacity: 1, duration: tokens.night.duration },
-          at.takeOff,
+          at.dusk,
         )
         .fromTo(
           one("[data-stars]"),
           { autoAlpha: 0 },
           { autoAlpha: 1, duration: tokens.night.duration },
-          at.takeOff,
+          at.dusk,
         )
         // The map's grid would glare on the dark sky: it dims to a faint chart.
         // (So does the country around Lucerne, whose lakes and label are drawn for
@@ -137,13 +165,30 @@ export const flightScene: Scene = ({ isDesktop }) => {
         .to(
           [grid, one("[data-origin-map]")],
           { opacity: tokens.night.grid, duration: tokens.night.duration },
-          at.takeOff,
+          at.dusk,
+        )
+        // The land and the clouds go dark too, and the cities' windows come on.
+        .to(
+          land,
+          { opacity: tokens.night.land, duration: tokens.night.duration },
+          at.dusk,
+        )
+        .to(
+          all("[data-clouds]"),
+          { opacity: tokens.night.clouds, duration: tokens.night.duration },
+          at.dusk,
+        )
+        .fromTo(
+          [cityLights, one("[data-land-shade]")],
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: tokens.night.duration },
+          at.dusk,
         );
       const reach = tokens.night.duration * tokens.night.reachesHeader;
       toneHeader(
         timeline,
         "ink",
-        at.takeOff + reach,
+        at.dusk + reach,
         at.dawn + tokens.night.duration - reach,
       );
 
@@ -173,7 +218,16 @@ export const flightScene: Scene = ({ isDesktop }) => {
           { autoAlpha: 0, duration: tokens.night.duration },
           at.dawn,
         )
-        .to(grid, { opacity: 1, duration: tokens.night.duration }, at.dawn);
+        .to(
+          [grid, land],
+          { opacity: 1, duration: tokens.night.duration },
+          at.dawn,
+        )
+        .to(
+          one("[data-land-shade]"),
+          { autoAlpha: 0, duration: tokens.night.duration },
+          at.dawn,
+        );
       arrive(
         [one("[data-hills]"), one("[data-harbour]")],
         { y: tokens.harbour.fromY },
@@ -194,6 +248,13 @@ export const flightScene: Scene = ({ isDesktop }) => {
           stagger: tokens.towers.stagger,
         },
         at.towers,
+      );
+      // The hotel's name appears once its tower stands (it is the last to rise).
+      timeline.fromTo(
+        one("[data-rosewood-label]"),
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: tokens.towers.duration },
+        at.towers + tokens.towers.stagger * (towers.length - 1),
       );
       beatIn(noBetter, at.noBetter);
       beatOut(noBetter, at.windows - out);
@@ -248,13 +309,14 @@ export const flightScene: Scene = ({ isDesktop }) => {
       // A rest at the end, so the last line can be read before the scene lets go.
       timeline.set({}, {}, at.end);
     },
-    // On the way in: the strip is back at its start, the country around Lucerne
-    // appears, the pin drops where the route arrives, and the plane is waiting on it.
+    // On the way in: the strip is back at its start, the country around Lucerne and
+    // the land ahead appear, the pin drops where the route arrives, and the plane is
+    // waiting on it.
     (timeline) => {
       const arrive = arriveOn(timeline);
       timeline.call(fly, undefined, 0);
       arrive(
-        one("[data-origin-map]"),
+        [one("[data-origin-map]"), land],
         { y: tokens.map.fromY },
         tokens.map,
         approach.map,

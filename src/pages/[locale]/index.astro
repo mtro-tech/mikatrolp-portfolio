@@ -118,7 +118,7 @@ const meta = (data: (typeof chapters)[number]["data"]) =>
       origin={checkIn.data.place}
       place={next.data.place}
       date={next.data.period && formatDate(next.data.period.start)}
-      hidden={site.hiddenDetail}
+      hotel={next.data.organisation?.name}
     />
 
     <!-- Plain placeholders until step 4 designs each chapter. -->

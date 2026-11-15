@@ -5,10 +5,13 @@
 // next-destination.motion.ts slides the strip to the left while the plane follows the
 // flight path, so the plane stays in view and the world passes underneath.
 // - The map is borderless: a grid and terrain rings only. No countries, no borders.
-// - Along the way lie small joints with a lit window: the hidden detail, with its
-//   sentence beside one of them.
-// - The skyline is my own drawing of generic towers, flat and side-on, like St. Gallen
-//   in the hero but far taller. No real building is copied and there is no logo.
+// - Along the bottom of the strip lies the land the plane flies over, side-on:
+//   meadows, trees, two villages, a river, then two cities whose windows are lit at
+//   night. Clouds drift through the frame (they are not on the strip).
+// - The skyline is Hong Kong's harbour front in my own flat drawing. The Rosewood
+//   tower stands at the water's edge, drawn from its features (stone piers at the
+//   base, a slender glass shaft, setbacks near the top) and named in map lettering.
+//   Nothing is traced and there is no logo.
 // The strip is drawn in its finished place (slid to the skyline), which is what the
 // motion-off version shows.
 import { contours, graticule } from "./contours";
@@ -22,11 +25,11 @@ interface Props {
   place?: string;
   /** The first day in Hong Kong, already formatted. */
   date?: string;
-  /** The hidden detail's sentence. */
-  hidden?: string;
+  /** The hotel's name, as the label beside its tower. */
+  hotel?: string;
 }
 
-const { part, origin, place, date, hidden } = Astro.props;
+const { part, origin, place, date, hotel } = Astro.props;
 const desktop = part === "desktop";
 
 const g = desktop
@@ -50,7 +53,9 @@ const g = desktop
       exit: "M4240 560L4320 560C4320 640 {x} 640 {x} 720L{x} 2000",
       exitAt: { x: 4320, origin: 3960 },
       quay: 80,
-      joints: { y: 700, at: [1150, 1750, 2350, 2950, 3450] },
+      // The land under the flight: where it starts, its ground line, its length
+      // (in drawing units, before k).
+      land: { x: 700, y: 730, length: 2640 },
     }
   : {
       view: [390, 340],
@@ -66,7 +71,7 @@ const g = desktop
       exit: "M1190 250L1230 250C1230 310 1039 290 1039 340",
       exitAt: undefined,
       quay: 40,
-      joints: { y: 318, at: [330, 520, 700, 880, 1040] },
+      land: { x: 170, y: 306, length: 1560 },
     };
 
 const [width, height] = g.view;
@@ -83,17 +88,90 @@ const terrain = [
   ...contours(-260, 150, { first: 30, step: 36, count: 3, seed: 2 }),
 ];
 
-// The skyline, in desktop units from the Hong Kong pin: where each tower stands, how
-// wide and tall it is, and what it ends in. The lower ones are in the middle, where
-// the text is shown. It runs on past the frame's right edge: on a short screen the
-// drawing is shrunk, and more of it comes into view.
-type Top = "flat" | "step" | "spire";
+// ---- The land under the flight, in its own units: x from 0 to its length, the
+// ground around y = 0. Everything is placed from these few lists.
+const L = g.land.length;
+// How far down the ground is filled: on desktop past the drawing's bottom edge (the
+// frame can be taller); on phones only to it, because the text stands below.
+const depth = desktop ? 170 : round((height - g.land.y) / g.k);
+// The rolling ground, and a far ridge behind it.
+const ground = (x: number) =>
+  round(-(18 + 14 * Math.sin(x / 170) + 7 * Math.sin(x / 61 + 1)));
+const ridge = (x: number) =>
+  round(-(74 + 34 * Math.sin(x / 310 + 2) + 10 * Math.sin(x / 97)));
+const band = (line: (x: number) => number, from: number, to: number) => {
+  const points = [];
+  for (let x = from; x < to; x += 40) points.push(`L${x} ${line(x)}`);
+  return `M${from - 240} ${depth}C${from - 160} ${depth / 3} ${from - 80} ${line(from)} ${from} ${line(from)}${points.join("")}L${to} ${line(to)}C${to + 80} ${line(to)} ${to + 160} ${depth / 3} ${to + 240} ${depth}Z`;
+};
+// Things stand a little sunk into the ground, which is drawn over their feet.
+const stand = (x: number) => ({ x: round(x), y: ground(x) + 8 });
+
+const villages = [
+  { at: 0.12, houses: [-52, -14, 28], church: 66 },
+  { at: 0.32, houses: [-36, 4, 46], church: -78 },
+].map(({ at, houses, church }) => ({
+  houses: houses.map((dx) => stand(L * at + dx)),
+  church: stand(L * at + church),
+}));
+const river = { x: round(L * 0.22), y: ground(L * 0.22) - 2 };
+// Two cities, the second bigger: blocks of different heights, two windows each.
+const cities = [
+  { at: 0.62, count: 8, extra: 0 },
+  { at: 0.86, count: 11, extra: 44 },
+].map(({ at, count, extra }) => {
+  const base = ground(L * at) + 8;
+  return Array.from({ length: count }, (_, i) => {
+    const w = 28 + ((i * 7) % 3) * 5;
+    const h = 62 + ((i * 37) % 5) * 22 + (i % 2 ? extra : 0);
+    const x = round(L * at + (i - count / 2) * 36);
+    return { x, w, h, base, deep: i % 3 === 0 };
+  });
+});
+const built = [0.12, 0.22, 0.32, 0.62, 0.86];
+const trees = Array.from({ length: 30 }, (_, i) => ({
+  share: (i * 0.618 + 0.05) % 1,
+  fir: i % 3 === 0,
+}))
+  // Only where the far ridge stands behind them: an ink trunk would vanish against
+  // the night sky.
+  .filter(({ share }) => share > 0.07 && share < 0.9)
+  .filter(({ share }) => built.every((at) => Math.abs(share - at) > 0.045))
+  .map(({ share, fir }) => ({ ...stand(L * share), fir }));
+
+// Clouds: fixed in the frame, like the stars. Each starts off to the right and
+// drifts left as the flight goes on, the front ones faster (the scene moves them).
+// In shares of the frame: where it starts, how high it is, how far it drifts.
+const clouds = {
+  back: [
+    [1.1, 0.52],
+    [1.4, 0.6],
+    [1.7, 0.5],
+  ].map(([x, y]) => ({ x: round(x * width), y: round(y * height) })),
+  front: [
+    [1.15, 0.68],
+    [1.7, 0.56],
+    [2.25, 0.72],
+    [2.8, 0.62],
+  ].map(([x, y]) => ({ x: round(x * width), y: round(y * height) })),
+};
+const drift = { back: round(width * 2.2), front: round(width * 3.5) };
+
+// ---- The skyline, in desktop units from the Hong Kong pin: where each tower stands,
+// how wide and tall it is, and what it ends in. The tall ones stand at the two ends;
+// the lower ones are in the middle, where the text is shown. It runs on past the
+// frame's right edge: on a short screen the drawing is shrunk, and more of it comes
+// into view. The Rosewood tower is drawn on its own, after these.
+type Top = "flat" | "step" | "spire" | "pyramid" | "brace" | "clock";
 const towers: [number, number, number, Top][] = [
-  [-400, 54, 150, "flat"],
-  [-336, 46, 230, "step"],
-  [-280, 60, 320, "spire"],
-  [-208, 50, 210, "flat"],
-  [-150, 44, 160, "step"],
+  [-700, 50, 140, "flat"],
+  [-640, 58, 300, "pyramid"],
+  [-572, 48, 190, "step"],
+  [-516, 60, 330, "brace"],
+  [-446, 52, 170, "flat"],
+  [-392, 48, 150, "flat"],
+  [-336, 46, 210, "step"],
+  [-150, 24, 96, "clock"],
   [-96, 56, 120, "flat"],
   [-30, 48, 160, "step"],
   [30, 52, 130, "flat"],
@@ -105,23 +183,37 @@ const towers: [number, number, number, Top][] = [
   [436, 58, 170, "flat"],
   [506, 70, 150, "step"],
   [590, 56, 170, "flat"],
-  [658, 60, 300, "spire"],
+  [658, 60, 300, "pyramid"],
   [730, 54, 210, "flat"],
-  [796, 60, 270, "step"],
+  [796, 60, 280, "brace"],
   [870, 52, 220, "flat"],
-  [934, 64, 320, "spire"],
+  [934, 64, 330, "spire"],
   [1010, 56, 200, "flat"],
   [1080, 60, 250, "step"],
 ];
-// Every second tower has rooms that light up: three windows, one above the other.
-const windows = towers.flatMap(([x, w, h], index) =>
-  index % 2 === 0
-    ? [0.28, 0.5, 0.72].map((share) => ({
-        x: round(x + w / 2 - 5),
-        y: round(-h * share),
-      }))
-    : [],
-);
+// The Rosewood tower: its left edge, width, and the heights of its parts.
+const rosewood = {
+  x: -250,
+  w: 74,
+  piers: 44,
+  shaft: 330,
+  tiers: [362, 390, 404],
+};
+// Rooms that light up, the hotel's first: two columns of five. Then every second
+// tower: two windows, one above the other.
+const windows = [
+  ...[70, 125, 180, 235, 290].flatMap((y) =>
+    [16, 48].map((dx) => ({ x: rosewood.x + dx, y: -y })),
+  ),
+  ...towers.flatMap(([x, w, h, top], index) =>
+    index % 2 === 0 && top !== "clock"
+      ? [0.35, 0.68].map((share) => ({
+          x: round(x + w / 2 - 5),
+          y: round(-h * share),
+        }))
+      : [],
+  ),
+];
 
 // Stars over the flight: fixed in the frame, not on the strip. Deterministic.
 const stars = Array.from({ length: 14 }, (_, i) => ({
@@ -145,6 +237,57 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
         cy={y}
         r={r}
       />
+    ))}
+  </g>
+
+  {/* Pieces that are drawn many times: defined once, placed with <use>. */}
+  <defs>
+    <g id={`flight-tree-${part}`}>
+      <path class="ink-line" d="M0 0L0 -18"></path>
+      <circle class="fill-meadow ink-line" cx="0" cy="-30" r="14"></circle>
+    </g>
+    <g id={`flight-fir-${part}`}>
+      <path class="ink-line" d="M0 0L0 -10"></path>
+      <path class="fill-meadow ink-line" d="M-11 -10L0 -48L11 -10Z"></path>
+    </g>
+    <g id={`flight-house-${part}`}>
+      <rect
+        class="fill-paper ink-line"
+        x="-15"
+        y="-22"
+        width="30"
+        height="22"
+      ></rect>
+      <path class="fill-route ink-line" d="M-19 -22L0 -38L19 -22Z"></path>
+    </g>
+    <g id={`flight-church-${part}`}>
+      <rect
+        class="fill-paper ink-line"
+        x="-9"
+        y="-52"
+        width="18"
+        height="52"
+      ></rect>
+      <path class="fill-brass ink-line" d="M-11 -52L0 -80L11 -52Z"></path>
+    </g>
+    <path
+      id={`flight-cloud-${part}`}
+      class="fill-paper ink-line"
+      d="M-64 0C-80 0 -80 -24 -58 -24C-56 -46 -22 -50 -12 -34C2 -58 44 -52 44 -26C70 -30 76 0 56 0Z"
+    ></path>
+  </defs>
+
+  <g data-clouds="back" data-drift={drift.back}>
+    {clouds.back.map(({ x, y }) => (
+      <g
+        data-cloud
+        data-x={x}
+        data-y={y}
+        class:list={[!desktop && "small"]}
+        transform={place_(x, y)}
+      >
+        <use href={`#flight-cloud-${part}`} />
+      </g>
     ))}
   </g>
 
@@ -199,42 +342,79 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
 
     <path class="route-line" d={g.routeIn}></path>
 
-    {/* The small joints along the way: a wall, an awning, one lit window, a stool.
-         The hidden detail: its sentence stands beside the middle one. */}
-    {g.joints.at.map((x, index) => (
-      <g data-joint>
-        <g class:list={[!desktop && "small"]} transform={place_(x, g.joints.y)}>
+    {/* The land under the flight: a far ridge, then villages, cities and trees, then
+         the meadow drawn over their feet, and a river with its bridge. */}
+    {/* At night the land is dimmed by making it part see-through. This dark shape of
+         the same ground lies under it then, so the map's grid does not show through. */}
+    <g data-land-shade>
+      <g
+        class:list={[!desktop && "small"]}
+        transform={place_(g.land.x, g.land.y)}
+      >
+        <path class="shade" d={band(ridge, 160, L - 240)}></path>
+        <path class="shade" d={band(ground, 0, L)}></path>
+      </g>
+    </g>
+    <g data-land>
+      <g
+        class:list={[!desktop && "small"]}
+        transform={place_(g.land.x, g.land.y)}
+      >
+        <path class="map-water" d={band(ridge, 160, L - 240)}></path>
+        {cities.flat().map(({ x, w, h, base, deep }) => (
           <rect
-            class="fill-paper ink-line"
-            x="-22"
-            y="-30"
-            width="44"
-            height="30"
+            class:list={[deep ? "fill-paper-deep" : "fill-paper", "ink-line"]}
+            x={x}
+            y={base - h}
+            width={w}
+            height={h}
           />
+        ))}
+        {villages.map(({ houses, church }) => (
+          <>
+            <use href={`#flight-church-${part}`} x={church.x} y={church.y} />
+            {houses.map(({ x, y }) => (
+              <use href={`#flight-house-${part}`} x={x} y={y} />
+            ))}
+          </>
+        ))}
+        {trees.map(({ x, y, fir }) => (
+          <use href={`#flight-${fir ? "fir" : "tree"}-${part}`} x={x} y={y} />
+        ))}
+        <path class="fill-meadow" d={band(ground, 0, L)}></path>
+        <g transform={`translate(${river.x} ${river.y})`}>
           <path
-            class:list={[index % 2 ? "fill-brass" : "fill-route", "ink-line"]}
-            d="M-28 -30L28 -30L22 -42L-22 -42Z"
-          />
-          <rect
-            class:list={["fill-brass", "lit", index % 2 && "lit--late"]}
-            x="-7"
-            y="-23"
-            width="14"
-            height="13"
-          />
-          <path class="ink-line" d="M36 0L36 -11M31 -11L41 -11" />
-          {index === 2 && hidden && (
-            <text
-              class="map-label map-label--small hidden-detail"
-              x="52"
-              y="-12"
-            >
-              {hidden}
-            </text>
-          )}
+            class="map-water"
+            d={`M-30 0L30 0L${round(30 + depth / 6)} ${depth}L${round(-30 - depth / 6)} ${depth}Z`}
+          ></path>
+          <path
+            class="fill-paper ink-line"
+            d="M-50 0Q0 -34 50 0L50 8Q0 -22 -50 8Z"
+          ></path>
         </g>
       </g>
-    ))}
+    </g>
+    {/* The cities' windows, lit when night falls. */}
+    <g data-city-lights>
+      <g
+        class:list={[!desktop && "small"]}
+        transform={place_(g.land.x, g.land.y)}
+      >
+        {cities
+          .flat()
+          .flatMap(({ x, w, h, base }, index) =>
+            [0.4, 0.75].map((share) => (
+              <rect
+                class:list={["fill-brass", "lit", index % 2 && "lit--late"]}
+                x={round(x + w / 2 - 4)}
+                y={round(base - h * share)}
+                width="8"
+                height="10"
+              />
+            )),
+          )}
+      </g>
+    </g>
 
     {/* The flight, drawn behind the plane as it goes. It lies under the skyline, so
          the line passes behind the towers on its way down, not across them. */}
@@ -255,7 +435,7 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
       >
         <path
           class="ink-line"
-          d="M-470 0C-300 -150 -180 -60 -40 -110C120 -190 260 -70 420 -150C560 -230 680 -100 800 -130C940 -170 1040 -60 1180 -110L1240 0"
+          d="M-980 0C-820 -110 -700 -200 -560 -210C-420 -220 -330 -120 -180 -150C-40 -180 60 -100 200 -130C340 -160 420 -175 560 -200C700 -230 820 -120 960 -150C1080 -175 1160 -80 1240 0"
         ></path>
       </g>
     </g>
@@ -284,6 +464,57 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
               height="26"
             />
           )}
+          {top === "pyramid" && (
+            <>
+              <rect
+                class="fill-paper ink-line"
+                x={round(x + w * 0.15)}
+                y={-h - 20}
+                width={round(w * 0.7)}
+                height="20"
+              />
+              <path
+                class="fill-brass ink-line"
+                d={`M${round(x + w * 0.15)} ${-h - 20}L${round(x + w / 2)} ${-h - 62}L${round(x + w * 0.85)} ${-h - 20}Z`}
+              />
+              <path
+                class="ink-line"
+                d={`M${round(x + w / 2)} ${-h - 62}L${round(x + w / 2)} ${-h - 92}`}
+              />
+            </>
+          )}
+          {top === "brace" && (
+            <>
+              <path
+                class="fin"
+                d={[0, 1, 2]
+                  .map((j) => {
+                    const low = round((-h * j) / 3);
+                    const high = round((-h * (j + 1)) / 3);
+                    return `M${x} ${low}L${x + w} ${high}M${x + w} ${low}L${x} ${high}`;
+                  })
+                  .join("")}
+              />
+              <path
+                class="ink-line"
+                d={`M${round(x + w * 0.3)} ${-h}v-42M${round(x + w * 0.7)} ${-h}v-28`}
+              />
+            </>
+          )}
+          {top === "clock" && (
+            <>
+              <path
+                class="fill-brass ink-line"
+                d={`M${x - 2} ${-h}L${round(x + w / 2)} ${-h - 26}L${x + w + 2} ${-h}Z`}
+              />
+              <circle
+                class="fill-paper ink-line"
+                cx={round(x + w / 2)}
+                cy={-h + 20}
+                r="7"
+              />
+            </>
+          )}
           {top === "spire" && (
             <>
               <path
@@ -299,16 +530,71 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
         </g>
       </g>
     ))}
+    {/* The Rosewood tower, last, so it rises last and stands in front: stone piers,
+         a slender shaft with fine vertical lines, setbacks stepping in near the top. */}
+    <g data-tower data-rosewood>
+      <g
+        class:list={[!desktop && "small"]}
+        transform={place_(g.pin[0], g.pin[1])}
+      >
+        {[0, 21, 42, 63].map((dx) => (
+          <rect
+            class="fill-paper-deep ink-line"
+            x={rosewood.x + dx}
+            y={-rosewood.piers}
+            width="11"
+            height={rosewood.piers}
+          />
+        ))}
+        <rect
+          class="fill-paper ink-line"
+          x={rosewood.x}
+          y={-rosewood.shaft}
+          width={rosewood.w}
+          height={rosewood.shaft - rosewood.piers}
+        ></rect>
+        <path
+          class="fin"
+          d={[0.25, 0.5, 0.75]
+            .map(
+              (share) =>
+                `M${round(rosewood.x + rosewood.w * share)} ${-rosewood.piers - 8}L${round(rosewood.x + rosewood.w * share)} ${-rosewood.shaft + 8}`,
+            )
+            .join("")}
+        ></path>
+        <rect
+          class="fill-paper ink-line"
+          x={rosewood.x}
+          y={-rosewood.tiers[0]}
+          width="58"
+          height={rosewood.tiers[0] - rosewood.shaft}
+        ></rect>
+        <rect
+          class="fill-paper ink-line"
+          x={rosewood.x}
+          y={-rosewood.tiers[1]}
+          width="42"
+          height={rosewood.tiers[1] - rosewood.tiers[0]}
+        ></rect>
+        <rect
+          class="fill-brass ink-line"
+          x={rosewood.x}
+          y={-rosewood.tiers[2]}
+          width="26"
+          height={rosewood.tiers[2] - rosewood.tiers[1]}
+        ></rect>
+      </g>
+    </g>
     <g data-harbour>
       <path
         class="map-water"
-        d={`M${g.travel - 260 * g.k} ${g.pin[1]}L${g.travel + reach} ${g.pin[1]}L${g.travel + reach} ${height + 40}L${g.travel - 460 * g.k} ${height + 40}Z`}
+        d={`M${g.travel - 260 * g.k} ${g.pin[1]}L${g.travel + reach} ${g.pin[1]}L${g.travel + reach} ${height + (desktop ? 40 : 0)}L${g.travel - 460 * g.k} ${height + (desktop ? 40 : 0)}Z`}
       ></path>
       <g
         class:list={[!desktop && "small"]}
         transform={place_(g.pin[0], g.pin[1])}
       >
-        <path class="quay" d="M-470 0L1240 0"></path>
+        <path class="quay" d="M-980 0L1240 0"></path>
         <path class="wave idle-shimmer" d="M-380 60h70M-120 120h90"></path>
         <path
           class="wave idle-shimmer idle-shimmer--late"
@@ -339,8 +625,10 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
       >
         <g class="ferry">
           <g transform="translate(260 96)">
-            <path class="fill-paper ink-line" d="M-26 0h52l-8 11h-36z"></path>
-            <path class="fill-route ink-line" d="M-14 0v-12h28v12z"></path>
+            <path class="fill-route ink-line" d="M-32 0h64l-9 11h-46z"></path>
+            <path class="fill-paper ink-line" d="M-24 0v-10h48v10z"></path>
+            <path class="fill-paper ink-line" d="M-19 -10v-9h38v9z"></path>
+            <path class="fill-paper-deep ink-line" d="M-4 -19v-9h8v9z"></path>
           </g>
         </g>
       </g>
@@ -393,6 +681,37 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
         )}
       </g>
     </g>
+    <g data-rosewood-label>
+      <g
+        class:list={[!desktop && "small"]}
+        transform={place_(g.pin[0], g.pin[1])}
+      >
+        {hotel && (
+          <text
+            class="map-label map-label--small tower-label"
+            x={rosewood.x}
+            y={-rosewood.tiers[2] - 18}
+          >
+            {hotel}
+          </text>
+        )}
+      </g>
+    </g>
+  </g>
+
+  {/* Clouds in front of the plane. */}
+  <g data-clouds="front" data-drift={drift.front}>
+    {clouds.front.map(({ x, y }) => (
+      <g
+        data-cloud
+        data-x={x}
+        data-y={y}
+        class:list={[!desktop && "small"]}
+        transform={place_(x, y)}
+      >
+        <use href={`#flight-cloud-${part}`} />
+      </g>
+    ))}
   </g>
 </svg>
 
@@ -415,8 +734,20 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
     );
   }
 
-  /* The hidden sentence is tiny by design, but still legible on a phone. */
-  .small .hidden-detail {
+  .shade {
+    fill: var(--color-ink);
+  }
+
+  /* Fine lines on a tower's front. */
+  .fin {
+    stroke: var(--color-ink);
+    stroke-width: calc(
+      var(--route-detail-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  /* The hotel's name must stay legible on a phone, where pieces are drawn at 45%. */
+  .small .tower-label {
     font-size: 26px;
   }
 
@@ -496,17 +827,15 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
     }
   }
 
-  /* During the flight the sky is pine ink: the hidden sentence is paper-coloured
-     there. Without motion the page stays paper, and it keeps the map's soft ink. */
-  :global(html[data-motion="on"]) .hidden-detail {
-    fill: var(--color-paper);
-  }
-
   /* Before the choreography reaches them, these are not on stage. With motion off they
      are simply there, in their finished places (the stars belong to the night flight). */
   :global(html[data-motion="on"]) [data-stars],
   :global(html[data-motion="on"]) [data-origin-map],
   :global(html[data-motion="on"]) [data-origin-pin],
+  :global(html[data-motion="on"]) [data-land],
+  :global(html[data-motion="on"]) [data-land-shade],
+  :global(html[data-motion="on"]) [data-city-lights],
+  :global(html[data-motion="on"]) [data-rosewood-label],
   :global(html[data-motion="on"]) [data-plane],
   :global(html[data-motion="on"]) [data-hills],
   :global(html[data-motion="on"]) [data-harbour],
@@ -523,6 +852,8 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
   }
 
   :global(html:not([data-motion="on"])) [data-stars],
+  :global(html:not([data-motion="on"])) [data-clouds],
+  :global(html:not([data-motion="on"])) [data-land-shade],
   :global(html[data-motion="on"]) .connector {
     display: none;
   }

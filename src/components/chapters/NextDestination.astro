@@ -5,8 +5,7 @@
 //   scene: the plane takes off from Lucerne, the sky turns to night, the map slides past
 //   underneath, the skyline rises, the pin lands, windows light up.
 // - With motion off (or no JavaScript) the same markup is a normal section: the skyline
-//   in its finished state and every line of text visible, with the hidden detail as a
-//   small note under the copy.
+//   in its finished state and every line of text visible.
 import FlightScene from "../route/FlightScene.astro";
 import ChapterHeading from "./ChapterHeading.astro";
 
@@ -22,13 +21,12 @@ interface Props {
   place?: string;
   /** The first day in Hong Kong, already formatted. */
   date?: string;
-  /** The hidden detail's sentence. */
-  hidden?: string;
+  /** The hotel's name, as the label beside its tower. */
+  hotel?: string;
 }
 
-const { stage, heading, meta, beats, origin, place, date, hidden } =
-  Astro.props;
-const drawing = { origin, place, date, hidden };
+const { stage, heading, meta, beats, origin, place, date, hotel } = Astro.props;
+const drawing = { origin, place, date, hotel };
 ---
 
 <section class="flight" data-flight data-stage-name={stage}>
@@ -64,14 +62,6 @@ const drawing = { origin, place, date, hidden };
           </div>
         ))}
       </div>
-      {
-        /* The hidden detail as text. In the animated version it is on the map (drawn,
-           and not read out there), so here it is kept for screen readers only; without
-           motion it is a small note under the copy. */
-        hidden && (
-          <p class="aside text-ink-soft italic font-display">{hidden}</p>
-        )
-      }
     </div>
   </div>
 </section>
@@ -89,10 +79,6 @@ const drawing = { origin, place, date, hidden };
 
   .title {
     margin-bottom: 1rem;
-  }
-
-  .aside {
-    margin-top: 1.5rem;
   }
 
   /* ---- Motion off: a normal scrolling section ------------------------------------ */
@@ -174,17 +160,6 @@ const drawing = { origin, place, date, hidden };
   /* The line that is read during the night flight is paper-coloured. */
   :global(html[data-motion="on"]) [data-group="night"] {
     color: var(--color-paper);
-  }
-
-  /* On the map in the animated version; here for screen readers only. */
-  :global(html[data-motion="on"]) .aside {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
   }
 
   /* Nothing is on stage before its moment (next-destination.motion.ts brings each in). */

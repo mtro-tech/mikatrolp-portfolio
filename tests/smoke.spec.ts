@@ -574,7 +574,7 @@ test("each chapter's place is built on the way in", async ({ page }) => {
     ],
     [
       "[data-flight]",
-      ["[data-origin-map]", "[data-origin-pin]", "[data-plane]"],
+      ["[data-origin-map]", "[data-land]", "[data-origin-pin]", "[data-plane]"],
       "[data-line]",
     ],
   ];
@@ -800,8 +800,8 @@ test("Next destination is complete and static without motion", async ({
     await expect(line).toBeVisible();
     await expect(line).toHaveCSS("opacity", "1");
   }
-  // The skyline with its pin, the route drawn, no night sky. The hidden detail is
-  // there to read as a note; the drawings, which also carry it, are not read out.
+  // The skyline with its pin and the hotel's tower, named; the route drawn; no
+  // night sky and no clouds.
   await expect(drawing.locator("[data-place-pin]")).toBeVisible();
   await expect(drawing.locator("[data-tower]").first()).toBeVisible();
   await expect(drawing.locator("[data-route]")).toHaveCSS(
@@ -809,11 +809,14 @@ test("Next destination is complete and static without motion", async ({
     "0px",
   );
   await expect(chapter.locator("[data-night]")).toBeHidden();
-  const note = chapter.locator("p", {
-    hasText: "The local hospitality of small joints all over the world",
-  });
-  await expect(note).toHaveCount(1);
-  await expect(note).toBeVisible();
+  await expect(drawing.locator("[data-rosewood]")).toBeVisible();
+  await expect(drawing.locator("[data-rosewood-label]")).toHaveText(
+    "Rosewood Hong Kong",
+  );
+  await expect(drawing.locator("[data-clouds]").first()).toBeHidden();
+  // The small joints were taken out of the chapter (Mika, 2026-11-15).
+  await expect(chapter.locator("[data-joint]")).toHaveCount(0);
+  await expect(chapter).not.toContainText("small joints");
   await expect(drawing).toHaveAttribute("aria-hidden", "true");
 });
 
@@ -852,16 +855,31 @@ test("Next destination plays as a held scene, objects before text", async ({
   await expect(header).not.toHaveAttribute("data-tone");
   await expect.poll(slid).toBeLessThan(0.02);
 
-  // Just before the second line: the plane is airborne, the sky is dark, the header
-  // has turned with it, and the line is not up yet.
-  await playFlight(page, 6.4);
+  // The first stretch is flown by day: the plane is airborne over the land, the sky
+  // is still paper, and a cloud has drifted into the frame.
+  await playFlight(page, 5.6);
+  await expect.poll(slid).toBeGreaterThan(0.08);
+  await expect(night).toHaveCSS("opacity", "0");
+  await expect(header).not.toHaveAttribute("data-tone");
+  await shown("[data-land]").toHaveCSS("opacity", "1");
+  await shown("[data-city-lights]").toHaveCSS("opacity", "0");
+  const cloud = drawing.locator("[data-cloud]").first();
+  const cloudAt = async () => (await cloud.boundingBox())!.x;
+  const cloudBefore = await cloudAt();
+  expect(cloudBefore).toBeLessThan(page.viewportSize()!.width);
+  await playFlight(page, 6.2);
+  await expect.poll(cloudAt).toBeLessThan(cloudBefore);
+
+  // Just before the second line: the sky is dark, the header has turned with it,
+  // the cities' windows are lit, and the line is not up yet.
+  await playFlight(page, 7.5);
   await expect(night).toHaveCSS("opacity", "1");
   await expect(header).toHaveAttribute("data-tone", "ink");
-  await expect.poll(slid).toBeGreaterThan(0.15);
+  await shown("[data-city-lights]").toHaveCSS("opacity", "1");
   await expect(line("night")).toHaveCSS("opacity", "0");
 
   // The night line rests, paper-coloured on ink and readable, while the map drifts on.
-  await playFlight(page, 8.4);
+  await playFlight(page, 8.6);
   await expect(line("night")).toHaveCSS("opacity", "1");
   await expect(header).toHaveCSS("background-color", "rgb(30, 43, 38)");
   const dark = await new AxeBuilder({ page })
@@ -881,6 +899,9 @@ test("Next destination plays as a held scene, objects before text", async ({
   await expect(header).not.toHaveAttribute("data-tone");
   await expect.poll(slid).toBeCloseTo(1, 2);
   await shown("[data-tower]").toHaveCSS("opacity", "1");
+  await shown("[data-rosewood]").toHaveCSS("opacity", "1");
+  await shown("[data-rosewood-label]").toHaveCSS("opacity", "1");
+  await shown("[data-land]").toHaveCSS("opacity", "1");
   await expect(line("place")).toHaveCSS("opacity", "0");
   await shown("[data-place-pin]").toHaveCSS("opacity", "0");
 

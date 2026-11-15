@@ -231,7 +231,8 @@ export const flight = {
     title: 0,
     next: 0.3,
     takeOff: 2.6,
-    benchmark: 6.6,
+    dusk: 6.4,
+    benchmark: 7.6,
     dawn: 12.4,
     harbour: 12.8,
     towers: 13.2,
@@ -248,16 +249,23 @@ export const flight = {
   /** A pin drops and bounces to rest (the Lucerne one on the way in, then Hong Kong's). */
   pin: { fromY: -90, duration: 0.55, ease: "bounce.out" },
   /** The sky closes in to night, and opens again, over this long. */
-  night: { duration: 0.9, reachesHeader: 0.6, grid: 0.18 },
+  /** In the dark the grid, the land and the clouds are dimmed to these opacities. */
+  night: {
+    duration: 0.9,
+    reachesHeader: 0.6,
+    grid: 0.18,
+    land: 0.4,
+    clouds: 0.5,
+  },
   /** The whole flight is one even movement: slow off the pin, slow onto the quay. */
   /** Over the last share of the way (levelOut) the plane turns level for landing. */
   /** It waits a little way off the pin (start), where it can be seen. */
   flight: { ease: "sine.inOut", levelOut: 0.05, start: 0.012 },
   harbour: { fromY: 60, duration: 0.8, ease: "power2.out" },
   /** The towers rise one after another, like the houses of St. Gallen in the hero. */
-  towers: { duration: 0.6, stagger: 0.08, ease: "power2.out" },
+  towers: { duration: 0.6, stagger: 0.07, ease: "power2.out" },
   /** Windows light up one by one. */
-  windows: { duration: 0.2, stagger: 0.03 },
+  windows: { duration: 0.2, stagger: 0.025 },
   route: { duration: 1.2 },
 } as const;
 

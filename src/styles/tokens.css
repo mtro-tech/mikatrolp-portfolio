@@ -16,6 +16,8 @@
   --color-route: #a6341b;
   /* Decorative strokes only, never text. */
   --color-brass: #b58a3c;
+  /* Landscape only (meadows, trees), never text or interface. */
+  --color-meadow: #9aa983;
 
   --text-hero: clamp(3.25rem, 10vw, 8.5rem);
   --text-hero--line-height: 0.95;

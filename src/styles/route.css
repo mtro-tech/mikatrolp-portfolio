@@ -92,6 +92,11 @@
   fill: var(--color-paper-deep);
 }
 
+/* Landscape only: meadows and trees. */
+.fill-meadow {
+  fill: var(--color-meadow);
+}
+
 .map-label {
   stroke: none;
   fill: var(--color-ink-soft);

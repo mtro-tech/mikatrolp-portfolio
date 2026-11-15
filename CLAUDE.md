@@ -78,7 +78,8 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
   `--color-paper #F2E6D3` (background) · `--color-paper-deep #E7D6BC` (map land, form surface) ·
   `--color-ink #1E2B26` (text) · `--color-ink-soft #55605A` (secondary text) ·
   `--color-route #A6341B` (route line, links, focus ring: the one accent) ·
-  `--color-brass #B58A3C` (decorative strokes only, never text).
+  `--color-brass #B58A3C` (decorative strokes only, never text) ·
+  `--color-meadow #9AA983` (landscape only: meadows and trees; never text or interface; added 2026-11-15).
   Colours live only as CSS custom properties / Tailwind theme tokens; never hard-code hex values in components.
 - **Type:** one serif display font + one sans, free licences, **self-hosted** (never loaded from Google's servers).
   Display: Newsreader (OFL; italic for chapter names). Text: Hanken Grotesk (OFL). Self-hosted through Astro's built-in Fonts API, Latin subset.
@@ -234,6 +235,8 @@ Add new entries at the top. Format: date · decision · why · decided by.
 
 | Date | Decision | Why | By |
 | --- | --- | --- | --- |
+| 2026-11-15 | Next destination, second pass (this changes the two rows below). The flight starts by day: under the plane lies a side-on landscape on the map strip (meadows in the new green, trees, two villages, a river with a bridge), and clouds drift through the frame in two layers. Night falls about a screen into the flight (`at.dusk`); then two cities pass with lit windows. The skyline is Hong Kong's harbour front in my own flat drawing, no longer generic: the Rosewood tower stands at the water's edge (stone piers, a slender shaft with fine vertical lines, setbacks near the top, a brass crown) with "Rosewood Hong Kong" in map lettering above it; around it a clock tower, towers with a pyramid top, crossed bracing and a spire, a higher peak behind, a two-deck ferry. Its rooms light up first. Nothing is traced, no logo. The small joints and the hidden sentence are removed from the chapter, in both versions | Mika's review of pull request 18; he first asked for a pit stop at a joint, then chose to leave the joints out | Mika |
+| 2026-11-15 | Palette: one soft green, `--color-meadow`, for landscape only (meadows, trees). Never text, never interface | Mika asked for greenery; the palette had no green | Mika |
 | 2026-11-15 | Next destination is a staged scene and the second cinematic peak, held for 7 screens on desktop and 6.5 on phones: a night flight. On the way in, the country around Lucerne, its pin and the paper plane (the same one as in Check-in, now `Plane.astro`) are ready. Moments: departure; take-off into a pine-ink night with stars (the header turns ink); the flight, one long movement in which the map strip slides left under the plane while the path is drawn behind it, with the second line resting mid-flight; the sky opens, the harbour and the skyline rise from behind the waterline; the pin lands with "Hong Kong" and the first day; windows light up for the lines about what he wants to learn; the route leaves at 50%. The map is borderless (grid and terrain only). The skyline is generic towers, my own drawing, no logo. The copy is cut into `beats`; `place: Hong Kong` is added to the content. Without motion: the skyline, all text, and the hidden detail as a note under the copy | Step 4 plan | Claude, plan approved by Mika |
 | 2026-11-15 | The hidden detail is on the flight map: five small joints with a lit window lie along the way, and the sentence from `site.hiddenDetail` stands beside the middle one in small map lettering. It passes by unannounced. Screen readers get it once, as text in the chapter; the drawing is not read out | Step 1 plan (hidden detail on the flight map) | Claude, plan approved by Mika |
 | 2026-11-15 | Next destination is held on phones too (this replaces "Mobile: peak 2 not pinned" of 2026-11-13) | Every chapter since has been held on phones | Claude, plan approved by Mika |
@@ -315,6 +318,8 @@ Add new entries at the top. Format: date · decision · why · decided by.
 Add an entry whenever a bug, a correction from Mika or a wrong assumption teaches something reusable.
 Format: date · what happened · the rule that prevents it next time.
 
+- 2026-11-15 · Dimming the land for the night by making it part see-through let the map's grid show through it, and tree trunks drawn in ink vanished where only the night sky was behind them · To darken a drawing with opacity, lay a dark copy of its ground under it; and check every ink-coloured piece on the dark background.
+- 2026-11-15 · On phones the land's fill ran below the drawing into the text area · A phone drawing has text right under it: nothing may be filled past the drawing's bottom edge there.
 - 2026-11-15 · Two pieces that each faded in (the scoop, its ice) showed one through the other while half transparent · Opacity on a group flattens it first: fade the group, not its members.
 - 2026-11-15 · The skyline's towers were scaled up from the ground with GSAP and floated above it, the same trap as the Foundations pegs · Do not scale SVG pieces around their own point with GSAP. To make something rise, move it up from behind what stands in front of it (here the waterline).
 - 2026-11-15 · A drawing that is shrunk on a short screen showed its right-hand end, and text that fitted at 1440 × 900 ran into the skyline at 1470 × 760 · A scene that shrinks around a point on the left must be drawn wider than the frame, and text beside a tall drawing needs a smaller size on short screens. 1470 × 760 is Mika's own window: check it for every scene.
@@ -385,4 +390,5 @@ Format: date · what happened · the rule that prevents it next time.
 - [ ] Drafted chapter copy (EN + DE): Mika reviews the wording
 - [ ] "Currently in semester 3" in The academy goes out of date; Mika updates it or the line is dropped
 - [ ] No 404 page yet
+- [ ] The hidden detail (the local hospitality of small joints) has no place on the page since 2026-11-15; the sentence is still in `src/content/site/` (`hiddenDetail`), unused, until Mika decides
 - [ ] Next destination switches from "Upcoming" to "currently in Hong Kong" only when Mika changes `status` in its content file (from 15 February 2027)
