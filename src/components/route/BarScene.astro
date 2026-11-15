@@ -23,9 +23,12 @@ const g =
         // Down from Foundations to the counter; then (drawn by scrolling) along its top
         // edge, down past its far end and on, far beyond the frame.
         routeIn: "M720 -1200L720 520",
-        routeDrawn: "M720 520L1040 520L1040 2000",
-        // How much of the drawn part is still undrawn (of 1000) once the edge is done.
-        edge: 822,
+        routeDrawn:
+          "M720 520L1040 520L1040 600C1040 660 {x} 640 {x} 700L{x} 2000",
+        // Leaves at x = 1040; the drawing shrinks around x = 720 (src/lib/scroll.ts).
+        exit: { x: 1040, origin: 720 },
+        // The length of the counter's edge, the first stretch of the drawn route.
+        edgeLength: 320,
         ceiling: { from: 540, to: 1440, depth: 170, peaks: 12 },
         // Globe lamps: x and how far each hangs down.
         globes: {
@@ -49,7 +52,8 @@ const g =
         counter: { x: 84, width: 288, top: 262, slab: 8, height: 62 },
         routeIn: "M39 0L39 214",
         routeDrawn: "M39 214C39 250 56 262 84 262L372 262",
-        edge: 0,
+        exit: undefined,
+        edgeLength: 0,
         ceiling: { from: 56, to: 390, depth: 56, peaks: 8 },
         globes: {
           at: [
@@ -368,9 +372,12 @@ const glasses = [
   <path
     class="route-line route-draw"
     data-route
-    data-edge={g.edge}
+    data-edge-length={g.edgeLength}
+    data-exit={g.exit?.x}
+    data-origin={g.exit?.origin}
+    data-template={g.exit && g.routeDrawn}
     pathLength="1000"
-    d={g.routeDrawn}
+    d={g.routeDrawn.replaceAll("{x}", String(g.exit?.x))}
   ></path>
 
   {/* Two round-backed stools in front of the counter. */}

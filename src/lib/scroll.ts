@@ -47,6 +47,21 @@ function measure() {
       ? Math.min(1, frame.clientHeight / (view.height * scale))
       : 1;
     frame.style.setProperty("--stage-fit", fit.toFixed(4));
+
+    // 3. A shrunk drawing would hand its route over in the wrong place. Each exit path
+    //    is redrawn so that it still leaves at its fixed share of the page width:
+    //    data-origin is the x the drawing shrinks around, data-exit the x it must
+    //    reach on a full-size drawing, both in drawing units.
+    for (const path of frame.querySelectorAll<SVGPathElement>(
+      "path[data-exit]",
+    )) {
+      const origin = Number(path.dataset.origin);
+      const exit = origin + (Number(path.dataset.exit) - origin) / fit;
+      path.setAttribute(
+        "d",
+        (path.dataset.template ?? "").replaceAll("{x}", exit.toFixed(1)),
+      );
+    }
   }
 }
 

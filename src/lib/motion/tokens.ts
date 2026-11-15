@@ -30,22 +30,31 @@ export const arrival = {
   routeDuration: 0.75,
 } as const;
 
-/** Foundations: the ruler, 60 pegs, one goes first, carried on. A short stop. */
+/**
+ * Foundations: the ruler, 60 pegs, one goes first, carried on. Objects first, then the
+ * line, then a rest (CLAUDE.md §4).
+ */
 export const foundations = {
   /** Screens of scrolling the scene is held for, on every screen size. */
-  screens: 2.5,
-  /** When each moment starts, in units on the scene's timeline. */
+  screens: 4,
+  /** When each thing starts, in units on the scene's timeline. */
   at: {
     title: 0,
     ruler: 0.1,
-    rank: 0.3,
-    count: 1.2,
-    lesson: 3.1,
-    follow: 3.6,
-    arcs: 5.0,
-    carry: 6.4,
-    ride: 6.9,
-    end: 8.6,
+    rank1: 0.9,
+    count: 2.6,
+    rank2: 4.2,
+    lesson: 5.9,
+    lesson1: 6.6,
+    follow: 8.1,
+    lesson2: 9.9,
+    arcs: 11.4,
+    lesson3: 12.8,
+    exit: 14.5,
+    carry1: 15.1,
+    ride: 16.7,
+    carry2: 18.1,
+    end: 20,
   },
   ruler: { fromX: -80, duration: 0.6, ease: "power2.out" },
   /** The pegs pop up on the ticks one by one while the numeral counts with them. */
@@ -117,28 +126,32 @@ export const bar = {
   route: { duration: 1.2 },
 } as const;
 
-/** Check-in: key, door, map, languages. Positions are units on the scene's timeline. */
+/**
+ * Check-in: key, door, map, languages. Positions are units on the scene's timeline;
+ * one unit is about a quarter of a screen of scrolling. Objects first, then the line,
+ * then a rest (CLAUDE.md §4).
+ */
 export const checkIn = {
   /** Screens of scrolling the scene is held for. */
-  screens: { desktop: 4, phone: 3.5 },
-  /** When each moment starts. The gaps are how long a beat stays readable. */
+  screens: { desktop: 6, phone: 5.5 },
+  /** When each thing starts. The gaps after a line are how long it rests. */
   at: {
     title: 0,
-    began1: 0.3,
-    began2: 1.5,
-    plane: 1.5,
-    turn: 2.9,
-    door: 3.2,
-    meaning: 4.0,
-    meaningStep: 0.55,
-    promise: 7.2,
-    close: 8.4,
-    map: 8.9,
-    route: 9.3,
-    leg1: 9.4,
-    leg2: 10.6,
-    tags: 11.6,
-    end: 13,
+    began1: 0.4,
+    plane: 2.2,
+    began2: 3.9,
+    turn: 5.6,
+    door: 5.9,
+    meaning: 7.0,
+    meaningStep: 0.9,
+    promise: 12.0,
+    close: 13.6,
+    map: 14.7,
+    route: 15.6,
+    leg1: 17.6,
+    leg2: 19.3,
+    tags: 21.1,
+    end: 24,
   },
   /** The key turns a quarter, like a key in a lock, with a little overshoot. */
   turn: { rotation: 90, duration: 0.6, ease: "back.out(1.6)" },

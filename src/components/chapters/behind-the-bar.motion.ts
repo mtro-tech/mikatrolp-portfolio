@@ -56,7 +56,13 @@ export const barScene: Scene = ({ isDesktop }) => {
   const { at } = tokens;
   const out = stage.beatOut.duration;
   // What is left undrawn of the route (of 1000) once the counter's edge is drawn.
-  const edge = Number(route?.dataset.edge ?? 0);
+  // Measured when needed: the path's far end bends with the window (src/lib/scroll.ts).
+  // On phones the edge is the whole drawn path (its edge length is given as 0).
+  const edge = () => {
+    const length = Number(route?.dataset.edgeLength ?? 0);
+    const total = (route as SVGPathElement | null)?.getTotalLength() ?? 0;
+    return length && total ? DRAWN * (1 - length / total) : 0;
+  };
   const depth = (liquid: Element) =>
     Number((liquid as SVGElement).dataset.depth);
 
