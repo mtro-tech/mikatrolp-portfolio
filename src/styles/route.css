@@ -180,6 +180,12 @@ html[data-motion="on"] .idle-shimmer--late {
 /* Clipped in both modes: routes are drawn far beyond the frame in both directions
    (so tall frames are covered) and must not spill into the neighbouring chapters. */
 .stage-frame {
+  /* On a window that is short for its width, a scene's drawing is shrunk to fit
+     (--stage-fit, src/lib/scroll.ts). Check-in shrinks around the point where the route
+     enters it, at 72.22% of the width, so its exit (at 50%) moves sideways by this much.
+     The chapters after it shift by the same amount, so the route still meets. */
+  --join-shift: calc((1 - var(--stage-fit, 1)) * 22.22%);
+
   position: relative;
   overflow: clip;
 }

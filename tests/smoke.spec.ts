@@ -88,8 +88,7 @@ test("the header shows the chapter being read", async ({ page }) => {
     .scrollIntoViewIfNeeded();
   await expect(stage).toHaveText("Foundations");
   await page
-    .locator("[data-bar] [data-tool-name]")
-    .last()
+    .locator('[data-bar] [data-group="learning"]')
     .scrollIntoViewIfNeeded();
   await expect(stage).toHaveText("Behind the bar");
 });
@@ -151,7 +150,7 @@ const playFoundations = (page: Page, position: number) =>
     phone: 2.5,
   });
 const playBar = (page: Page, position: number) =>
-  playStage(page, "[data-bar]", position / 12, { desktop: 3.5, phone: 3 });
+  playStage(page, "[data-bar]", position / 24, { desktop: 6, phone: 5.5 });
 
 test("Check-in plays as a held scene, one beat at a time", async ({ page }) => {
   await page.goto("/en/");
@@ -232,14 +231,13 @@ test("Behind the bar is complete and static without motion", async ({
   await expect(chapter.getByRole("heading", { level: 2 })).toHaveText(
     "Hinter der Bar",
   );
-  // All seven lines of the copy and the three tool names are on the page at once.
-  const lines = chapter.locator("[data-line], [data-tool-name]");
-  await expect(lines).toHaveCount(10);
+  // All seven lines of the copy are on the page at once.
+  const lines = chapter.locator("[data-line]");
+  await expect(lines).toHaveCount(7);
   for (const line of await lines.all()) {
     await expect(line).toBeVisible();
     await expect(line).toHaveCSS("opacity", "1");
   }
-  await expect(chapter.getByRole("listitem")).toHaveCount(3);
   // Three glasses, three tools, the route drawn; the pour and the flood are not shown.
   await expect(drawing.locator("[data-glass]")).toHaveCount(3);
   await expect(drawing.locator("[data-tool]")).toHaveCount(3);
@@ -252,52 +250,94 @@ test("Behind the bar is complete and static without motion", async ({
   }
 });
 
-test("Behind the bar plays as a held scene, one moment at a time", async ({
+test("Behind the bar plays as a held scene, objects before text", async ({
   page,
 }) => {
   await page.goto("/en/");
   await expect(page.locator("html")).toHaveAttribute("data-motion-ready", "");
   const chapter = page.locator("[data-bar]");
   const drawing = chapter.locator("svg:visible");
-  const lines = (moment: string) =>
-    chapter.locator(`[data-group="${moment}"] [data-line]`);
+  const line = (moment: string, index = 0) =>
+    chapter.locator(`[data-group="${moment}"] [data-line]`).nth(index);
+  const shown = (part: string) => expect(drawing.locator(part).last());
 
   // Nothing is on stage before its moment.
-  await expect(lines("joined").first()).toHaveCSS("opacity", "0");
-  for (const part of ["[data-counter]", "[data-shelf]", "[data-lamp]"]) {
-    await expect(drawing.locator(part)).toHaveCSS("opacity", "0");
+  await expect(line("joined")).toHaveCSS("opacity", "0");
+  for (const part of ["[data-counter]", "[data-wall]", "[data-ceiling]"]) {
+    await shown(part).toHaveCSS("opacity", "0");
   }
   await expect(chapter.locator("[data-flood]")).toHaveCSS("opacity", "0");
 
-  // The counter is set; the lines replace each other.
-  await playBar(page, 2.0);
-  await expect(lines("joined").nth(1)).toHaveCSS("opacity", "1");
-  await expect(lines("joined").first()).toHaveCSS("opacity", "0");
-  await expect(drawing.locator("[data-glass]").last()).toHaveCSS(
-    "opacity",
-    "1",
-  );
+  // The room is built and the first line rests; the glasses have not started.
+  await playBar(page, 3.5);
+  await expect(line("joined")).toHaveCSS("opacity", "1");
+  await shown("[data-counter]").toHaveCSS("opacity", "1");
+  await shown("[data-glass]").toHaveCSS("opacity", "0");
+
+  // Just before the second line: every glass is in place, the line is not up yet.
+  await playBar(page, 5.6);
+  await shown("[data-glass]").toHaveCSS("opacity", "1");
+  await expect(line("joined", 1)).toHaveCSS("opacity", "0");
 
   // The red moment: paper-coloured text on the flood, readable.
-  await playBar(page, 5.9);
-  await expect(lines("today").first()).toHaveCSS("opacity", "1");
+  await playBar(page, 10.8);
+  await expect(line("today")).toHaveCSS("opacity", "1");
   const red = await new AxeBuilder({ page })
     .include("[data-bar]")
     .withRules(["color-contrast"])
     .analyze();
   expect(red.violations).toEqual([]);
 
-  // The end: the tool names are up and the route has run on.
-  await playBar(page, 11.9);
-  await expect(chapter.locator("[data-tool-name]").last()).toHaveCSS(
-    "opacity",
-    "1",
-  );
-  await expect(lines("growth").last()).toHaveCSS("opacity", "0");
+  // Responsibility: the tray is there with its line; the drinks are not finished yet.
+  await playBar(page, 14.5);
+  await expect(line("responsibility")).toHaveCSS("opacity", "1");
+  await shown("[data-tray]").toHaveCSS("opacity", "1");
+  await shown('[data-garnish="ice"]').toHaveCSS("opacity", "0");
+
+  // Growth: both garnishes have landed before its line rests.
+  await playBar(page, 17.0);
+  await expect(line("growth")).toHaveCSS("opacity", "1");
+  await shown('[data-garnish="peel"]').toHaveCSS("opacity", "1");
+  await shown("[data-tool]").toHaveCSS("opacity", "0");
+
+  // The end: the tools are in their niches, the last line is up, the route has run on.
+  await playBar(page, 23.8);
+  await shown("[data-tool]").toHaveCSS("opacity", "1");
+  await expect(line("learning", 1)).toHaveCSS("opacity", "1");
+  await expect(line("learning")).toHaveCSS("opacity", "0");
   await expect(drawing.locator("[data-route]")).toHaveCSS(
     "stroke-dashoffset",
     "0px",
   );
+});
+
+test("the route meets between chapters on a short, wide window", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "phones use the fixed rail");
+  // A window like this shrinks every scene's drawing to fit the frame.
+  await page.setViewportSize({ width: 1470, height: 760 });
+  await page.goto("/en/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion-ready", "");
+  // Where a drawing's x coordinate lands on screen.
+  const onScreen = (chapter: string, x: number) =>
+    page.evaluate(
+      ({ chapter, x }) => {
+        const drawing = [...document.querySelectorAll(`${chapter} svg`)].find(
+          (svg) => svg.getClientRects().length > 0,
+        ) as SVGSVGElement;
+        const matrix = drawing.getScreenCTM()!;
+        return matrix.a * x + matrix.e;
+      },
+      { chapter, x },
+    );
+  // Each route leaves its chapter where the next one picks it up (drawing units).
+  const checkInExit = await onScreen("[data-check-in]", 720);
+  expect(await onScreen("[data-foundations]", 720)).toBeCloseTo(checkInExit, 0);
+  expect(await onScreen("[data-bar]", 720)).toBeCloseTo(checkInExit, 0);
+  // Behind the bar hands the route on at a fixed place: 72.22% of the page width.
+  const width = await page.evaluate(() => document.documentElement.clientWidth);
+  expect(await onScreen("[data-bar]", 1040)).toBeCloseTo(width * 0.7222, 0);
 });
 
 test("Foundations is complete and static without motion", async ({ page }) => {

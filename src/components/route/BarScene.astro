@@ -1,8 +1,10 @@
 ---
 // Behind the bar: the drawings for the staged scene, once for desktop and once for phones.
-// The route runs across as the top edge of a bar counter. Three glasses stand on it
-// (a coupe, a highball, a tumbler), a pendant lamp hangs above, and a shelf carries the
-// three bar tools: rotary evaporator, centrifuge, ultrasonic homogeniser.
+// The room takes its feel from the bar itself, as principles only: a ceiling like a
+// mountain range hanging overhead, globe lamps on thin cords, a stone counter, lit
+// niches in the back wall, round-backed stools. The route runs across as the counter's
+// top edge. Three glasses stand on it; a tray of small glasses stands for the events;
+// the three tools (rotary evaporator, centrifuge, ultrasonic homogeniser) stand in niches.
 // Everything is drawn in its finished place, which is what the motion-off version shows.
 // behind-the-bar.motion.ts brings the pieces in. Each piece is drawn once, around its
 // own base point, and placed with translate + scale.
@@ -16,35 +18,119 @@ const g =
   part === "desktop"
     ? {
         view: [1440, 810],
-        counter: { x: 600, y: 500, width: 440, height: 180 },
+        // The counter: a slab on a stone body. `top` is the slab's upper edge.
+        counter: { x: 600, width: 440, top: 520, slab: 16, height: 180 },
         // Down from Foundations to the counter; then (drawn by scrolling) along its top
-        // edge, down its far side and on, far beyond the frame.
-        routeIn: "M720 -1200L720 500",
-        routeDrawn: "M720 500L1040 500L1040 2000",
+        // edge, down past its far end and on, far beyond the frame.
+        routeIn: "M720 -1200L720 520",
+        routeDrawn: "M720 520L1040 520L1040 2000",
         // How much of the drawn part is still undrawn (of 1000) once the edge is done.
-        edge: 824,
-        lamp: { x: 650, y: 190, scale: 1 },
+        edge: 822,
+        ceiling: { from: 540, to: 1440, depth: 170, peaks: 12 },
+        // Globe lamps: x and how far each hangs down.
+        globes: {
+          at: [
+            [606, 300],
+            [650, 236],
+            [690, 350],
+          ],
+          scale: 1,
+        },
+        wall: { x: 760, y: 204, width: 600, height: 124, niches: 5 },
+        tools: { scale: 0.8 },
+        stools: { x: [686, 930], floor: 742, scale: 1 },
+        tray: { x: 660, scale: 1 },
         glasses: { x: [790, 885, 980], scale: 1 },
-        shelf: { from: 800, to: 1330, y: 250 },
-        tools: { x: [885, 1065, 1245], scale: 1 },
         // The bottle's mouth, from which the pour falls into the first glass.
-        bottle: { x: 790, y: 330, scale: 1 },
+        bottle: { x: 790, y: 350, scale: 1 },
       }
     : {
         view: [390, 340],
-        counter: { x: 84, y: 262, width: 288, height: 70 },
+        counter: { x: 84, width: 288, top: 262, slab: 8, height: 62 },
         routeIn: "M39 0L39 214",
         routeDrawn: "M39 214C39 250 56 262 84 262L372 262",
         edge: 0,
-        lamp: { x: 104, y: 84, scale: 0.55 },
-        glasses: { x: [150, 220, 290], scale: 0.62 },
-        shelf: { from: 150, to: 378, y: 128 },
-        tools: { x: [186, 264, 342], scale: 0.52 },
-        bottle: { x: 150, y: 160, scale: 0.62 },
+        ceiling: { from: 56, to: 390, depth: 56, peaks: 8 },
+        globes: {
+          at: [
+            [78, 128],
+            [100, 96],
+            [122, 150],
+          ],
+          scale: 0.5,
+        },
+        wall: { x: 150, y: 64, width: 228, height: 70, niches: 3 },
+        tools: { scale: 0.5 },
+        stools: { x: [196, 318], floor: 338, scale: 0.42 },
+        tray: { x: 122, scale: 0.6 },
+        glasses: { x: [182, 244, 306], scale: 0.62 },
+        bottle: { x: 182, y: 168, scale: 0.62 },
       };
 
+const round = (n: number) => Math.round(n * 10) / 10;
 const place = (x: number, y: number, scale: number) =>
   `translate(${x} ${y}) scale(${scale})`;
+
+// The ceiling: ranges of uneven ridges hanging from the top edge, like a mountain
+// relief seen upside down. Fixed numbers, no randomness, so every build draws the same.
+const ridge = (depth: number, peaks: number, seed: number) => {
+  const { from, to } = g.ceiling;
+  const jitter = (i: number) =>
+    Math.abs((Math.sin(i * 12.9898 + seed) * 43758.5453) % 1);
+  const step = (to - from) / (peaks * 2);
+  let d = `M${from} 0L${from} ${round(depth * 0.3)}`;
+  for (let i = 1; i < peaks * 2; i++) {
+    // Uneven spacing and height: no two summits alike.
+    const x = from + step * (i + (jitter(i + 7) - 0.5) * 0.9);
+    // Odd points hang low (the summits, upside down); even points sit high (saddles).
+    const y =
+      i % 2
+        ? depth * (0.45 + 0.55 * jitter(i))
+        : depth * (0.18 + 0.3 * jitter(i));
+    d += `L${round(x)} ${round(y)}`;
+  }
+  return `${d}L${to} ${round(depth * 0.25)}L${to} 0Z`;
+};
+const ridges = [
+  {
+    d: ridge(g.ceiling.depth, Math.round(g.ceiling.peaks * 0.5), 1),
+    fill: "fill-paper-deep",
+  },
+  {
+    d: ridge(g.ceiling.depth * 0.72, Math.round(g.ceiling.peaks * 0.75), 4),
+    fill: "fill-paper",
+  },
+  {
+    d: ridge(g.ceiling.depth * 0.42, g.ceiling.peaks, 9),
+    fill: "fill-paper-deep",
+  },
+];
+
+// The back wall's niches. With five, the tools stand in the first, third and fifth
+// and bottles in between; with three (phones), every niche holds a tool.
+const gap = g.wall.width * 0.022;
+const nicheWidth = (g.wall.width - gap * (g.wall.niches + 1)) / g.wall.niches;
+const niches = Array.from({ length: g.wall.niches }, (_, i) => ({
+  x: round(g.wall.x + gap + i * (nicheWidth + gap)),
+  y: round(g.wall.y + gap),
+  width: round(nicheWidth),
+  height: round(g.wall.height - gap * 2),
+  tool: g.wall.niches === 3 || i % 2 === 0,
+}));
+type Niche = (typeof niches)[number];
+const floorOf = (niche: Niche) => round(niche.y + niche.height - 3);
+const middleOf = (niche: Niche) => round(niche.x + niche.width / 2);
+const toolNiches = niches.filter((niche) => niche.tool);
+const bottleNiches = niches.filter((niche) => !niche.tool);
+const toolAt = (index: number) =>
+  place(middleOf(toolNiches[index]), floorOf(toolNiches[index]), g.tools.scale);
+
+const body = {
+  x: round(g.counter.x + g.counter.width * 0.03),
+  y: g.counter.top + g.counter.slab,
+  width: round(g.counter.width * 0.94),
+  height: g.counter.height - g.counter.slab,
+};
 
 // The three glasses, each standing on (0, 0). `inside` is the shape liquid can fill;
 // `level` is how high the drink stands (a negative y); `liquid` is its colour.
@@ -82,18 +168,64 @@ const glasses = [
         <path d={inside} />
       </clipPath>
     ))}
+    <clipPath id={`bar-stone-${part}`}>
+      <rect
+        x={body.x}
+        y={body.y}
+        width={body.width}
+        height={body.height}
+      ></rect>
+    </clipPath>
   </defs>
 
-  {/* The shelf behind the bar, with the three tools standing on it. */}
-  <g data-shelf>
-    <path
-      class="plank"
-      d={`M${g.shelf.from} ${g.shelf.y}L${g.shelf.to} ${g.shelf.y}`}
-    ></path>
+  {/* The ceiling: three ranges of ridges, one behind the other. */}
+  <g data-ceiling>
+    {ridges.map(({ d, fill }) => (
+      <path class:list={[fill, "ink-line"]} d={d} />
+    ))}
   </g>
 
+  {/* The back wall: a darker panel with lit niches. */}
+  <g data-wall>
+    <rect
+      class="fill-paper-deep ink-line"
+      x={g.wall.x}
+      y={g.wall.y}
+      width={g.wall.width}
+      height={g.wall.height}
+      rx="6"
+    ></rect>
+    {niches.map((niche) => (
+      <rect
+        class="fill-paper ink-line"
+        x={niche.x}
+        y={niche.y}
+        width={niche.width}
+        height={niche.height}
+        rx="3"
+      />
+    ))}
+    {bottleNiches.map((niche) => (
+      <g transform={place(middleOf(niche), floorOf(niche), g.tools.scale)}>
+        <path
+          class="fill-brass ink-line"
+          d="M-34 0L-34 -44C-34 -54 -29 -56 -29 -66L-29 -84L-21 -84L-21 -66C-21 -56 -16 -54 -16 -44L-16 0Z"
+        />
+        <path
+          class="fill-route ink-line"
+          d="M-8 0L-8 -60C-8 -72 -3 -74 -3 -84L-3 -100L5 -100L5 -84C5 -74 10 -72 10 -60L10 0Z"
+        />
+        <path
+          class="fill-paper-deep ink-line"
+          d="M18 0L18 -36C18 -46 23 -48 23 -58L23 -72L31 -72L31 -58C31 -48 36 -46 36 -36L36 0Z"
+        />
+      </g>
+    ))}
+  </g>
+
+  {/* The tools, each in its niche. Inner parts move on their own (CSS) once it is there. */}
   <g data-tool="rotary-evaporator">
-    <g transform={place(g.tools.x[0], g.shelf.y - 4, g.tools.scale)}>
+    <g transform={toolAt(0)}>
       <rect
         class="fill-brass ink-line"
         x="-44"
@@ -112,15 +244,18 @@ const glasses = [
         rx="4"
       ></rect>
       <path class="ink-line" d="M-12 -86L8 -62"></path>
-      {/* The flask, tilted, with the drink it is distilling. */}
+      {/* The flask, with the drink it is distilling rocking inside as it turns. */}
       <circle class="fill-paper ink-line" cx="20" cy="-46" r="24"></circle>
-      <path class="fill-route" d="M-2 -40A24 24 0 0 0 42 -40Z"></path>
+      <g class="rock">
+        <path class="fill-route" d="M-2 -40A24 24 0 0 0 42 -40Z"></path>
+        <circle class="hub" cx="20" cy="-46" r="24"></circle>
+      </g>
       <circle class="ink-line" cx="20" cy="-46" r="24"></circle>
     </g>
   </g>
 
   <g data-tool="centrifuge">
-    <g transform={place(g.tools.x[1], g.shelf.y - 4, g.tools.scale)}>
+    <g transform={toolAt(1)}>
       <path
         class="fill-brass ink-line"
         d="M-38 -58C-38 -86 38 -86 38 -58Z"
@@ -133,16 +268,15 @@ const glasses = [
         height="58"
         rx="8"
       ></rect>
-      <circle class="fill-paper ink-line" cx="-20" cy="-29" r="9"></circle>
-      <path
-        class="ink-line"
-        d="M-20 -29L-15 -34M4 -36L30 -36M4 -22L22 -22"
-      ></path>
+      <circle class="fill-paper ink-line" cx="-20" cy="-29" r="11"></circle>
+      {/* The dial spins. */}
+      <path class="ink-line spin" d="M-20 -37L-20 -21M-28 -29L-12 -29"></path>
+      <path class="ink-line" d="M6 -36L30 -36M6 -22L22 -22"></path>
     </g>
   </g>
 
   <g data-tool="ultrasonic-homogeniser">
-    <g transform={place(g.tools.x[2], g.shelf.y - 4, g.tools.scale)}>
+    <g transform={toolAt(2)}>
       <rect
         class="fill-brass ink-line"
         x="-44"
@@ -160,12 +294,13 @@ const glasses = [
         height="36"
         rx="4"
       ></rect>
-      {/* The probe reaches down into a small beaker. */}
+      {/* The probe reaches down into a small beaker; rings pulse out from its tip. */}
       <path
         class="fill-paper ink-line"
         d="M-10 -48L-8 -10L28 -10L30 -48Z"
       ></path>
       <path class="fill-route" d="M-9 -30L-8 -11L28 -11L29 -30Z"></path>
+      <circle class="ring" cx="9" cy="-22" r="5"></circle>
       <rect
         class="fill-brass ink-line"
         x="6"
@@ -178,39 +313,55 @@ const glasses = [
     </g>
   </g>
 
-  {/* The pendant lamp. GSAP drops the outer group in; the inner one sways (CSS). */}
-  <g data-lamp>
-    <g transform={place(g.lamp.x, g.lamp.y, g.lamp.scale)}>
-      <g class="sway">
-        <path class="ink-line" d="M0 -400L0 -40"></path>
-        <path
-          class="fill-brass ink-line"
-          d="M-12 -40L12 -40L40 0L-40 0Z"
-        ></path>
-        <path class="fill-paper ink-line" d="M-16 0A16 13 0 0 0 16 0Z"></path>
+  {/* The globe lamps. GSAP drops each outer group in; the inner one sways (CSS). */}
+  {g.globes.at.map(([x, y]) => (
+    <g data-globe>
+      <g transform={place(x, y, g.globes.scale)}>
+        <g class="sway">
+          <path class="ink-line" d="M0 -600L0 -22" />
+          <rect
+            class="fill-brass ink-line"
+            x="-5"
+            y="-24"
+            width="10"
+            height="8"
+            rx="2"
+          />
+          <circle class="fill-paper ink-line" cx="0" cy="0" r="16" />
+        </g>
       </g>
     </g>
-  </g>
+  ))}
 
-  {/* The counter: a darker-paper front. Its top edge is the route itself. */}
+  {/* The counter: a stone body with veining under a slab. Its top edge is the route. */}
   <g data-counter>
     <rect
       class="fill-paper-deep ink-line"
-      x={g.counter.x}
-      y={g.counter.y}
-      width={g.counter.width}
-      height={g.counter.height}
-      rx="4"
+      x={body.x}
+      y={body.y}
+      width={body.width}
+      height={body.height}
+      rx="3"
     ></rect>
-    <path
-      class="panel"
-      d={`M${g.counter.x + g.counter.width * 0.08} ${g.counter.y + g.counter.height * 0.3}h${g.counter.width * 0.84}`}
-    ></path>
-    {/* The brass foot rail. */}
+    <g clip-path={`url(#bar-stone-${part})`}>
+      <path
+        class="vein"
+        transform={`translate(${body.x} ${body.y}) scale(${round(body.width / 414)} ${round(body.height / 164)})`}
+        d="M-10 40C60 20 90 70 150 52C210 34 230 96 300 80C350 68 380 110 430 96M40 -6C70 40 50 90 96 170M250 -10C236 40 286 70 268 170M330 -4C350 30 400 40 424 30"
+      ></path>
+    </g>
     <path
       class="plank"
-      d={`M${g.counter.x + g.counter.width * 0.05} ${g.counter.y + g.counter.height * 0.82}h${g.counter.width * 0.9}`}
+      d={`M${round(body.x + body.width * 0.04)} ${round(body.y + body.height * 0.86)}h${round(body.width * 0.92)}`}
     ></path>
+    <rect
+      class="fill-paper ink-line"
+      x={g.counter.x}
+      y={g.counter.top}
+      width={g.counter.width}
+      height={g.counter.slab}
+      rx="3"
+    ></rect>
   </g>
 
   <path class="route-line" d={g.routeIn}></path>
@@ -222,12 +373,60 @@ const glasses = [
     d={g.routeDrawn}
   ></path>
 
+  {/* Two round-backed stools in front of the counter. */}
+  {g.stools.x.map((x) => (
+    <g data-stool>
+      <g transform={place(x, g.stools.floor, g.stools.scale)}>
+        <path class="ink-line" d="M-18 0L-11 -104M18 0L11 -104" />
+        <path class="plank" d="M-15 -40L15 -40" />
+        <path
+          class="fill-paper ink-line"
+          d="M-30 -118C-38 -176 38 -176 30 -118Z"
+        />
+        <rect
+          class="fill-paper ink-line"
+          x="-32"
+          y="-120"
+          width="64"
+          height="18"
+          rx="8"
+        />
+      </g>
+    </g>
+  ))}
+
+  {/* The events: a brass tray of small glasses on the counter. */}
+  <g data-tray>
+    <g transform={place(g.tray.x, g.counter.top, g.tray.scale)}>
+      {[-30, 0, 30].map((x) => (
+        <>
+          <path
+            class="fill-paper ink-line"
+            d={`M${x - 9} -30L${x - 7} -5L${x + 7} -5L${x + 9} -30Z`}
+          />
+          <path
+            class="fill-route"
+            d={`M${x - 8} -20L${x - 7} -6L${x + 7} -6L${x + 8} -20Z`}
+          />
+        </>
+      ))}
+      <rect
+        class="fill-brass ink-line"
+        x="-48"
+        y="-5"
+        width="96"
+        height="5"
+        rx="2"
+      ></rect>
+    </g>
+  </g>
+
   {/* The pour: a tilted bottle and a thin stream into the first glass (animated version only). */}
   <path
     class="route-line pour"
     data-pour
     pathLength="1000"
-    d={`M${g.bottle.x} ${g.bottle.y}L${g.bottle.x} ${g.counter.y - 56 * g.glasses.scale}`}
+    d={`M${g.bottle.x} ${g.bottle.y}L${g.bottle.x} ${g.counter.top - 56 * g.glasses.scale}`}
   ></path>
   <g data-bottle>
     <g
@@ -249,7 +448,7 @@ const glasses = [
 
   {glasses.map(({ name, inside, level, liquid }, index) => (
     <g data-glass={name}>
-      <g transform={place(g.glasses.x[index], g.counter.y, g.glasses.scale)}>
+      <g transform={place(g.glasses.x[index], g.counter.top, g.glasses.scale)}>
         <path class="fill-paper" d={inside} />
         <g clip-path={`url(#bar-${name}-${part})`}>
           {/* GSAP lifts this group from below the glass; the rect inside wobbles (CSS). */}
@@ -317,11 +516,11 @@ const glasses = [
     );
   }
 
-  .panel {
+  /* Veining in the stone: thin light lines. */
+  .vein {
     stroke: var(--color-paper);
-    stroke-width: calc(
-      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
-    );
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
   }
 
   .ice {
@@ -344,6 +543,18 @@ const glasses = [
     fill: var(--color-paper);
   }
 
+  /* An invisible full circle, so the rocking drink turns around the flask's centre. */
+  .hub {
+    stroke: none;
+    fill: none;
+  }
+
+  .ring {
+    stroke: var(--color-paper);
+    stroke-width: 1.5;
+    opacity: 0;
+  }
+
   /* Scroll-drawn paths count their length in 1000 steps (GSAP rounds stroke-dashoffset
      to whole pixels). */
   .route-draw,
@@ -351,19 +562,27 @@ const glasses = [
     stroke-dasharray: 1000;
   }
 
-  .sway {
-    transform-box: fill-box;
-    transform-origin: 50% 0%;
-  }
-
+  .sway,
   .wobble {
     transform-box: fill-box;
     transform-origin: 50% 0%;
   }
 
-  /* Idle: the lamp sways, the drinks never lie quite still, the last one fizzes. */
+  .rock,
+  .spin,
+  .ring {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /* Idle: the globes sway, the drinks never lie quite still, the last one fizzes, and
+     the tools work: the flask rocks, the dial spins, rings pulse from the probe. */
   :global(html[data-motion="on"]) .sway {
     animation: lamp-sway var(--duration-sway) ease-in-out infinite alternate;
+  }
+
+  :global(html[data-motion="on"]) [data-globe]:nth-of-type(2n) .sway {
+    animation-delay: calc(var(--duration-sway) * -0.45);
   }
 
   :global(html[data-motion="on"]) .wobble {
@@ -382,13 +601,25 @@ const glasses = [
     animation-delay: calc(var(--duration-shimmer) * -0.7);
   }
 
+  :global(html[data-motion="on"]) .rock {
+    animation: tool-rock var(--duration-pulse) ease-in-out infinite alternate;
+  }
+
+  :global(html[data-motion="on"]) .spin {
+    animation: tool-spin var(--duration-pulse) linear infinite;
+  }
+
+  :global(html[data-motion="on"]) .ring {
+    animation: tool-pulse var(--duration-shimmer) ease-out infinite;
+  }
+
   @keyframes lamp-sway {
     from {
-      rotate: -1.2deg;
+      rotate: -0.8deg;
     }
 
     to {
-      rotate: 1.2deg;
+      rotate: 0.8deg;
     }
   }
 
@@ -414,13 +645,44 @@ const glasses = [
     }
   }
 
+  @keyframes tool-rock {
+    from {
+      rotate: -14deg;
+    }
+
+    to {
+      rotate: 14deg;
+    }
+  }
+
+  @keyframes tool-spin {
+    to {
+      rotate: 360deg;
+    }
+  }
+
+  @keyframes tool-pulse {
+    from {
+      scale: 0.4;
+      opacity: 0.9;
+    }
+
+    to {
+      scale: 2.6;
+      opacity: 0;
+    }
+  }
+
   /* Before the choreography reaches them, these are not on stage. With motion off they
      are simply there, in their finished places (the pour belongs to the animated
      version only). */
-  :global(html[data-motion="on"]) [data-shelf],
+  :global(html[data-motion="on"]) [data-ceiling],
+  :global(html[data-motion="on"]) [data-wall],
   :global(html[data-motion="on"]) [data-tool],
-  :global(html[data-motion="on"]) [data-lamp],
+  :global(html[data-motion="on"]) [data-globe],
   :global(html[data-motion="on"]) [data-counter],
+  :global(html[data-motion="on"]) [data-stool],
+  :global(html[data-motion="on"]) [data-tray],
   :global(html[data-motion="on"]) [data-glass],
   :global(html[data-motion="on"]) [data-garnish],
   :global(html[data-motion="on"]) [data-pour],

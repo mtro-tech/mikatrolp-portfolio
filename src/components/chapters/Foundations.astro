@@ -127,10 +127,13 @@ const { stage, heading, beats } = Astro.props;
     :global(html[data-motion="on"]) .scene {
       inset: 0;
       transform-origin: 50% 0;
+      /* Follows Check-in's exit on short windows (route.css: --join-shift). */
+      translate: var(--join-shift) 0;
     }
 
     :global(html[data-motion="on"]) .copy {
-      inset: 13% 6% 0 56%;
+      inset: 13% max(1%, calc(6% - var(--join-shift))) 0
+        calc(56% + var(--join-shift));
       width: auto;
       margin: 0;
       padding: 0;
