@@ -9,22 +9,19 @@ period:
   end: "2026-07-31"
 body:
   - Im Appenzeller Huus begann ich als Praktikant Bar & Lounges, in einem Fünf-Sterne-Haus, das zu The Leading Hotels of the World gehört und nach LQA-Standards arbeitet. Heute stehe ich dort an den Wochenenden in Teilzeit hinter der Bar.
-  - Mein Gästekontakt hat sich von eher zurückhaltend zu authentisch und selbstsicher entwickelt, und Verantwortung kam schnell, etwa bei der Mitorganisation von Events.
-# Derselbe Text wie body, in kurze Zeilen für die Szene geschnitten. Keine neuen Fakten.
+  - Verantwortung wurde mir schnell übertragen, etwa bei der Mitorganisation von Events. Daran ist mein Gästekontakt gewachsen, von eher zurückhaltend zu authentisch und selbstsicher.
+  - "Am meisten fasziniert mich, Neues zu lernen, weit über klassisches Bartending hinaus: mit Rotationsverdampfer, Zentrifuge und Ultraschall-Homogenisator zu arbeiten und zu verstehen, wofür sie da sind."
+# Derselbe Text wie body, in Zeilen für die Szene geschnitten. Keine neuen Fakten.
 beats:
   joined:
     - "Im Appenzeller Huus begann ich als Praktikant Bar & Lounges,"
-    - "in einem Fünf-Sterne-Haus, das zu The Leading Hotels of the World gehört"
-    - "und nach LQA-Standards arbeitet."
+    - "in einem Fünf-Sterne-Haus, das zu The Leading Hotels of the World gehört und nach LQA-Standards arbeitet."
   today:
     - "Heute stehe ich dort an den Wochenenden in Teilzeit hinter der Bar."
+  responsibility:
+    - "Verantwortung wurde mir schnell übertragen, etwa bei der Mitorganisation von Events."
   growth:
-    - "Mein Gästekontakt hat sich von eher zurückhaltend"
-    - "zu authentisch und selbstsicher entwickelt,"
-    - "und Verantwortung kam schnell, etwa bei der Mitorganisation von Events."
-items:
-  - label: Werkzeuge
-    values:
-      - Rotationsverdampfer
-      - Zentrifuge
-      - Ultraschall-Homogenisator
+    - "Daran ist mein Gästekontakt gewachsen, von eher zurückhaltend zu authentisch und selbstsicher."
+  learning:
+    - "Am meisten fasziniert mich, Neues zu lernen, weit über klassisches Bartending hinaus:"
+    - "mit Rotationsverdampfer, Zentrifuge und Ultraschall-Homogenisator zu arbeiten und zu verstehen, wofür sie da sind."

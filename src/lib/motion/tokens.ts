@@ -61,44 +61,59 @@ export const foundations = {
   ride: { duration: 1.3, ease: "power1.in" },
 } as const;
 
-/** Behind the bar: the counter, the pour, three glasses, the tools. */
+/**
+ * Behind the bar: the room, the house, the pour, responsibility and growth, learning
+ * the new. In every moment the objects move first, then the line arrives, then it
+ * rests (CLAUDE.md §4). One unit is about a quarter of a screen of scrolling.
+ */
 export const bar = {
   /** Screens of scrolling the scene is held for. */
-  screens: { desktop: 3.5, phone: 3 },
-  /** When each moment starts, in units on the scene's timeline. */
+  screens: { desktop: 6, phone: 5.5 },
+  /** When each thing starts, in units on the scene's timeline. */
   at: {
-    title: 0,
-    counter: 0.1,
-    lamp: 0.3,
-    glasses: 0.6,
-    joined: 0.4,
-    joinedStep: 1.1,
-    pour: 3.7,
-    fill: 3.9,
-    flood: 4.4,
-    today: 5.1,
-    drain: 6.5,
-    growth: 7.3,
-    growthStep: 0.8,
-    shelf: 9.9,
-    tools: 10.1,
-    toolStep: 0.4,
-    route: 10.5,
-    end: 12,
+    room: 0,
+    wall: 0.3,
+    globes: 0.7,
+    counter: 1.2,
+    edge: 1.5,
+    joined1: 2.3,
+    stools: 4.1,
+    glasses: 4.5,
+    joined2: 5.7,
+    bottle: 7.7,
+    pour: 8.1,
+    fill: 8.3,
+    flood: 8.9,
+    today: 9.9,
+    drain: 11.6,
+    tray: 12.5,
+    responsibility: 13.2,
+    ice: 15.0,
+    peel: 15.4,
+    growth: 15.9,
+    learning1: 17.8,
+    tools: 19.5,
+    learning2: 21.0,
+    route: 21.4,
+    end: 24,
   },
+  ceiling: { fromY: -60, duration: 0.7, ease: "power2.out" },
+  wall: { fromY: 30, duration: 0.6, ease: "power2.out" },
+  globes: { fromY: -220, duration: 0.6, stagger: 0.25, ease: "back.out(1.4)" },
   counter: { fromY: 40, duration: 0.6, ease: "power2.out" },
   /** The route running across as the counter's top edge. */
-  edge: { duration: 0.8 },
-  lamp: { fromY: -260, duration: 0.8, ease: "bounce.out" },
-  glasses: { fromX: 90, duration: 0.5, stagger: 0.2, ease: "back.out(1.6)" },
+  edge: { duration: 0.7 },
+  stools: { fromY: 60, duration: 0.5, stagger: 0.2, ease: "power2.out" },
+  glasses: { fromX: 90, duration: 0.5, stagger: 0.3, ease: "back.out(1.6)" },
   bottle: { fromY: -50, duration: 0.4, ease: "power2.out" },
   pour: { duration: 0.3 },
   fill: { duration: 0.6, ease: "power1.inOut" },
   /** Red rises to cover the frame, and later drains away at the same pace. */
   flood: { duration: 0.9, ease: "power2.inOut" },
+  tray: { fromX: -90, duration: 0.6, ease: "back.out(1.4)" },
   garnish: { fromY: -40, duration: 0.4, ease: "back.out(2.5)" },
-  shelf: { fromX: 60, duration: 0.5, ease: "power2.out" },
-  tool: { fromY: -36, duration: 0.45, ease: "back.out(2)" },
+  /** The tools land in their niches one after another. */
+  tools: { fromY: -30, duration: 0.45, stagger: 0.45, ease: "back.out(2)" },
   route: { duration: 1.2 },
 } as const;
 

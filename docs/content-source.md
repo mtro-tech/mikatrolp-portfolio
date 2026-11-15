@@ -49,6 +49,7 @@ German copy is a translation of these facts, written in Swiss conventions ("ss",
 - **Proud of:** How he developed from a rather reserved style of guest contact to a very authentic and confident one
 - **Trust shown:** The speed at which responsibility was handed over to him, e.g. co-organising events
 - **Bar skills:** Working with and understanding tools such as a rotary evaporator (rotovap), centrifuge and ultrasonic homogeniser
+- **In Mika's words (2026-11-15):** The responsibility handed to him is why his guest contact grew. The tools stand for his fascination with learning the new, which goes well beyond classic bartending. The site leaves out the Michelin-starred restaurant.
 - **Numbers:** `[TODO: none given; show none]`
 
 ## 5. The academy — SHL

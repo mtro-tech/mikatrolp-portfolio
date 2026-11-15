@@ -1,8 +1,8 @@
 ---
 // Behind the bar as a staged scene (the frame is .stage-frame in src/styles/route.css).
 // - With motion on, the frame is held on screen and behind-the-bar.motion.ts plays the
-//   scene: the counter, the pour (one moment where red floods the frame), the three
-//   finished glasses, the tools on the shelf.
+//   scene: the room, the house, the pour (one moment where red floods the frame),
+//   responsibility and growth, learning the new.
 // - With motion off (or no JavaScript) the same markup is a normal section: the drawing
 //   in its finished state and every line of text visible. The flood is not shown.
 import BarScene from "../route/BarScene.astro";
@@ -13,13 +13,11 @@ interface Props {
   heading: string;
   /** Role and dates, already formatted for the language. */
   meta?: string;
-  /** The copy in short lines, grouped by moment: joined, today, growth. */
+  /** The copy in lines, grouped by moment: joined, today, responsibility, growth, learning. */
   beats: Record<string, string[]>;
-  /** The bar tools, as a labelled list. */
-  items?: { label: string; values: string[] }[];
 }
 
-const { stage, heading, meta, beats, items = [] } = Astro.props;
+const { stage, heading, meta, beats } = Astro.props;
 ---
 
 <section class="bar" data-bar data-stage-name={stage}>
@@ -41,29 +39,21 @@ const { stage, heading, meta, beats, items = [] } = Astro.props;
     </div>
 
     <div class="copy">
-      <div class="title" data-title>
-        <ChapterHeading stage={stage} heading={heading} />
-        {meta && <p class="text-ink-soft mt-1">{meta}</p>}
-      </div>
-
       <div class="stage-slot">
-        {Object.entries(beats).map(([moment, lines]) => (
-          <div class="group font-display text-quote" data-group={moment}>
-            {lines.map((line) => (
-              <p data-line>{line}</p>
-            ))}
-          </div>
-        ))}
-        {items.map((item) => (
-          <div class="tools">
-            <p class="font-semibold" data-tools-label>
-              {item.label}
-            </p>
-            <ul>
-              {item.values.map((value) => (
-                <li data-tool-name>{value}</li>
+        {Object.entries(beats).map(([moment, lines], index) => (
+          <div class="group" data-group={moment}>
+            {/* The heading belongs to the first moment, so later ones start at the top. */}
+            {index === 0 && (
+              <div class="title" data-title>
+                <ChapterHeading stage={stage} heading={heading} />
+                {meta && <p class="mt-1 text-ink-soft">{meta}</p>}
+              </div>
+            )}
+            <div class="lines font-display text-quote">
+              {lines.map((line) => (
+                <p data-line>{line}</p>
               ))}
-            </ul>
+            </div>
           </div>
         ))}
       </div>
@@ -76,25 +66,14 @@ const { stage, heading, meta, beats, items = [] } = Astro.props;
     display: none;
   }
 
-  .group {
+  .lines {
+    display: grid;
+    gap: 0.5rem;
     text-wrap: balance;
   }
 
-  /* The tool names: a short list with a brass dot each, like labels on the shelf. */
-  .tools li {
-    display: flex;
-    align-items: baseline;
-    gap: 0.6rem;
-    margin-top: 0.35rem;
-  }
-
-  .tools li::before {
-    content: "";
-    flex: none;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--color-brass);
+  .title {
+    margin-bottom: 1rem;
   }
 
   /* ---- Motion off: a normal scrolling section ------------------------------------ */
@@ -104,8 +83,6 @@ const { stage, heading, meta, beats, items = [] } = Astro.props;
 
   .copy {
     position: relative;
-    display: grid;
-    gap: 1.25rem;
     padding: 1.5rem var(--spacing-page) 3rem calc(10% + 1.25rem);
   }
 
@@ -131,7 +108,7 @@ const { stage, heading, meta, beats, items = [] } = Astro.props;
     }
 
     /* Stacked, the large beat size would not fit the column. */
-    :global(html:not([data-motion="on"])) .group {
+    :global(html:not([data-motion="on"])) .lines {
       font-size: var(--text-lead);
       line-height: var(--text-lead--line-height);
     }
@@ -236,16 +213,15 @@ const { stage, heading, meta, beats, items = [] } = Astro.props;
     position: absolute;
     z-index: 3;
     inset: 46% 0 0 0;
-    display: block;
     padding: 0.5rem var(--spacing-page) 1.5rem calc(10% + 1.25rem);
   }
 
   /* The lines of a moment replace each other, so they share one place. */
-  :global(html[data-motion="on"]) .group {
-    display: grid;
+  :global(html[data-motion="on"]) .lines {
+    gap: 0;
   }
 
-  :global(html[data-motion="on"]) .group > * {
+  :global(html[data-motion="on"]) .lines > * {
     grid-area: 1 / 1;
   }
 
@@ -256,17 +232,17 @@ const { stage, heading, meta, beats, items = [] } = Astro.props;
 
   /* Nothing is on stage before its moment (behind-the-bar.motion.ts brings each one in). */
   :global(html[data-motion="on"]) .title,
-  :global(html[data-motion="on"]) [data-line],
-  :global(html[data-motion="on"]) [data-tools-label],
-  :global(html[data-motion="on"]) [data-tool-name] {
+  :global(html[data-motion="on"]) [data-line] {
     opacity: 0;
   }
 
   @media (width >= 60rem) {
-    /* Desktop: the drawing fills the frame and shrinks from where the route enters. */
+    /* Desktop: the drawing fills the frame and shrinks from where the route enters,
+       and follows Check-in's exit on short windows (route.css: --join-shift). */
     :global(html[data-motion="on"]) .scene {
       inset: 0;
       transform-origin: 50% 0;
+      translate: var(--join-shift) 0;
     }
 
     :global(html[data-motion="on"]) .copy {
