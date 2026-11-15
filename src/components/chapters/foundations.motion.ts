@@ -79,10 +79,10 @@ export const foundationsScene: Scene = () => {
       },
       at.ruler,
     );
-    beatIn(rank[0], at.rank);
+    beatIn(rank[0], at.rank1);
 
     // 2. Sixty: a peg pops up on each tick, and the numeral counts with them.
-    beatIn(rank[1], at.count);
+    beatIn(rank[1], at.rank2);
     timeline.set(pegsGroup, { autoAlpha: 1 }, 0);
     timeline.fromTo(
       numeral,
@@ -168,11 +168,11 @@ export const foundationsScene: Scene = () => {
       { x: 0, y: 0, duration: tokens.step.duration, ease: tokens.step.ease },
       at.lesson,
     );
-    beatIn(lesson[0], at.lesson + 0.1);
-    beatIn(lesson[1], at.follow + 0.4);
+    beatIn(lesson[0], at.lesson1);
+    beatIn(lesson[1], at.lesson2);
 
     // Respect earned both ways: one arc from the leader to the block, then one back.
-    beatIn(lesson[2], at.arcs);
+    beatIn(lesson[2], at.lesson3);
     timeline.set(arcs, { autoAlpha: 1 }, at.arcs);
     arcLines.forEach((line, index) => {
       const start = at.arcs + index * tokens.arcs.gap;
@@ -190,12 +190,12 @@ export const foundationsScene: Scene = () => {
           start + tokens.arcs.duration,
         );
     });
-    beatOut(lesson, at.carry - out);
-    timeline.to(arcs, { autoAlpha: 0, duration: out }, at.carry - out);
+    beatOut(lesson, at.exit - out);
+    timeline.to(arcs, { autoAlpha: 0, duration: out }, at.exit - out);
 
     // 4. Carried on: back onto the route, then down it and out towards the next chapter.
     //    The line is drawn at the same pace, so its tip stays under the peg.
-    beatIn(carry[0], at.carry);
+    beatIn(carry[0], at.carry1);
     if (leader) {
       timeline
         .to(
@@ -206,7 +206,7 @@ export const foundationsScene: Scene = () => {
             duration: tokens.exit.duration,
             ease: tokens.exit.ease,
           },
-          at.carry,
+          at.exit,
         )
         .to(
           leader,
@@ -228,7 +228,7 @@ export const foundationsScene: Scene = () => {
       },
       at.ride,
     );
-    beatIn(carry[1], at.ride + 0.2);
+    beatIn(carry[1], at.carry2);
 
     // A short rest at the end, so the last line can be read before the scene lets go.
     timeline.set({}, {}, at.end);

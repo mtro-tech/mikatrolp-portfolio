@@ -143,11 +143,14 @@ async function playStage(
 
 // Positions are units on each scene's timeline (checkIn.at, foundations.at, bar.at).
 const playCheckIn = (page: Page, position: number) =>
-  playStage(page, "[data-check-in]", position / 13, { desktop: 4, phone: 3.5 });
+  playStage(page, "[data-check-in]", position / 24, {
+    desktop: 6,
+    phone: 5.5,
+  });
 const playFoundations = (page: Page, position: number) =>
-  playStage(page, "[data-foundations]", position / 8.6, {
-    desktop: 2.5,
-    phone: 2.5,
+  playStage(page, "[data-foundations]", position / 20, {
+    desktop: 4,
+    phone: 4,
   });
 const playBar = (page: Page, position: number) =>
   playStage(page, "[data-bar]", position / 24, { desktop: 6, phone: 5.5 });
@@ -162,13 +165,13 @@ test("Check-in plays as a held scene, one beat at a time", async ({ page }) => {
   // Nothing is written before its moment.
   await expect(began.first()).toHaveCSS("opacity", "0");
 
-  await playCheckIn(page, 1);
+  await playCheckIn(page, 1.5);
   await expect(began.first()).toHaveCSS("opacity", "1");
   await expect(began.last()).toHaveCSS("opacity", "0");
   await expect(meaning.first()).toHaveCSS("opacity", "0");
 
   // The dark scene: the hospitality lines have gathered, the first beats are gone.
-  await playCheckIn(page, 6.8);
+  await playCheckIn(page, 11.4);
   await expect(meaning.last()).toHaveCSS("opacity", "1");
   await expect(began.first()).toHaveCSS("opacity", "0");
   const dark = await new AxeBuilder({ page })
@@ -177,8 +180,19 @@ test("Check-in plays as a held scene, one beat at a time", async ({ page }) => {
     .analyze();
   expect(dark.violations).toEqual([]);
 
+  // Objects before text: the route has reached Lucerne before its line arrives.
+  await playCheckIn(page, 17.5);
+  await expect(chapter.locator("[data-route]:visible")).toHaveCSS(
+    "stroke-dashoffset",
+    "0px",
+  );
+  await expect(chapter.locator('[data-beat="leg"]').first()).toHaveCSS(
+    "opacity",
+    "0",
+  );
+
   // The end: the map is drawn and the languages hang on their rail.
-  await playCheckIn(page, 12.9);
+  await playCheckIn(page, 23.8);
   await expect(chapter.locator("[data-route]:visible")).toHaveCSS(
     "stroke-dashoffset",
     "0px",
@@ -319,25 +333,33 @@ test("the route meets between chapters on a short, wide window", async ({
   await page.setViewportSize({ width: 1470, height: 760 });
   await page.goto("/en/");
   await expect(page.locator("html")).toHaveAttribute("data-motion-ready", "");
-  // Where a drawing's x coordinate lands on screen.
-  const onScreen = (chapter: string, x: number) =>
+  const width = await page.evaluate(() => document.documentElement.clientWidth);
+  // Where a route path starts or ends on screen (x in pixels).
+  const onScreen = (chapter: string, path: string, end: "start" | "end") =>
     page.evaluate(
-      ({ chapter, x }) => {
+      ({ chapter, path, end }) => {
         const drawing = [...document.querySelectorAll(`${chapter} svg`)].find(
           (svg) => svg.getClientRects().length > 0,
-        ) as SVGSVGElement;
-        const matrix = drawing.getScreenCTM()!;
-        return matrix.a * x + matrix.e;
+        )!;
+        const route = drawing.querySelector<SVGPathElement>(path)!;
+        const point = route.getPointAtLength(
+          end === "end" ? route.getTotalLength() : 0,
+        );
+        const matrix = route.getScreenCTM()!;
+        return matrix.a * point.x + matrix.c * point.y + matrix.e;
       },
-      { chapter, x },
+      { chapter, path, end },
     );
-  // Each route leaves its chapter where the next one picks it up (drawing units).
-  const checkInExit = await onScreen("[data-check-in]", 720);
-  expect(await onScreen("[data-foundations]", 720)).toBeCloseTo(checkInExit, 0);
-  expect(await onScreen("[data-bar]", 720)).toBeCloseTo(checkInExit, 0);
+  const entry = (chapter: string) => onScreen(chapter, ".route-line", "start");
+  const exit = (chapter: string) => onScreen(chapter, "[data-route]", "end");
+
+  // Foundations sits in the middle of the page, and Check-in's route bends to meet it.
+  expect(await entry("[data-foundations]")).toBeCloseTo(width / 2, 0);
+  expect(await exit("[data-check-in]")).toBeCloseTo(width / 2, 0);
+  expect(await exit("[data-foundations]")).toBeCloseTo(width / 2, 0);
+  expect(await entry("[data-bar]")).toBeCloseTo(width / 2, 0);
   // Behind the bar hands the route on at a fixed place: 72.22% of the page width.
-  const width = await page.evaluate(() => document.documentElement.clientWidth);
-  expect(await onScreen("[data-bar]", 1040)).toBeCloseTo(width * 0.7222, 0);
+  expect(await exit("[data-bar]")).toBeCloseTo(width * 0.7222, 0);
 });
 
 test("Foundations is complete and static without motion", async ({ page }) => {
@@ -387,14 +409,19 @@ test("Foundations plays as a held scene, one moment at a time", async ({
   }
   await expect(drawing.locator("[data-pegs]")).toHaveCSS("opacity", "0");
 
-  // All 60 are counted; the lesson has not started.
-  await playFoundations(page, 2.6);
+  // Objects before text: all 60 are counted before the line that names them arrives.
+  await playFoundations(page, 4.0);
+  await expect(numeral).toHaveText("60");
+  await expect(lines("rank").last()).toHaveCSS("opacity", "0");
+
+  // The line rests; the lesson has not started.
+  await playFoundations(page, 5.2);
   await expect(numeral).toHaveText("60");
   await expect(lines("rank").last()).toHaveCSS("opacity", "1");
   await expect(lines("lesson").first()).toHaveCSS("opacity", "0");
 
   // The block has formed behind the leader and the lesson is complete.
-  await playFoundations(page, 6.0);
+  await playFoundations(page, 13.6);
   await expect(lines("lesson").last()).toHaveCSS("opacity", "1");
   await expect(lines("rank").first()).toHaveCSS("opacity", "0");
   await expect(lastPeg).toHaveAttribute(
@@ -403,14 +430,14 @@ test("Foundations plays as a held scene, one moment at a time", async ({
   );
 
   // The end: the last line is up and the route has run on.
-  await playFoundations(page, 8.5);
+  await playFoundations(page, 19.8);
   await expect(lines("carry").last()).toHaveCSS("opacity", "1");
   for (const route of await drawing.locator("[data-route]").all()) {
     await expect(route).toHaveCSS("stroke-dashoffset", "0px");
   }
 
   // Switching motion off mid-scene puts the count and the pegs back as drawn.
-  await playFoundations(page, 2.0);
+  await playFoundations(page, 3.2);
   await expect(numeral).not.toHaveText("60");
   await page.getByRole("button", { name: /Bewegung/ }).click();
   await expect(numeral).toHaveText("60");

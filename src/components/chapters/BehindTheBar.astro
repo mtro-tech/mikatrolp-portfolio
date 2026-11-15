@@ -237,12 +237,10 @@ const { stage, heading, meta, beats } = Astro.props;
   }
 
   @media (width >= 60rem) {
-    /* Desktop: the drawing fills the frame and shrinks from where the route enters,
-       and follows Check-in's exit on short windows (route.css: --join-shift). */
+    /* Desktop: the drawing fills the frame and shrinks from where the route enters. */
     :global(html[data-motion="on"]) .scene {
       inset: 0;
       transform-origin: 50% 0;
-      translate: var(--join-shift) 0;
     }
 
     :global(html[data-motion="on"]) .copy {

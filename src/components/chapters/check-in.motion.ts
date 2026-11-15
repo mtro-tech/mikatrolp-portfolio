@@ -74,7 +74,7 @@ export const checkInScene: Scene = ({ isDesktop }) => {
       // 1. How it began. The key is already hanging there as the scene arrives.
       beatIn(title, at.title);
       beatIn(began[0], at.began1);
-      beatOut(began[0], at.began2 - stage.beatOut.duration);
+      beatOut(began[0], at.plane - stage.beatOut.duration);
       beatIn(began[1], at.began2);
 
       // The plane to Toronto crosses while the second beat is up.

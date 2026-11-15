@@ -155,8 +155,13 @@ const ground =
           class="route-line route-draw"
           data-route
           pathLength="1000"
+          data-exit="720"
+          data-origin="1040"
+          data-template="M1040 150C1040 190 960 210 900 260C840 320 740 380 690 440C660 480 640 500 620 520C620 600 {x} 610 {x} 700L{x} 2000"
           d="M1040 150C1040 190 960 210 900 260C840 320 740 380 690 440C660 480 640 500 620 520C620 600 720 610 720 700L720 2000"
         />
+        {/* The route above leaves in the middle of the page; src/lib/scroll.ts bends its
+            last stretch there when the drawing is shrunk (it shrinks around x = 1040). */}
         {/* St. Gallen: a small outlined marker. Lucerne: the same pin as in the hero. */}
         <g data-marker class="pivot">
           <circle class="fill-paper ink-line" cx="900" cy="260" r="9" />
