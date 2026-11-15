@@ -10,6 +10,18 @@ period:
 body:
   - I joined Appenzeller Huus as Intern Bar & Lounges, in a five-star house that is a member of The Leading Hotels of the World and works to LQA standards. Today I tend bar there part-time at weekends.
   - My guest contact grew from rather reserved to authentic and confident, and responsibility came quickly, such as co-organising events.
+# The same copy as body, cut into short beats for the staged scene. No facts are added.
+beats:
+  joined:
+    - "I joined Appenzeller Huus as Intern Bar & Lounges,"
+    - "in a five-star house that is a member of The Leading Hotels of the World"
+    - "and works to LQA standards."
+  today:
+    - "Today I tend bar there part-time at weekends."
+  growth:
+    - "My guest contact grew from rather reserved"
+    - "to authentic and confident,"
+    - "and responsibility came quickly, such as co-organising events."
 items:
   - label: Tools
     values:

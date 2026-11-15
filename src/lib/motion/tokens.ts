@@ -7,6 +7,8 @@ export const DESKTOP = "(width >= 60rem)";
 export const stage = {
   /** Seconds the scene trails the scrollbar, so motion glides instead of ticking. */
   scrub: 0.6,
+  /** A scene's timeline is built once its frame is within this many screen heights. */
+  buildAhead: 1,
   /** How a text beat arrives and leaves: it rises into place, then lifts away. */
   beatIn: { duration: 0.5, ease: "power2.out", y: 28 },
   beatOut: { duration: 0.35, ease: "power1.in", y: -20 },
@@ -57,6 +59,47 @@ export const foundations = {
   /** Back onto the route, then down it and out of the frame. */
   exit: { duration: 0.5, ease: "power2.inOut" },
   ride: { duration: 1.3, ease: "power1.in" },
+} as const;
+
+/** Behind the bar: the counter, the pour, three glasses, the tools. */
+export const bar = {
+  /** Screens of scrolling the scene is held for. */
+  screens: { desktop: 3.5, phone: 3 },
+  /** When each moment starts, in units on the scene's timeline. */
+  at: {
+    title: 0,
+    counter: 0.1,
+    lamp: 0.3,
+    glasses: 0.6,
+    joined: 0.4,
+    joinedStep: 1.1,
+    pour: 3.7,
+    fill: 3.9,
+    flood: 4.4,
+    today: 5.1,
+    drain: 6.5,
+    growth: 7.3,
+    growthStep: 0.8,
+    shelf: 9.9,
+    tools: 10.1,
+    toolStep: 0.4,
+    route: 10.5,
+    end: 12,
+  },
+  counter: { fromY: 40, duration: 0.6, ease: "power2.out" },
+  /** The route running across as the counter's top edge. */
+  edge: { duration: 0.8 },
+  lamp: { fromY: -260, duration: 0.8, ease: "bounce.out" },
+  glasses: { fromX: 90, duration: 0.5, stagger: 0.2, ease: "back.out(1.6)" },
+  bottle: { fromY: -50, duration: 0.4, ease: "power2.out" },
+  pour: { duration: 0.3 },
+  fill: { duration: 0.6, ease: "power1.inOut" },
+  /** Red rises to cover the frame, and later drains away at the same pace. */
+  flood: { duration: 0.9, ease: "power2.inOut" },
+  garnish: { fromY: -40, duration: 0.4, ease: "back.out(2.5)" },
+  shelf: { fromX: 60, duration: 0.5, ease: "power2.out" },
+  tool: { fromY: -36, duration: 0.45, ease: "back.out(2)" },
+  route: { duration: 1.2 },
 } as const;
 
 /** Check-in: key, door, map, languages. Positions are units on the scene's timeline. */

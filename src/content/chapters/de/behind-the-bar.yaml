@@ -10,6 +10,18 @@ period:
 body:
   - Im Appenzeller Huus begann ich als Praktikant Bar & Lounges, in einem Fünf-Sterne-Haus, das zu The Leading Hotels of the World gehört und nach LQA-Standards arbeitet. Heute stehe ich dort an den Wochenenden in Teilzeit hinter der Bar.
   - Mein Gästekontakt hat sich von eher zurückhaltend zu authentisch und selbstsicher entwickelt, und Verantwortung kam schnell, etwa bei der Mitorganisation von Events.
+# Derselbe Text wie body, in kurze Zeilen für die Szene geschnitten. Keine neuen Fakten.
+beats:
+  joined:
+    - "Im Appenzeller Huus begann ich als Praktikant Bar & Lounges,"
+    - "in einem Fünf-Sterne-Haus, das zu The Leading Hotels of the World gehört"
+    - "und nach LQA-Standards arbeitet."
+  today:
+    - "Heute stehe ich dort an den Wochenenden in Teilzeit hinter der Bar."
+  growth:
+    - "Mein Gästekontakt hat sich von eher zurückhaltend"
+    - "zu authentisch und selbstsicher entwickelt,"
+    - "und Verantwortung kam schnell, etwa bei der Mitorganisation von Events."
 items:
   - label: Werkzeuge
     values:

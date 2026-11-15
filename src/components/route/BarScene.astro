@@ -1,0 +1,440 @@
+---
+// Behind the bar: the drawings for the staged scene, once for desktop and once for phones.
+// The route runs across as the top edge of a bar counter. Three glasses stand on it
+// (a coupe, a highball, a tumbler), a pendant lamp hangs above, and a shelf carries the
+// three bar tools: rotary evaporator, centrifuge, ultrasonic homogeniser.
+// Everything is drawn in its finished place, which is what the motion-off version shows.
+// behind-the-bar.motion.ts brings the pieces in. Each piece is drawn once, around its
+// own base point, and placed with translate + scale.
+interface Props {
+  part: "desktop" | "phone";
+}
+
+const { part } = Astro.props;
+
+const g =
+  part === "desktop"
+    ? {
+        view: [1440, 810],
+        counter: { x: 600, y: 500, width: 440, height: 180 },
+        // Down from Foundations to the counter; then (drawn by scrolling) along its top
+        // edge, down its far side and on, far beyond the frame.
+        routeIn: "M720 -1200L720 500",
+        routeDrawn: "M720 500L1040 500L1040 2000",
+        // How much of the drawn part is still undrawn (of 1000) once the edge is done.
+        edge: 824,
+        lamp: { x: 650, y: 190, scale: 1 },
+        glasses: { x: [790, 885, 980], scale: 1 },
+        shelf: { from: 800, to: 1330, y: 250 },
+        tools: { x: [885, 1065, 1245], scale: 1 },
+        // The bottle's mouth, from which the pour falls into the first glass.
+        bottle: { x: 790, y: 330, scale: 1 },
+      }
+    : {
+        view: [390, 340],
+        counter: { x: 84, y: 262, width: 288, height: 70 },
+        routeIn: "M39 0L39 214",
+        routeDrawn: "M39 214C39 250 56 262 84 262L372 262",
+        edge: 0,
+        lamp: { x: 104, y: 84, scale: 0.55 },
+        glasses: { x: [150, 220, 290], scale: 0.62 },
+        shelf: { from: 150, to: 378, y: 128 },
+        tools: { x: [186, 264, 342], scale: 0.52 },
+        bottle: { x: 150, y: 160, scale: 0.62 },
+      };
+
+const place = (x: number, y: number, scale: number) =>
+  `translate(${x} ${y}) scale(${scale})`;
+
+// The three glasses, each standing on (0, 0). `inside` is the shape liquid can fill;
+// `level` is how high the drink stands (a negative y); `liquid` is its colour.
+const glasses = [
+  {
+    name: "coupe",
+    inside: "M-34 -92C-34 -64 -14 -50 0 -50C14 -50 34 -64 34 -92Z",
+    level: -84,
+    liquid: "fill-route",
+  },
+  {
+    name: "highball",
+    inside: "M-21 -112L-21 -4Q-21 0 -17 0L17 0Q21 0 21 -4L21 -112Z",
+    level: -94,
+    liquid: "fill-brass",
+  },
+  {
+    name: "tumbler",
+    inside: "M-29 -66L-24 0L24 0L29 -66Z",
+    level: -50,
+    liquid: "fill-route",
+  },
+];
+---
+
+<svg
+  class="scene-svg"
+  viewBox={`0 0 ${g.view[0]} ${g.view[1]}`}
+  aria-hidden="true"
+  focusable="false"
+>
+  <defs>
+    {glasses.map(({ name, inside }) => (
+      <clipPath id={`bar-${name}-${part}`}>
+        <path d={inside} />
+      </clipPath>
+    ))}
+  </defs>
+
+  {/* The shelf behind the bar, with the three tools standing on it. */}
+  <g data-shelf>
+    <path
+      class="plank"
+      d={`M${g.shelf.from} ${g.shelf.y}L${g.shelf.to} ${g.shelf.y}`}
+    ></path>
+  </g>
+
+  <g data-tool="rotary-evaporator">
+    <g transform={place(g.tools.x[0], g.shelf.y - 4, g.tools.scale)}>
+      <rect
+        class="fill-brass ink-line"
+        x="-44"
+        y="-10"
+        width="88"
+        height="10"
+        rx="3"
+      ></rect>
+      <path class="ink-line" d="M-30 -10L-30 -104"></path>
+      <rect
+        class="fill-paper-deep ink-line"
+        x="-42"
+        y="-104"
+        width="30"
+        height="26"
+        rx="4"
+      ></rect>
+      <path class="ink-line" d="M-12 -86L8 -62"></path>
+      {/* The flask, tilted, with the drink it is distilling. */}
+      <circle class="fill-paper ink-line" cx="20" cy="-46" r="24"></circle>
+      <path class="fill-route" d="M-2 -40A24 24 0 0 0 42 -40Z"></path>
+      <circle class="ink-line" cx="20" cy="-46" r="24"></circle>
+    </g>
+  </g>
+
+  <g data-tool="centrifuge">
+    <g transform={place(g.tools.x[1], g.shelf.y - 4, g.tools.scale)}>
+      <path
+        class="fill-brass ink-line"
+        d="M-38 -58C-38 -86 38 -86 38 -58Z"
+      ></path>
+      <rect
+        class="fill-paper-deep ink-line"
+        x="-44"
+        y="-58"
+        width="88"
+        height="58"
+        rx="8"
+      ></rect>
+      <circle class="fill-paper ink-line" cx="-20" cy="-29" r="9"></circle>
+      <path
+        class="ink-line"
+        d="M-20 -29L-15 -34M4 -36L30 -36M4 -22L22 -22"
+      ></path>
+    </g>
+  </g>
+
+  <g data-tool="ultrasonic-homogeniser">
+    <g transform={place(g.tools.x[2], g.shelf.y - 4, g.tools.scale)}>
+      <rect
+        class="fill-brass ink-line"
+        x="-44"
+        y="-10"
+        width="88"
+        height="10"
+        rx="3"
+      ></rect>
+      <path class="ink-line" d="M-30 -10L-30 -110M-30 -92L6 -92"></path>
+      <rect
+        class="fill-paper-deep ink-line"
+        x="-4"
+        y="-112"
+        width="26"
+        height="36"
+        rx="4"
+      ></rect>
+      {/* The probe reaches down into a small beaker. */}
+      <path
+        class="fill-paper ink-line"
+        d="M-10 -48L-8 -10L28 -10L30 -48Z"
+      ></path>
+      <path class="fill-route" d="M-9 -30L-8 -11L28 -11L29 -30Z"></path>
+      <rect
+        class="fill-brass ink-line"
+        x="6"
+        y="-76"
+        width="6"
+        height="52"
+        rx="2"
+      ></rect>
+      <path class="ink-line" d="M-10 -48L-8 -10L28 -10L30 -48"></path>
+    </g>
+  </g>
+
+  {/* The pendant lamp. GSAP drops the outer group in; the inner one sways (CSS). */}
+  <g data-lamp>
+    <g transform={place(g.lamp.x, g.lamp.y, g.lamp.scale)}>
+      <g class="sway">
+        <path class="ink-line" d="M0 -400L0 -40"></path>
+        <path
+          class="fill-brass ink-line"
+          d="M-12 -40L12 -40L40 0L-40 0Z"
+        ></path>
+        <path class="fill-paper ink-line" d="M-16 0A16 13 0 0 0 16 0Z"></path>
+      </g>
+    </g>
+  </g>
+
+  {/* The counter: a darker-paper front. Its top edge is the route itself. */}
+  <g data-counter>
+    <rect
+      class="fill-paper-deep ink-line"
+      x={g.counter.x}
+      y={g.counter.y}
+      width={g.counter.width}
+      height={g.counter.height}
+      rx="4"
+    ></rect>
+    <path
+      class="panel"
+      d={`M${g.counter.x + g.counter.width * 0.08} ${g.counter.y + g.counter.height * 0.3}h${g.counter.width * 0.84}`}
+    ></path>
+    {/* The brass foot rail. */}
+    <path
+      class="plank"
+      d={`M${g.counter.x + g.counter.width * 0.05} ${g.counter.y + g.counter.height * 0.82}h${g.counter.width * 0.9}`}
+    ></path>
+  </g>
+
+  <path class="route-line" d={g.routeIn}></path>
+  <path
+    class="route-line route-draw"
+    data-route
+    data-edge={g.edge}
+    pathLength="1000"
+    d={g.routeDrawn}
+  ></path>
+
+  {/* The pour: a tilted bottle and a thin stream into the first glass (animated version only). */}
+  <path
+    class="route-line pour"
+    data-pour
+    pathLength="1000"
+    d={`M${g.bottle.x} ${g.bottle.y}L${g.bottle.x} ${g.counter.y - 56 * g.glasses.scale}`}
+  ></path>
+  <g data-bottle>
+    <g
+      transform={`${place(g.bottle.x, g.bottle.y, g.bottle.scale)} rotate(38)`}
+    >
+      <path
+        class="fill-brass ink-line"
+        d="M-6 0L-6 -30C-6 -44 -19 -46 -19 -62L-19 -128Q-19 -136 -11 -136L11 -136Q19 -136 19 -128L19 -62C19 -46 6 -44 6 -30L6 0Z"
+      ></path>
+      <rect
+        class="fill-paper ink-line"
+        x="-19"
+        y="-112"
+        width="38"
+        height="34"
+      ></rect>
+    </g>
+  </g>
+
+  {glasses.map(({ name, inside, level, liquid }, index) => (
+    <g data-glass={name}>
+      <g transform={place(g.glasses.x[index], g.counter.y, g.glasses.scale)}>
+        <path class="fill-paper" d={inside} />
+        <g clip-path={`url(#bar-${name}-${part})`}>
+          {/* GSAP lifts this group from below the glass; the rect inside wobbles (CSS). */}
+          <g data-liquid data-depth={-level}>
+            <rect
+              class:list={[liquid, "wobble"]}
+              x="-40"
+              y={level}
+              width="80"
+              height={-level + 4}
+            />
+          </g>
+        </g>
+        {name === "highball" && (
+          <g data-garnish="ice">
+            <rect
+              class="ice"
+              x="-13"
+              y="-84"
+              width="17"
+              height="17"
+              rx="3"
+              transform="rotate(-14 -4 -76)"
+            />
+            <rect
+              class="ice"
+              x="-3"
+              y="-58"
+              width="17"
+              height="17"
+              rx="3"
+              transform="rotate(18 5 -50)"
+            />
+          </g>
+        )}
+        {name === "tumbler" && (
+          <>
+            <g class="fizz">
+              <circle class="bubble" cx="-10" cy="-14" r="2.5" />
+              <circle class="bubble" cx="4" cy="-22" r="2" />
+              <circle class="bubble" cx="13" cy="-10" r="2.5" />
+            </g>
+            <g data-garnish="peel">
+              <path
+                class="peel"
+                d="M14 -70C30 -86 46 -70 34 -58C26 -50 40 -40 48 -48"
+              />
+            </g>
+          </>
+        )}
+        <path class="ink-line" d={inside} />
+        {name === "coupe" && (
+          <path class="ink-line" d="M0 -50L0 -4M-22 0C-22 -6 22 -6 22 0Z" />
+        )}
+      </g>
+    </g>
+  ))}
+</svg>
+
+<style>
+  .plank {
+    stroke: var(--color-brass);
+    stroke-width: calc(
+      var(--route-stroke-width) * 3 / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  .panel {
+    stroke: var(--color-paper);
+    stroke-width: calc(
+      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  .ice {
+    fill: var(--color-paper);
+    stroke: var(--color-ink);
+    stroke-width: calc(
+      var(--route-detail-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+    opacity: 0.85;
+  }
+
+  .peel {
+    stroke: var(--color-brass);
+    stroke-width: calc(
+      var(--route-stroke-width) * 2.5 / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  .bubble {
+    fill: var(--color-paper);
+  }
+
+  /* Scroll-drawn paths count their length in 1000 steps (GSAP rounds stroke-dashoffset
+     to whole pixels). */
+  .route-draw,
+  .pour {
+    stroke-dasharray: 1000;
+  }
+
+  .sway {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+  }
+
+  .wobble {
+    transform-box: fill-box;
+    transform-origin: 50% 0%;
+  }
+
+  /* Idle: the lamp sways, the drinks never lie quite still, the last one fizzes. */
+  :global(html[data-motion="on"]) .sway {
+    animation: lamp-sway var(--duration-sway) ease-in-out infinite alternate;
+  }
+
+  :global(html[data-motion="on"]) .wobble {
+    animation: drink-wobble var(--duration-pulse) ease-in-out infinite alternate;
+  }
+
+  :global(html[data-motion="on"]) .bubble {
+    animation: drink-fizz var(--duration-shimmer) ease-in infinite;
+  }
+
+  :global(html[data-motion="on"]) .bubble:nth-child(2) {
+    animation-delay: calc(var(--duration-shimmer) * -0.4);
+  }
+
+  :global(html[data-motion="on"]) .bubble:nth-child(3) {
+    animation-delay: calc(var(--duration-shimmer) * -0.7);
+  }
+
+  @keyframes lamp-sway {
+    from {
+      rotate: -1.2deg;
+    }
+
+    to {
+      rotate: 1.2deg;
+    }
+  }
+
+  @keyframes drink-wobble {
+    from {
+      rotate: -1.5deg;
+    }
+
+    to {
+      rotate: 1.5deg;
+    }
+  }
+
+  @keyframes drink-fizz {
+    from {
+      translate: 0 0;
+      opacity: 0.9;
+    }
+
+    to {
+      translate: 0 -30px;
+      opacity: 0;
+    }
+  }
+
+  /* Before the choreography reaches them, these are not on stage. With motion off they
+     are simply there, in their finished places (the pour belongs to the animated
+     version only). */
+  :global(html[data-motion="on"]) [data-shelf],
+  :global(html[data-motion="on"]) [data-tool],
+  :global(html[data-motion="on"]) [data-lamp],
+  :global(html[data-motion="on"]) [data-counter],
+  :global(html[data-motion="on"]) [data-glass],
+  :global(html[data-motion="on"]) [data-garnish],
+  :global(html[data-motion="on"]) [data-pour],
+  :global(html[data-motion="on"]) [data-bottle] {
+    opacity: 0;
+  }
+
+  :global(html[data-motion="on"]) .route-draw,
+  :global(html[data-motion="on"]) .pour {
+    stroke-dashoffset: 1000;
+  }
+
+  :global(html:not([data-motion="on"])) .pour,
+  :global(html:not([data-motion="on"])) [data-bottle] {
+    display: none;
+  }
+</style>

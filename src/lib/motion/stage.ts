@@ -10,13 +10,20 @@ export const headerHeight = () =>
 /**
  * Hold `frame` below the header for `screens` screen-heights of scrolling and scrub a
  * timeline over that distance. `build` fills the timeline; its positions are free units.
- * Call inside a Scene (src/lib/motion), so gsap.matchMedia() reverts it for us.
+ * Call inside a Scene (src/lib/motion), so gsap.matchMedia() reverts it for us, and
+ * return the cleanup it gives back from the scene.
+ *
+ * The hold itself is set up at once, so the page has its final height from the start.
+ * The timeline is filled only when the frame comes near (CLAUDE.md §5: lazy-init):
+ * building every scene's tweens at page load made the browser re-measure the page
+ * hundreds of times in one long task. Until then the scene's CSS keeps its pieces
+ * off stage.
  */
 export function holdStage(
   frame: Element,
   screens: number,
   build: (timeline: gsap.core.Timeline) => void,
-): gsap.core.Timeline {
+): () => void {
   const timeline = gsap.timeline({
     defaults: { ease: "none" },
     scrollTrigger: {
@@ -28,8 +35,21 @@ export function holdStage(
       invalidateOnRefresh: true,
     },
   });
-  build(timeline);
-  return timeline;
+  // A plain observer, not a ScrollTrigger callback: those can run while ScrollTrigger is
+  // re-measuring the page, which is no moment to create tweens.
+  const near = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      near.disconnect();
+      build(timeline);
+      // If the reader jumped straight into the scene, show the moment they are at.
+      timeline.progress(timeline.scrollTrigger?.progress ?? 0);
+    },
+    { rootMargin: `${tokens.buildAhead * 100}% 0px` },
+  );
+  // The frame's section: the frame itself is taken out of the flow while it is held.
+  near.observe(frame.closest("section") ?? frame);
+  return () => near.disconnect();
 }
 
 /**
