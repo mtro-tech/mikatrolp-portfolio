@@ -6,7 +6,12 @@
 // Idle motion (the key swaying, flecks, shimmer) is CSS, on inner elements.
 import { gsap } from "gsap";
 import type { Scene } from "../../lib/motion";
-import { beatMoves, holdStage, visible } from "../../lib/motion/stage";
+import {
+  beatMoves,
+  holdStage,
+  toneHeader,
+  visible,
+} from "../../lib/motion/stage";
 import { checkIn as tokens, stage } from "../../lib/motion/tokens";
 
 // Scroll-drawn paths declare pathLength="1000" (CheckInScene.astro).
@@ -139,6 +144,17 @@ export const checkInScene: Scene = ({ isDesktop }) => {
             },
             at.door,
           );
+      }
+      // The header joins the dark scene once the circle has reached it, and leaves
+      // as the circle pulls back (reachesHeader: that share of the door's opening).
+      const reach = tokens.door.duration * tokens.door.reachesHeader;
+      if (backdrop) {
+        toneHeader(
+          timeline,
+          "ink",
+          at.door + reach,
+          at.close + tokens.door.duration - reach,
+        );
       }
       timeline.fromTo(
         flecks,

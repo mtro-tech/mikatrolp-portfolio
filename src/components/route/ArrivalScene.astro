@@ -12,11 +12,15 @@ import { contours, graticule } from "./contours";
 import Pin from "./Pin.astro";
 
 interface Props {
+  /** The map ground and the objects are separate drawings, so that the ground alone
+      can fade out towards the next chapter (Arrival.astro). */
+  layer: "ground" | "objects";
   place?: string;
   coordinates?: string;
 }
 
-const { place, coordinates } = Astro.props;
+const { layer, place, coordinates } = Astro.props;
+const objects = layer === "objects";
 
 // The drawings scale with the page width only, so one unit is the same length in every
 // chapter and the route meets exactly at each join. The stage can be taller than the
@@ -101,89 +105,95 @@ const north = "M0 -38L6 -6L-6 -6Z";
   aria-hidden="true"
   focusable="false"
 >
-  <g class="ground">
-    <!-- Lake Constance, north of the town. -->
-    <path
-      class="water"
-      d="M770 96C860 58 1010 84 1130 122C1240 156 1360 150 1470 198L1470 262C1380 246 1290 266 1190 238C1080 206 960 186 868 186C806 186 748 146 770 96Z"
-    ></path>
-    <g transform="translate(0 -1100)">
-      {desktop.graticule.map((d) => (
-        <path class="grid" d={d} />
+  {!objects && (
+    <g class="ground">
+      {/* Lake Constance, north of the town. */}
+      <path
+        class="water"
+        d="M770 96C860 58 1010 84 1130 122C1240 156 1360 150 1470 198L1470 262C1380 246 1290 266 1190 238C1080 206 960 186 868 186C806 186 748 146 770 96Z"
+      ></path>
+      <g transform="translate(0 -1100)">
+        {desktop.graticule.map((d) => (
+          <path class="grid" d={d} />
+        ))}
+      </g>
+      {desktop.hills.map((d) => (
+        <path class="contour" d={d} />
       ))}
     </g>
-    {desktop.hills.map((d) => (
-      <path class="contour" d={d} />
-    ))}
-  </g>
+  )}
 
-  {/* A small boat crossing Lake Constance: one of the hero's idle details. */}
-  <g class="boat">
-    <g transform="translate(900 150)">
-      <path class="fill-paper ink-line" d="M-14 0h28l-5 7h-18z"></path>
-      <path class="fill-paper ink-line" d="M0 -2V-22L11 -5z"></path>
-    </g>
-  </g>
+  {objects && (
+    <>
+      {/* A small boat crossing Lake Constance: one of the hero's idle details. */}
+      <g class="boat">
+        <g transform="translate(900 150)">
+          <path class="fill-paper ink-line" d="M-14 0h28l-5 7h-18z"></path>
+          <path class="fill-paper ink-line" d="M0 -2V-22L11 -5z"></path>
+        </g>
+      </g>
 
-  <g class="compass" transform="translate(1310 372)">
-    <circle class="fill-paper ink-line" r="48"></circle>
-    <circle class="compass-band" r="39"></circle>
-    <g class="needle">
-      <path class="fill-paper-deep ink-line" d={star}></path>
-      <path class="fill-route ink-line" d={north}></path>
-      <circle class="fill-brass ink-line" r="4"></circle>
-    </g>
-    <text class="north" y="-58" text-anchor="middle">
-      N
-    </text>
-  </g>
+      <g class="compass" transform="translate(1310 372)">
+        <circle class="fill-paper ink-line" r="48"></circle>
+        <circle class="compass-band" r="39"></circle>
+        <g class="needle">
+          <path class="fill-paper-deep ink-line" d={star}></path>
+          <path class="fill-route ink-line" d={north}></path>
+          <circle class="fill-brass ink-line" r="4"></circle>
+        </g>
+        <text class="north" y="-58" text-anchor="middle">
+          N
+        </text>
+      </g>
 
-  {/* The town is drawn a little larger than its units: it is the heart of the scene. */}
-  <g
-    class="town-scale"
-    transform="translate(800 700) scale(1.3) translate(-800 -700)"
-  >
-    <path
-      class="fill-paper-deep ink-line hill"
-      d="M196 704C296 696 326 650 400 646C474 642 504 692 566 702Z"
-    ></path>
-    <g class="town">
-      {town.map((shapes) => (
-        <g class="building">
-          {shapes.map(([cls, d]) => (
-            <path class={cls} d={d} />
+      {/* The town is drawn a little larger than its units: it is the heart of the scene. */}
+      <g
+        class="town-scale"
+        transform="translate(800 700) scale(1.3) translate(-800 -700)"
+      >
+        <path
+          class="fill-paper-deep ink-line hill"
+          d="M196 704C296 696 326 650 400 646C474 642 504 692 566 702Z"
+        ></path>
+        <g class="town">
+          {town.map((shapes) => (
+            <g class="building">
+              {shapes.map(([cls, d]) => (
+                <path class={cls} d={d} />
+              ))}
+            </g>
           ))}
         </g>
-      ))}
-    </g>
-  </g>
+      </g>
 
-  <path
-    class="line skyline"
-    pathLength="1"
-    d="M-40 704C120 698 300 706 566 701L1040 700C1039.6 712 1040.4 724 1040 736"
-  ></path>
-  <path
-    class="line route-start"
-    data-route-start
-    pathLength="1000"
-    d="M1040 736C1039 790 1043 850 1040 920"
-  ></path>
+      <path
+        class="line skyline"
+        pathLength="1"
+        d="M-40 704C120 698 300 706 566 701L1040 700C1039.6 712 1040.4 724 1040 736"
+      ></path>
+      <path
+        class="line route-start"
+        data-route-start
+        pathLength="1000"
+        d="M1040 736L1040 920"
+      ></path>
 
-  <circle class="ring" cx="1040" cy="636" r="46"></circle>
-  <g class="pin-drop">
-    <Pin x={1040} y={700} radius={34} />
-  </g>
+      <circle class="ring" cx="1040" cy="636" r="46"></circle>
+      <g class="pin-drop">
+        <Pin x={1040} y={700} radius={34} />
+      </g>
 
-  {place && (
-    <text class="place" x="1100" y="632">
-      {place}
-    </text>
-  )}
-  {coordinates && (
-    <text class="coordinates" x="1100" y="656">
-      {coordinates}
-    </text>
+      {place && (
+        <text class="place" x="1100" y="632">
+          {place}
+        </text>
+      )}
+      {coordinates && (
+        <text class="coordinates" x="1100" y="656">
+          {coordinates}
+        </text>
+      )}
+    </>
   )}
 </svg>
 
@@ -193,78 +203,84 @@ const north = "M0 -38L6 -6L-6 -6Z";
   aria-hidden="true"
   focusable="false"
 >
-  <g class="ground">
-    {mobile.graticule.map((d) => (
-      <path class="grid" d={d} />
-    ))}
-    {mobile.hills.map((d) => (
-      <path class="contour" d={d} />
-    ))}
-  </g>
-
-  <g class="compass" transform="translate(292 82)">
-    <circle class="fill-paper ink-line" r="28"></circle>
-    <circle class="compass-band compass-band--small" r="22.5"></circle>
-    <g class="needle">
-      <g transform="scale(0.58)" class="half-size">
-        <path class="fill-paper-deep ink-line" d={star}></path>
-        <path class="fill-route ink-line" d={north}></path>
-        <circle class="fill-brass ink-line" r="4"></circle>
-      </g>
-    </g>
-    <text class="north" y="-35" text-anchor="middle">
-      N
-    </text>
-  </g>
-
-  {
-    // The same town at half size, mirrored: on phones the route comes in from the right.
-  }
-  <g
-    class="half-size"
-    transform="translate(594 230) scale(-0.5 0.5) translate(0 -700)"
-  >
-    <path
-      class="fill-paper-deep ink-line hill"
-      d="M196 704C296 696 326 650 400 646C474 642 504 692 566 702Z"
-    ></path>
-    <g class="town">
-      {town.map((shapes) => (
-        <g class="building">
-          {shapes.map(([cls, d]) => (
-            <path class={cls} d={d} />
-          ))}
-        </g>
+  {!objects && (
+    <g class="ground">
+      {mobile.graticule.map((d) => (
+        <path class="grid" d={d} />
+      ))}
+      {mobile.hills.map((d) => (
+        <path class="contour" d={d} />
       ))}
     </g>
-  </g>
-
-  <path
-    class="line skyline"
-    pathLength="1"
-    d="M400 233C370 230 340 233 311 231L39 230C38.6 244 39.4 258 39 272"
-  ></path>
-  <path
-    class="line route-start"
-    data-route-start
-    pathLength="1000"
-    d="M39 272C38 500 40 900 39 1400"
-  ></path>
-
-  <circle class="ring" cx="39" cy="196" r="25"></circle>
-  <g class="pin-drop">
-    <Pin x={39} y={230} radius={18} />
-  </g>
-
-  {place && (
-    <text class="place" x="68" y="186">
-      {place}
-    </text>
   )}
-  {coordinates && (
-    <text class="coordinates" x="68" y="201">
-      {coordinates}
-    </text>
+
+  {objects && (
+    <>
+      <g class="compass" transform="translate(292 82)">
+        <circle class="fill-paper ink-line" r="28"></circle>
+        <circle class="compass-band compass-band--small" r="22.5"></circle>
+        <g class="needle">
+          <g transform="scale(0.58)" class="half-size">
+            <path class="fill-paper-deep ink-line" d={star}></path>
+            <path class="fill-route ink-line" d={north}></path>
+            <circle class="fill-brass ink-line" r="4"></circle>
+          </g>
+        </g>
+        <text class="north" y="-35" text-anchor="middle">
+          N
+        </text>
+      </g>
+
+      {
+        // The same town at half size, mirrored: on phones the route comes in from the right.
+      }
+      <g
+        class="half-size"
+        transform="translate(594 230) scale(-0.5 0.5) translate(0 -700)"
+      >
+        <path
+          class="fill-paper-deep ink-line hill"
+          d="M196 704C296 696 326 650 400 646C474 642 504 692 566 702Z"
+        ></path>
+        <g class="town">
+          {town.map((shapes) => (
+            <g class="building">
+              {shapes.map(([cls, d]) => (
+                <path class={cls} d={d} />
+              ))}
+            </g>
+          ))}
+        </g>
+      </g>
+
+      <path
+        class="line skyline"
+        pathLength="1"
+        d="M400 233C370 230 340 233 311 231L39 230C38.6 244 39.4 258 39 272"
+      ></path>
+      <path
+        class="line route-start"
+        data-route-start
+        pathLength="1000"
+        d="M39 272L39 1400"
+      ></path>
+
+      <circle class="ring" cx="39" cy="196" r="25"></circle>
+      <g class="pin-drop">
+        <Pin x={39} y={230} radius={18} />
+      </g>
+
+      {place && (
+        <text class="place" x="68" y="186">
+          {place}
+        </text>
+      )}
+      {coordinates && (
+        <text class="coordinates" x="68" y="201">
+          {coordinates}
+        </text>
+      )}
+    </>
   )}
 </svg>
 
@@ -462,7 +478,9 @@ const north = "M0 -38L6 -6L-6 -6Z";
     --i: 7;
   }
 
-  /* The skyline path ends in a short stub below the pin. The rest of the route stays
+  /* The skyline path ends in a short stub below the pin. From there the route is exactly
+     vertical: the hero is cut off at a different height on every screen, and the line
+     must be in the same place wherever that is. The rest of the route stays
      undrawn until the reader scrolls (arrival.motion.ts draws it; no CSS animation here). */
   :global(html[data-motion="on"]) .route-start {
     stroke-dashoffset: 1000;

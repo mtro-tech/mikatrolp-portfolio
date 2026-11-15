@@ -63,6 +63,8 @@
   --duration-land: 0.9s;
   --duration-needle: 2s;
   --duration-fade: 0.8s;
+  /* The header changing colour with a scene. */
+  --duration-tone: 0.3s;
 
   /* Idle loops: slow enough to read as life, not as movement. */
   --duration-sway: 3.2s;

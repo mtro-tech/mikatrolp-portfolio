@@ -153,7 +153,7 @@ export const bar = {
   pour: { duration: 0.3 },
   fill: { duration: 0.6, ease: "power1.inOut" },
   /** Red rises to cover the frame, and later drains away at the same pace. */
-  flood: { duration: 0.9, ease: "power2.inOut" },
+  flood: { duration: 0.9, ease: "power2.inOut", reachesHeader: 0.9 },
   tray: { fromX: -90, duration: 0.6, ease: "back.out(1.4)" },
   garnish: { fromY: -40, duration: 0.4, ease: "back.out(2.5)" },
   /** The tools land in their niches one after another. */
@@ -191,7 +191,7 @@ export const checkIn = {
   /** The key turns a quarter, like a key in a lock, with a little overshoot. */
   turn: { rotation: 90, duration: 0.6, ease: "back.out(1.6)" },
   /** The dark scene opens from the keyhole and closes back into it. */
-  door: { duration: 0.9, ease: "power2.inOut" },
+  door: { duration: 0.9, ease: "power2.inOut", reachesHeader: 0.6 },
   plane: { duration: 1.6, ease: "power1.inOut" },
   map: { duration: 0.8, ease: "power2.out", fromRotation: -8, fromScale: 0.86 },
   route: { duration: 1.9 },

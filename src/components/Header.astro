@@ -17,7 +17,7 @@ const { name, homeHref, stage, languageSwitchLabel, other, motion } =
 <!-- Phones: name and controls on the first row, the stage name on its own row.
      From 48rem: one row with the stage name centred. -->
 <header class="site-header px-page">
-  <a href={homeHref} class="name text-ink no-underline">
+  <a href={homeHref} class="name no-underline">
     {name}
   </a>
   <!-- The stage name follows the scroll once the other chapters exist (step 4). -->
@@ -48,12 +48,41 @@ const { name, homeHref, stage, languageSwitchLabel, other, motion } =
     align-items: baseline;
     gap: 0.25rem 1rem;
     height: var(--header-height);
-    background: var(--color-paper);
+    background: var(--header-bg, var(--color-paper));
+    color: var(--header-fg, var(--color-ink));
     white-space: nowrap;
+    transition:
+      background-color var(--duration-tone) ease,
+      color var(--duration-tone) ease;
+  }
+
+  /* While a scene fills the frame with a colour, the header takes it too
+     (toneHeader in src/lib/motion/stage.ts sets data-tone). Paper-coloured text passes
+     AA contrast on both: about 12:1 on pine ink, 5.7:1 on aperitivo red. */
+  .site-header[data-tone="ink"] {
+    --header-bg: var(--color-ink);
+    --header-fg: var(--color-paper);
+  }
+
+  .site-header[data-tone="red"] {
+    --header-bg: var(--color-route);
+    --header-fg: var(--color-paper);
+  }
+
+  /* On a colour, every piece of header text is paper-coloured: the red link and the
+     grey switch would not be readable there, and the red focus ring would vanish. */
+  .site-header[data-tone] :global(:is(a, button)) {
+    color: var(--header-fg);
+    transition: color var(--duration-tone) ease;
+  }
+
+  .site-header[data-tone] :global(:focus-visible) {
+    outline-color: var(--header-fg);
   }
 
   .name {
     grid-area: name;
+    color: inherit;
   }
 
   .stage {

@@ -49,7 +49,32 @@ export function holdStage(
   );
   // The frame's section: the frame itself is taken out of the flow while it is held.
   near.observe(frame.closest("section") ?? frame);
-  return () => near.disconnect();
+  return () => {
+    near.disconnect();
+    // A scene may have coloured the header (toneHeader); GSAP cannot revert that.
+    delete document.querySelector("header")?.dataset.tone;
+  };
+}
+
+/**
+ * While a scene fills the frame with a colour, the header takes that colour too, so the
+ * page reads as one surface (Header.astro styles data-tone). `from` and `to` are
+ * timeline positions. The tone follows the timeline's position, not start and end
+ * events, so it is right however the reader got here: jumping, or scrolling backwards.
+ */
+export function toneHeader(
+  timeline: gsap.core.Timeline,
+  tone: "ink" | "red",
+  from: number,
+  to: number,
+) {
+  const header = document.querySelector("header");
+  if (!header) return;
+  timeline.eventCallback("onUpdate", () => {
+    const time = timeline.time();
+    if (time >= from && time < to) header.dataset.tone = tone;
+    else if (header.dataset.tone === tone) delete header.dataset.tone;
+  });
 }
 
 /**
