@@ -1,0 +1,375 @@
+---
+// Foundations: the drawings for the staged scene, once for desktop and once for phones.
+// A brass ruler with 60 ticks lies along the ruler-straight route. 60 pegs (the people
+// led: abstract pieces, as on a map table) stand in a block of 6 rows; one red peg with
+// a pennant stands in front of them.
+// Everything is drawn in its finished place, which is what the motion-off version shows.
+// foundations.motion.ts moves the pieces there from where each one starts; the data-*
+// numbers on the pegs and the leader tell it from where.
+import { graticule } from "./contours";
+
+interface Props {
+  part: "desktop" | "phone";
+}
+
+const { part } = Astro.props;
+
+const PEOPLE = 60;
+const COLUMNS = 10;
+
+const g =
+  part === "desktop"
+    ? {
+        view: [1440, 810],
+        route: 720,
+        // The route is drawn by scrolling from the ruler's end; far beyond the frame.
+        routeEnd: 2000,
+        ruler: { x: 676, width: 36, top: 126, step: 8 },
+        dotX: 660,
+        dotStep: -15,
+        block: { x: 128, y: 330, dx: 44, dy: 52, scale: 1.35 },
+        ground: { x: 90, y: 262, width: 490, height: 370, grid: 70 },
+        numeral: { x: 88, y: 228 },
+        leader: { start: [720, 126], front: [628, 470], scale: 1.9 },
+      }
+    : {
+        view: [390, 340],
+        route: 39,
+        routeEnd: 1100,
+        ruler: { x: 47, width: 16, top: 52, step: 4.2 },
+        dotX: 72,
+        dotStep: 8,
+        block: { x: 118, y: 118, dx: 26, dy: 38, scale: 0.78 },
+        ground: { x: 96, y: 72, width: 280, height: 254, grid: 44 },
+        numeral: { x: 98, y: 58 },
+        leader: { start: [39, 44], front: [80, 196], scale: 1 },
+      };
+
+const round = (n: number) => Math.round(n * 10) / 10;
+const rulerEnd = round(
+  g.ruler.top + (PEOPLE - 1) * g.ruler.step + g.ruler.step,
+);
+const tickY = (i: number) => round(g.ruler.top + g.ruler.step * (i + 0.5));
+
+// Ticks on the ruler's route-side edge: every fifth longer, every tenth longest.
+const edge = g.ruler.x + g.ruler.width;
+const ticks = Array.from({ length: PEOPLE }, (_, i) => {
+  const share = (i + 1) % 10 === 0 ? 0.6 : (i + 1) % 5 === 0 ? 0.42 : 0.25;
+  return `M${edge} ${tickY(i)}h${round(-g.ruler.width * share)}`;
+}).join("");
+
+// Each peg stands in the block; dx/dy lead back to its tick, where it first appears.
+const pegs = Array.from({ length: PEOPLE }, (_, i) => {
+  const x = g.block.x + (i % COLUMNS) * g.block.dx;
+  const y = g.block.y + Math.floor(i / COLUMNS) * g.block.dy;
+  // On the ticks they stand in two staggered columns, so each one can be told apart.
+  const column = g.dotX + (i % 2) * g.dotStep;
+  return { x, y, dx: round(column - x), dy: round(tickY(i) - y) };
+});
+
+// The leader ends in front of the block. It starts on the route above the ruler and
+// later steps back onto the route at the ruler's end, then rides down it.
+const [lx, ly] = g.leader.front;
+const leader = {
+  startDx: g.leader.start[0] - lx,
+  startDy: g.leader.start[1] - ly,
+  exitDx: g.route - lx,
+  exitDy: round(rulerEnd - ly),
+  ride: round(g.routeEnd - rulerEnd),
+};
+
+// Respect earned both ways: one arc from the leader to the block, one back.
+const s = g.leader.scale / 1.9;
+// The block's edge nearest the leader (it stands right of the block on desktop, left
+// of it on phones), and which way the block lies from the leader.
+const last = g.block.x + (COLUMNS - 1) * g.block.dx;
+const toBlock = lx > last ? -1 : 1;
+const near =
+  toBlock === -1 ? last + 12 * g.block.scale : g.block.x - 12 * g.block.scale;
+const arc = (side: 1 | -1) => {
+  // side -1: above, from the leader to the block. side 1: below, from the block back.
+  const lift = side === -1 ? -46 : 14;
+  const bow = side === -1 ? -30 : 30;
+  const atLeader = [lx + toBlock * 12 * s, ly + lift * s];
+  const atBlock = [near, ly + lift * s];
+  const [from, to] = side === -1 ? [atLeader, atBlock] : [atBlock, atLeader];
+  const c1 = [from[0] + (to[0] - from[0]) * 0.25, from[1] + bow * s];
+  const c2 = [from[0] + (to[0] - from[0]) * 0.75, from[1] + bow * s];
+  // The arrowhead: two short strokes back from the end, either side of the arc.
+  const angle = Math.atan2(to[1] - c2[1], to[0] - c2[0]);
+  const wing = (turn: number) =>
+    `L${round(to[0] - Math.cos(angle + turn) * 11 * s)} ${round(to[1] - Math.sin(angle + turn) * 11 * s)}`;
+  const p = (point: number[]) => `${round(point[0])} ${round(point[1])}`;
+  return {
+    line: `M${p(from)}C${p(c1)} ${p(c2)} ${p(to)}`,
+    head: `M${p(to)}${wing(0.5)}M${p(to)}${wing(-0.5)}`,
+  };
+};
+const arcs = [arc(-1), arc(1)];
+
+const sheet = `foundations-ground-${part}`;
+const peg = `foundations-peg-${part}`;
+---
+
+<svg
+  class="scene-svg"
+  viewBox={`0 0 ${g.view[0]} ${g.view[1]}`}
+  aria-hidden="true"
+  focusable="false"
+>
+  <defs>
+    <clipPath id={sheet}>
+      <rect
+        x={g.ground.x}
+        y={g.ground.y}
+        width={g.ground.width}
+        height={g.ground.height}
+        rx="6"
+      ></rect>
+    </clipPath>
+    {/* One peg, standing on (0, 0): a head on a tapered body. */}
+    <g id={peg}>
+      <path class="fill-paper ink-line" d="M-8 0L-4.5 -12L4.5 -12L8 0Z"></path>
+      <circle class="fill-paper ink-line" cx="0" cy="-19.5" r="6.5"></circle>
+    </g>
+  </defs>
+
+  {/* The ground the block stands on: darker paper with a faint grid. */}
+  <g data-ground class="pivot">
+    <rect
+      class="map-sheet"
+      x={g.ground.x}
+      y={g.ground.y}
+      width={g.ground.width}
+      height={g.ground.height}
+      rx="6"
+    ></rect>
+    <g class="on-sheet" clip-path={`url(#${sheet})`}>
+      {graticule(g.view[0], g.view[1], g.ground.grid).map((d) => (
+        <path class="map-grid" d={d} />
+      ))}
+    </g>
+  </g>
+
+  <text data-numeral class="numeral" x={g.numeral.x} y={g.numeral.y}>
+    {PEOPLE}
+  </text>
+
+  {/* The route: there from the start down to the ruler's end, then drawn by scrolling. */}
+  <path
+    class="route-line"
+    d={`M${g.route} -1200L${g.route} ${rulerEnd}`}
+  ></path>
+  {part === "desktop" && (
+    <path
+      class="route-line route-draw"
+      data-route
+      pathLength="1000"
+      d={`M${g.route} ${rulerEnd}L${g.route} ${g.routeEnd}`}
+    />
+  )}
+
+  <g data-ruler>
+    <rect
+      class="fill-brass ink-line"
+      x={g.ruler.x}
+      y={g.ruler.top}
+      width={g.ruler.width}
+      height={round(rulerEnd - g.ruler.top)}
+      rx="3"
+    ></rect>
+    <path class="tick" d={ticks}></path>
+    <path
+      class="glint"
+      d={`M${round(g.ruler.x + g.ruler.width * 0.22)} ${g.ruler.top + 10}v${round(g.ruler.step * 5)}`}
+    ></path>
+  </g>
+
+  <g data-pegs>
+    {pegs.map(({ x, y, dx, dy }) => (
+      <g
+        data-peg
+        data-x={x}
+        data-y={y}
+        data-dx={dx}
+        data-dy={dy}
+        data-size={g.block.scale}
+        transform={`translate(${x} ${y}) scale(${g.block.scale})`}
+      >
+        <g class="bob">
+          <use href={`#${peg}`} />
+        </g>
+      </g>
+    ))}
+  </g>
+
+  <g data-arcs>
+    {arcs.map(({ line, head }) => (
+      <>
+        <path class="arc arc-line" data-arc pathLength="1000" d={line} />
+        <path class="arc" data-arc-head d={head} />
+      </>
+    ))}
+  </g>
+
+  {/* The leader: red, with a pennant. Two groups, so GSAP (outer) and CSS (pennant) never share one. */}
+  <g
+    data-leader
+    data-start-dx={leader.startDx}
+    data-start-dy={leader.startDy}
+    data-exit-dx={leader.exitDx}
+    data-exit-dy={leader.exitDy}
+    data-ride={leader.ride}
+  >
+    <g transform={`translate(${lx} ${ly}) scale(${g.leader.scale})`}>
+      <path class="ink-line" d="M0 -25L0 -46"></path>
+      <path class="pennant fill-route ink-line" d="M0 -46L15 -41L0 -36Z"></path>
+      <path class="fill-route ink-line" d="M-8 0L-4.5 -12L4.5 -12L8 0Z"></path>
+      <circle class="fill-route ink-line" cx="0" cy="-19.5" r="6.5"></circle>
+    </g>
+  </g>
+</svg>
+
+<style>
+  .tick {
+    stroke: var(--color-ink);
+    stroke-width: calc(
+      var(--route-detail-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  .arc {
+    stroke: var(--color-brass);
+    stroke-width: calc(
+      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  /* Scroll-drawn paths count their length in 1000 steps (GSAP rounds stroke-dashoffset
+     to whole pixels). */
+  .route-draw,
+  .arc-line {
+    stroke-dasharray: 1000;
+  }
+
+  /* The count, set large in the display face. */
+  .numeral {
+    stroke: none;
+    fill: var(--color-ink);
+    font-family: var(--font-display);
+    font-size: 150px;
+  }
+
+  svg[viewBox="0 0 390 340"] .numeral {
+    font-size: 54px;
+  }
+
+  /* Light running along the ruler's edge. */
+  .glint {
+    stroke: var(--color-paper);
+    stroke-width: calc(
+      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+    opacity: 0;
+  }
+
+  .pennant {
+    transform-box: fill-box;
+    transform-origin: 0% 50%;
+  }
+
+  /* Idle: the pennant flutters, the block breathes in a slow wave, light runs down the ruler. */
+  :global(html[data-motion="on"]) .pennant {
+    animation: pennant-flutter var(--duration-flutter) ease-in-out infinite
+      alternate;
+  }
+
+  :global(html[data-motion="on"]) .bob {
+    animation: peg-bob var(--duration-pulse) ease-in-out infinite alternate;
+  }
+
+  :global(html[data-motion="on"]) [data-peg]:nth-child(5n + 1) .bob {
+    animation-delay: calc(var(--duration-pulse) * -0.2);
+  }
+
+  :global(html[data-motion="on"]) [data-peg]:nth-child(5n + 2) .bob {
+    animation-delay: calc(var(--duration-pulse) * -0.4);
+  }
+
+  :global(html[data-motion="on"]) [data-peg]:nth-child(5n + 3) .bob {
+    animation-delay: calc(var(--duration-pulse) * -0.6);
+  }
+
+  :global(html[data-motion="on"]) [data-peg]:nth-child(5n + 4) .bob {
+    animation-delay: calc(var(--duration-pulse) * -0.8);
+  }
+
+  :global(html[data-motion="on"]) .glint {
+    animation: ruler-glint var(--duration-drift) ease-in-out infinite;
+  }
+
+  @keyframes pennant-flutter {
+    from {
+      transform: skewY(-9deg) scaleX(1);
+    }
+
+    to {
+      transform: skewY(8deg) scaleX(0.86);
+    }
+  }
+
+  @keyframes peg-bob {
+    from {
+      translate: 0 0;
+    }
+
+    to {
+      translate: 0 -2px;
+    }
+  }
+
+  @keyframes ruler-glint {
+    0%,
+    55% {
+      translate: 0 0;
+      opacity: 0;
+    }
+
+    65% {
+      opacity: 0.8;
+    }
+
+    95% {
+      opacity: 0.8;
+    }
+
+    100% {
+      translate: 0 var(--glint-run);
+      opacity: 0;
+    }
+  }
+
+  .glint {
+    --glint-run: 420px;
+  }
+
+  svg[viewBox="0 0 390 340"] .glint {
+    --glint-run: 215px;
+  }
+
+  /* Before the choreography reaches them, these are not on stage. With motion off they
+     are simply there, in their finished places. */
+  :global(html[data-motion="on"]) [data-ground],
+  :global(html[data-motion="on"]) [data-numeral],
+  :global(html[data-motion="on"]) [data-ruler],
+  :global(html[data-motion="on"]) [data-pegs],
+  :global(html[data-motion="on"]) [data-arcs],
+  :global(html[data-motion="on"]) [data-leader] {
+    opacity: 0;
+  }
+
+  :global(html[data-motion="on"]) .route-draw,
+  :global(html[data-motion="on"]) .arc-line {
+    stroke-dashoffset: 1000;
+  }
+</style>

@@ -35,7 +35,7 @@ German copy is a translation of these facts, written in Swiss conventions ("ss",
 - **Service:** 1.5 years in total, of which 18 weeks as an active lieutenant.
 - **Led and trained:** 60 people.
 - **What leadership taught him:** Leading by example with integrity and fairness creates an environment where respect is earned both ways.
-- **What carries over into hospitality:** The work ethic of always going the extra mile, for the result and for the people he leads.
+- **What carries over into hospitality:** The work ethic of always going the extra mile, for the result and for the people he leads. (On the site this chapter does not repeat "the extra mile": Check-in already says it. Mika, 2026-11-15.)
 - **Concrete situation:** `[TODO: optional, left open]`
 
 ## 4. Behind the bar

@@ -1,0 +1,139 @@
+---
+// Foundations as a staged scene, built like Check-in (the frame is .stage-frame in
+// src/styles/route.css).
+// - With motion on, the frame is held on screen and foundations.motion.ts plays the
+//   scene: the ruler, 60 pegs, one goes first, carried on. Text arrives line by line.
+// - With motion off (or no JavaScript) the same markup is a normal section: the drawing
+//   in its finished state and every line of text visible.
+import FoundationsScene from "../route/FoundationsScene.astro";
+import ChapterHeading from "./ChapterHeading.astro";
+
+interface Props {
+  stage: string;
+  heading: string;
+  /** The copy in short lines, grouped by moment: rank, lesson, carry. */
+  beats: Record<string, string[]>;
+}
+
+const { stage, heading, beats } = Astro.props;
+---
+
+<section class="foundations" data-foundations data-stage-name={stage}>
+  <div class="stage-frame" data-stage-frame>
+    <div class="scene" data-stage-scene>
+      <div class="layer layer--desktop">
+        <FoundationsScene part="desktop" />
+      </div>
+      <div class="layer layer--phone">
+        <FoundationsScene part="phone" />
+      </div>
+    </div>
+
+    <div class="copy">
+      <div class="title" data-title>
+        <ChapterHeading stage={stage} heading={heading} />
+      </div>
+
+      <div class="stage-slot">
+        {Object.entries(beats).map(([moment, lines]) => (
+          <div class="group font-display text-quote" data-group={moment}>
+            {lines.map((line) => (
+              <p data-line>{line}</p>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .layer--desktop {
+    display: none;
+  }
+
+  .group {
+    text-wrap: balance;
+  }
+
+  /* ---- Motion off: a normal scrolling section ------------------------------------ */
+  .copy {
+    position: relative;
+    display: grid;
+    gap: 1.25rem;
+    padding: 1.5rem var(--spacing-page) 3rem calc(10% + 1.25rem);
+  }
+
+  @media (width >= 60rem) {
+    .layer--desktop {
+      display: block;
+    }
+
+    .layer--phone {
+      display: none;
+    }
+
+    /* The drawing lies behind; the copy takes the column right of the route (x > 720). */
+    .scene {
+      position: absolute;
+      inset: 0;
+    }
+
+    .copy {
+      width: 34%;
+      margin-left: 56%;
+      padding: 7vw 0 4rem;
+    }
+
+    /* Stacked, the large beat size would not fit the column. */
+    :global(html:not([data-motion="on"])) .group {
+      font-size: var(--text-lead);
+      line-height: var(--text-lead--line-height);
+    }
+  }
+
+  /* ---- Motion on: the scene plays inside the held frame -------------------------- */
+  /* Phones: the drawing in the top 46% of the frame, the text below. The drawing
+     shrinks from the rail's top if the screen is short (--stage-fit, src/lib/scroll.ts). */
+  :global(html[data-motion="on"]) .scene {
+    --zoom: var(--stage-fit, 1);
+
+    position: absolute;
+    inset: 0 0 54% 0;
+    scale: var(--stage-fit, 1);
+    transform-origin: 10% 0;
+  }
+
+  :global(html[data-motion="on"]) .layer {
+    position: absolute;
+    inset: 0 0 auto 0;
+  }
+
+  :global(html[data-motion="on"]) .copy {
+    position: absolute;
+    inset: 46% 0 0 0;
+    display: block;
+    padding: 0.5rem var(--spacing-page) 1.5rem calc(10% + 1.25rem);
+  }
+
+  /* Nothing is on stage before its moment (foundations.motion.ts brings each one in). */
+  :global(html[data-motion="on"]) .title,
+  :global(html[data-motion="on"]) [data-line] {
+    opacity: 0;
+  }
+
+  @media (width >= 60rem) {
+    /* Desktop: the drawing fills the frame and shrinks from where the route enters. */
+    :global(html[data-motion="on"]) .scene {
+      inset: 0;
+      transform-origin: 50% 0;
+    }
+
+    :global(html[data-motion="on"]) .copy {
+      inset: 13% 6% 0 56%;
+      width: auto;
+      margin: 0;
+      padding: 0;
+    }
+  }
+</style>

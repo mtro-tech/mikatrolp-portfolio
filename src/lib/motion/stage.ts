@@ -32,6 +32,38 @@ export function holdStage(
   return timeline;
 }
 
+/**
+ * How text beats arrive and leave on a stage's timeline. Text fades with opacity only
+ * (never visibility), so every line stays available to screen readers the whole time,
+ * whatever is on stage.
+ */
+export function beatMoves(timeline: gsap.core.Timeline) {
+  const beatIn = (target: gsap.TweenTarget, position: number) =>
+    timeline.fromTo(
+      target,
+      { opacity: 0, y: tokens.beatIn.y },
+      {
+        opacity: 1,
+        y: 0,
+        duration: tokens.beatIn.duration,
+        ease: tokens.beatIn.ease,
+      },
+      position,
+    );
+  const beatOut = (target: gsap.TweenTarget, position: number) =>
+    timeline.to(
+      target,
+      {
+        opacity: 0,
+        y: tokens.beatOut.y,
+        duration: tokens.beatOut.duration,
+        ease: tokens.beatOut.ease,
+      },
+      position,
+    );
+  return { beatIn, beatOut };
+}
+
 /** The drawing shown at the current screen size (each scene has a desktop and a phone one). */
 export function visible<T extends Element>(root: ParentNode, selector: string) {
   return [...root.querySelectorAll<T>(selector)].find(

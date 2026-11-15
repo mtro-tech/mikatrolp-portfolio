@@ -83,6 +83,10 @@ test("the header shows the chapter being read", async ({ page }) => {
   await page.locator(".check-in").scrollIntoViewIfNeeded();
   await page.getByText("Languages").scrollIntoViewIfNeeded();
   await expect(stage).toHaveText("Check-in");
+  await page
+    .locator('[data-foundations] [data-group="carry"]')
+    .scrollIntoViewIfNeeded();
+  await expect(stage).toHaveText("Foundations");
 });
 
 test("Check-in is complete and static without motion", async ({ page }) => {
@@ -108,20 +112,39 @@ test("Check-in is complete and static without motion", async ({ page }) => {
   await expect(chapter.getByRole("listitem")).toHaveCount(3);
 });
 
-// Scroll the held Check-in scene to a position on its timeline (0 to 13 units,
-// see checkIn.at in src/lib/motion/tokens.ts).
-async function playCheckIn(page: Page, position: number) {
-  await page.evaluate(async (at) => {
-    const frame = document.querySelector("[data-check-in] [data-stage-frame]")!;
-    const spacer = frame.closest(".pin-spacer") ?? frame;
-    const top =
-      spacer.getBoundingClientRect().top +
-      window.scrollY -
-      document.querySelector("header")!.offsetHeight;
-    const screens = window.matchMedia("(width >= 60rem)").matches ? 4 : 3.5;
-    window.scrollTo(0, top + (at / 13) * window.innerHeight * screens);
-  }, position);
+// Scroll a held scene to a share (0 to 1) of its timeline. `screens` is how long the
+// scene is held, as in src/lib/motion/tokens.ts.
+async function playStage(
+  page: Page,
+  chapter: string,
+  share: number,
+  screens: { desktop: number; phone: number },
+) {
+  await page.evaluate(
+    ({ chapter, share, screens }) => {
+      const frame = document.querySelector(`${chapter} [data-stage-frame]`)!;
+      const spacer = frame.closest(".pin-spacer") ?? frame;
+      const top =
+        spacer.getBoundingClientRect().top +
+        window.scrollY -
+        document.querySelector("header")!.offsetHeight;
+      const held = window.matchMedia("(width >= 60rem)").matches
+        ? screens.desktop
+        : screens.phone;
+      window.scrollTo(0, top + share * window.innerHeight * held);
+    },
+    { chapter, share, screens },
+  );
 }
+
+// Positions are units on each scene's timeline (checkIn.at and foundations.at).
+const playCheckIn = (page: Page, position: number) =>
+  playStage(page, "[data-check-in]", position / 13, { desktop: 4, phone: 3.5 });
+const playFoundations = (page: Page, position: number) =>
+  playStage(page, "[data-foundations]", position / 8.6, {
+    desktop: 2.5,
+    phone: 2.5,
+  });
 
 test("Check-in plays as a held scene, one beat at a time", async ({ page }) => {
   await page.goto("/en/");
@@ -181,6 +204,90 @@ test("the route line keeps one thickness on screen", async ({ page }) => {
   await expect
     .poll(() => thickness("[data-check-in] .route-line"))
     .toBeCloseTo(atLoad, 1);
+  await playFoundations(page, 1);
+  await expect
+    .poll(() => thickness("[data-foundations] .route-line"))
+    .toBeCloseTo(atLoad, 1);
+});
+
+test("Foundations is complete and static without motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/en/");
+  const chapter = page.locator("[data-foundations]");
+  const drawing = chapter.locator("svg:visible");
+  await expect(drawing).toHaveCount(1);
+  await expect(chapter.getByRole("heading", { level: 2 })).toHaveText(
+    "Foundations",
+  );
+  // All seven lines of the copy are on the page at once.
+  const lines = chapter.locator("[data-line]");
+  await expect(lines).toHaveCount(7);
+  for (const line of await lines.all()) {
+    await expect(line).toBeVisible();
+    await expect(line).toHaveCSS("opacity", "1");
+  }
+  // The 60 people led, the one who leads, and the count beside them.
+  await expect(drawing.locator("[data-peg]")).toHaveCount(60);
+  await expect(drawing.locator("[data-leader]")).toHaveCount(1);
+  await expect(drawing.locator("[data-numeral]")).toHaveText("60");
+  for (const path of await drawing.locator(".route-line").all()) {
+    await expect(path).toHaveCSS("stroke-dashoffset", "0px");
+  }
+});
+
+test("Foundations plays as a held scene, one moment at a time", async ({
+  page,
+}) => {
+  await page.goto("/de/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion-ready", "");
+  const chapter = page.locator("[data-foundations]");
+  const drawing = chapter.locator("svg:visible");
+  const lines = (moment: string) =>
+    chapter.locator(`[data-group="${moment}"] [data-line]`);
+  const numeral = drawing.locator("[data-numeral]");
+  const lastPeg = drawing.locator("[data-peg]").last();
+  const drawnPlace = await lastPeg.evaluate(
+    (peg: SVGElement) => `translate(${peg.dataset.x} ${peg.dataset.y})`,
+  );
+
+  // Nothing is on stage before its moment.
+  await expect(lines("rank").first()).toHaveCSS("opacity", "0");
+  for (const part of ["[data-ruler]", "[data-ground]", "[data-numeral]"]) {
+    await expect(drawing.locator(part)).toHaveCSS("opacity", "0");
+  }
+  await expect(lastPeg).toHaveAttribute("transform", /scale\(0\)/);
+
+  // All 60 are counted; the lesson has not started.
+  await playFoundations(page, 2.6);
+  await expect(numeral).toHaveText("60");
+  await expect(lines("rank").last()).toHaveCSS("opacity", "1");
+  await expect(lines("lesson").first()).toHaveCSS("opacity", "0");
+
+  // The block has formed behind the leader and the lesson is complete.
+  await playFoundations(page, 6.0);
+  await expect(lines("lesson").last()).toHaveCSS("opacity", "1");
+  await expect(lines("rank").first()).toHaveCSS("opacity", "0");
+  await expect(lastPeg).toHaveAttribute(
+    "transform",
+    new RegExp(`^${drawnPlace.replace(/[()]/g, "\\$&")} `),
+  );
+
+  // The end: the last line is up and the route has run on.
+  await playFoundations(page, 8.5);
+  await expect(lines("carry").last()).toHaveCSS("opacity", "1");
+  for (const route of await drawing.locator("[data-route]").all()) {
+    await expect(route).toHaveCSS("stroke-dashoffset", "0px");
+  }
+
+  // Switching motion off mid-scene puts the count and the pegs back as drawn.
+  await playFoundations(page, 2.0);
+  await expect(numeral).not.toHaveText("60");
+  await page.getByRole("button", { name: /Bewegung/ }).click();
+  await expect(numeral).toHaveText("60");
+  await expect(lastPeg).toHaveAttribute(
+    "transform",
+    new RegExp(`^${drawnPlace.replace(/[()]/g, "\\$&")} `),
+  );
 });
 
 test("the hero does not scroll sideways", async ({ page }) => {

@@ -70,6 +70,7 @@
   --duration-shimmer: 2.4s;
   --duration-drift: 9s;
   --duration-tremble: 3.6s;
+  --duration-flutter: 0.9s;
   --duration-voyage: 48s;
   --ease-draw: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-settle: cubic-bezier(0.22, 1, 0.36, 1);
