@@ -2,7 +2,8 @@
 // The academy: Lucerne's waterfront, once for desktop and once for phones.
 // A mountain ridge behind, the lake, the stone water tower, and the covered wooden
 // bridge, whose walkway is the route. The pin stands on the bridge for where Mika is
-// now, with a small room key for Rooms Division; three books are the favourite modules.
+// now, with a small room key for Rooms Division. (The favourite modules are books in
+// the text column: Academy.astro.)
 // My own drawing of the landmark in the house style, not copied from a photo.
 // Everything is drawn in its finished place, which is what the motion-off version shows.
 // academy.motion.ts brings the pieces in.
@@ -50,7 +51,6 @@ const g =
           "M1040 380L800 455L545 610C480 650 {x} 640 {x} 720L{x} 2000",
         exit: { x: 360, origin: 1040 },
         swan: { x: 1010, y: 600, scale: 1 },
-        books: { x: 130, y: 770, scale: 1 },
         labels: { start: [1064, 368], end: [528, 584] },
       }
     : {
@@ -71,7 +71,6 @@ const g =
         routeDrawn: "M39 160C39 196 70 204 118 208L236 238L372 204",
         exit: undefined,
         swan: { x: 250, y: 290, scale: 0.6 },
-        books: { x: 84, y: 330, scale: 0.42 },
         labels: undefined,
       };
 
@@ -126,8 +125,6 @@ const pin: Point = [
   round(first[0] + (second[0] - first[0]) * 0.7),
   round(first[1] + (second[1] - first[1]) * 0.7 - 62 * k),
 ];
-
-const books = ["fill-route", "fill-brass", "fill-paper-deep"];
 ---
 
 <svg
@@ -247,39 +244,10 @@ const books = ["fill-route", "fill-brass", "fill-paper-deep"];
       </g>
     </g>
   </g>
-
-  {/* The favourite modules: three books, stacked on the shore. */}
-  {books.map((fill, index) => (
-    <g data-book>
-      <g
-        transform={`${place(g.books.x, g.books.y - index * 30 * g.books.scale, g.books.scale)} rotate(${[0, -3, 2][index]})`}
-      >
-        <rect
-          class:list={[fill, "ink-line"]}
-          x={-70 + [0, 8, -6][index]}
-          y="-28"
-          width="140"
-          height="28"
-          rx="4"
-        />
-        <path
-          class="page"
-          d={`M${-58 + [0, 8, -6][index]} -14h${[96, 80, 104][index]}`}
-        />
-      </g>
-    </g>
-  ))}
 </svg>
 
 <style>
   .wave {
-    stroke: var(--color-paper);
-    stroke-width: calc(
-      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
-    );
-  }
-
-  .page {
     stroke: var(--color-paper);
     stroke-width: calc(
       var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
@@ -367,8 +335,7 @@ const books = ["fill-route", "fill-brass", "fill-paper-deep"];
   :global(html[data-motion="on"]) [data-span],
   :global(html[data-motion="on"]) [data-flower],
   :global(html[data-motion="on"]) [data-dates],
-  :global(html[data-motion="on"]) [data-pin],
-  :global(html[data-motion="on"]) [data-book] {
+  :global(html[data-motion="on"]) [data-pin] {
     opacity: 0;
   }
 

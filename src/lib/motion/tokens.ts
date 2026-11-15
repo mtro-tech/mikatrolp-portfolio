@@ -77,7 +77,7 @@ export const foundations = {
  */
 export const academy = {
   /** Screens of scrolling the scene is held for. */
-  screens: { desktop: 4, phone: 3.5 },
+  screens: { desktop: 4.25, phone: 3.75 },
   /** When each thing starts, in units on the scene's timeline. */
   at: {
     town: 0,
@@ -90,9 +90,9 @@ export const academy = {
     pin: 8.2,
     now: 8.9,
     books: 10.6,
-    bookStep: 1.3,
-    route: 14.4,
-    end: 16.4,
+    bookStep: 1.5,
+    route: 15.4,
+    end: 17.4,
   },
   ridge: { fromY: 40, duration: 0.6, ease: "power2.out" },
   water: { fromY: 50, duration: 0.7, ease: "power2.out" },
@@ -102,6 +102,8 @@ export const academy = {
   flowers: { duration: 0.3, stagger: 0.12, ease: "back.out(3)" },
   pin: { fromY: -90, duration: 0.55, ease: "bounce.out" },
   book: { fromY: -60, duration: 0.5, ease: "bounce.out" },
+  /** A book opens shortly after it has landed; the first one waits for the label. */
+  open: { afterLabel: 0.3, afterLanding: 0.15, duration: 0.5 },
   route: { duration: 1.2 },
 } as const;
 
@@ -112,7 +114,7 @@ export const academy = {
  */
 export const bar = {
   /** Screens of scrolling the scene is held for. */
-  screens: { desktop: 6, phone: 5.5 },
+  screens: { desktop: 7.9, phone: 7.4 },
   /** When each thing starts, in units on the scene's timeline. */
   at: {
     room: 0,
@@ -128,18 +130,31 @@ export const bar = {
     pour: 8.1,
     fill: 8.3,
     flood: 8.9,
-    today: 9.9,
-    drain: 11.6,
-    tray: 12.5,
-    responsibility: 13.2,
-    ice: 15.0,
-    peel: 15.4,
-    growth: 15.9,
-    learning1: 17.8,
-    tools: 19.5,
-    learning2: 21.0,
-    route: 21.4,
-    end: 24,
+    // On the red: the shaker is filled, closed and shaken, then the line.
+    shaker: 9.9,
+    jigger: 10.6,
+    measure: 11.0,
+    shakerIce: 11.8,
+    cap: 12.6,
+    shake: 13.2,
+    rest: 15.5,
+    today: 15.9,
+    drain: 17.5,
+    // The shaker moves over the last glass and pours it.
+    serve: 18.4,
+    tilt: 19.0,
+    stream: 19.2,
+    leave: 20.0,
+    tray: 20.6,
+    responsibility: 21.3,
+    ice: 23.1,
+    peel: 23.5,
+    growth: 24.0,
+    learning1: 25.9,
+    tools: 27.6,
+    learning2: 29.1,
+    route: 29.5,
+    end: 32.1,
   },
   ceiling: { fromY: -60, duration: 0.7, ease: "power2.out" },
   wall: { fromY: 30, duration: 0.6, ease: "power2.out" },
@@ -154,6 +169,30 @@ export const bar = {
   fill: { duration: 0.6, ease: "power1.inOut" },
   /** Red rises to cover the frame, and later drains away at the same pace. */
   flood: { duration: 0.9, ease: "power2.inOut", reachesHeader: 0.9 },
+  /** The shaker drops onto the red and stands. */
+  shaker: { fromY: -80, duration: 0.5, ease: "back.out(1.4)" },
+  /** The jigger comes in, tips over the tin, pours its measure and leaves. */
+  jigger: {
+    fromX: -70,
+    fromY: -50,
+    duration: 0.4,
+    tip: 130,
+    ease: "power2.out",
+  },
+  measure: { duration: 0.4 },
+  shakerIce: { fromY: -170, duration: 0.35, stagger: 0.25, ease: "power2.in" },
+  cap: { fromY: -90, duration: 0.4, ease: "back.out(1.2)" },
+  /** The scrolling shakes it: leaning over, then swings along its length. */
+  shake: { lean: 28, travel: 22, swings: 10, duration: 1.9, settle: 0.2 },
+  /** Over the last glass: smaller, cap off, tipped until it pours. */
+  serve: {
+    scale: 0.6,
+    duration: 0.6,
+    tip: 118,
+    tipDuration: 0.25,
+    ease: "power2.inOut",
+  },
+  stream: { duration: 0.25, fill: 0.6 },
   tray: { fromX: -90, duration: 0.6, ease: "back.out(1.4)" },
   garnish: { fromY: -40, duration: 0.4, ease: "back.out(2.5)" },
   /** The tools land in their niches one after another. */

@@ -161,11 +161,14 @@ const playFoundations = (page: Page, position: number) =>
     phone: 4,
   });
 const playBar = (page: Page, position: number) =>
-  playStage(page, "[data-bar]", position / 24, { desktop: 6, phone: 5.5 });
+  playStage(page, "[data-bar]", position / 32.1, {
+    desktop: 7.9,
+    phone: 7.4,
+  });
 const playAcademy = (page: Page, position: number) =>
-  playStage(page, "[data-academy]", position / 16.4, {
-    desktop: 4,
-    phone: 3.5,
+  playStage(page, "[data-academy]", position / 17.4, {
+    desktop: 4.25,
+    phone: 3.75,
   });
 
 test("Check-in plays as a held scene, one beat at a time", async ({ page }) => {
@@ -283,7 +286,13 @@ test("Behind the bar is complete and static without motion", async ({
     "stroke-dashoffset",
     "0px",
   );
-  for (const part of ["[data-flood]", "[data-pour]", "[data-bottle]"]) {
+  for (const part of [
+    "[data-flood]",
+    "[data-shaker]",
+    "[data-pour]",
+    "[data-serve]",
+    "[data-bottle]",
+  ]) {
     await expect(chapter.locator(part).first()).toBeHidden();
   }
 });
@@ -317,9 +326,24 @@ test("Behind the bar plays as a held scene, objects before text", async ({
   await shown("[data-glass]").toHaveCSS("opacity", "1");
   await expect(line("joined", 1)).toHaveCSS("opacity", "0");
 
-  // The red moment: paper-coloured text on the flood, readable.
-  await playBar(page, 10.8);
+  // On the red: the shaker is being filled. The third glass is still empty (its drink
+  // waits below the glass), and the shaker is not closed yet.
+  const shaker = chapter.locator("[data-shaker]");
+  const lastDrink = drawing.locator("[data-liquid]").last();
+  await playBar(page, 12.2);
+  await expect(shaker).toHaveCSS("opacity", "1");
+  await expect(shaker.locator("[data-cap]")).toHaveCSS("opacity", "0");
+  await expect(lastDrink).not.toHaveAttribute("transform", /,0,0\)$/);
+
+  // Just before the shake: the shaker is closed, and the line is not up yet.
+  await playBar(page, 13.1);
+  await expect(shaker.locator("[data-cap]")).toHaveCSS("opacity", "1");
+  await expect(line("today")).toHaveCSS("opacity", "0");
+
+  // The red moment: the shaker rests, paper-coloured text on the flood, readable.
+  await playBar(page, 16.7);
   await expect(line("today")).toHaveCSS("opacity", "1");
+  await expect(shaker).toHaveCSS("rotate", "none");
   // The header has turned red with the flood, and its text is still readable.
   const header = page.locator(".site-header");
   await expect(header).toHaveAttribute("data-tone", "red");
@@ -331,21 +355,33 @@ test("Behind the bar plays as a held scene, objects before text", async ({
     .analyze();
   expect(red.violations).toEqual([]);
 
+  // The red has drained and the shaker hangs over the third glass, about to pour:
+  // the glass is still empty.
+  await playBar(page, 19.1);
+  await expect(header).not.toHaveAttribute("data-tone");
+  await expect(shaker).toHaveCSS("opacity", "1");
+  await expect(lastDrink).not.toHaveAttribute("transform", /,0,0\)$/);
+
+  // Poured: the glass is full and the shaker has left.
+  await playBar(page, 20.5);
+  await expect(lastDrink).toHaveAttribute("transform", /,0,0\)$/);
+  await expect(shaker).toHaveCSS("opacity", "0");
+
   // Responsibility: the tray is there with its line; the drinks are not finished yet.
-  await playBar(page, 14.5);
+  await playBar(page, 22.6);
   await expect(header).not.toHaveAttribute("data-tone");
   await expect(line("responsibility")).toHaveCSS("opacity", "1");
   await shown("[data-tray]").toHaveCSS("opacity", "1");
   await shown('[data-garnish="ice"]').toHaveCSS("opacity", "0");
 
   // Growth: both garnishes have landed before its line rests.
-  await playBar(page, 17.0);
+  await playBar(page, 25.1);
   await expect(line("growth")).toHaveCSS("opacity", "1");
   await shown('[data-garnish="peel"]').toHaveCSS("opacity", "1");
   await shown("[data-tool]").toHaveCSS("opacity", "0");
 
   // The end: the tools are in their niches, the last line is up, the route has run on.
-  await playBar(page, 23.8);
+  await playBar(page, 31.9);
   await shown("[data-tool]").toHaveCSS("opacity", "1");
   await expect(line("learning", 1)).toHaveCSS("opacity", "1");
   await expect(line("learning")).toHaveCSS("opacity", "0");
@@ -427,9 +463,12 @@ test("The academy is complete and static without motion", async ({ page }) => {
     await expect(line).toHaveCSS("opacity", "1");
   }
   await expect(chapter.getByRole("listitem")).toHaveCount(3);
-  // The pin, one book per module, and the route drawn.
+  // One open book per module (no closed covers), the pin, and the route drawn.
+  await expect(chapter.locator("[data-book]")).toHaveCount(3);
+  for (const cover of await chapter.locator("[data-book-cover]").all()) {
+    await expect(cover).toBeHidden();
+  }
   await expect(drawing.locator("[data-pin]")).toHaveCount(1);
-  await expect(drawing.locator("[data-book]")).toHaveCount(3);
   await expect(drawing.locator("[data-route]")).toHaveCSS(
     "stroke-dashoffset",
     "0px",
@@ -467,15 +506,27 @@ test("The academy plays as a held scene, objects before text", async ({
   await playAcademy(page, 9.8);
   await expect(line(2)).toHaveCSS("opacity", "1");
   await shown("[data-pin]").toHaveCSS("opacity", "1");
-  await shown("[data-book]").toHaveCSS("opacity", "0");
+  const books = chapter.locator("[data-book]");
+  const covers = chapter.locator("[data-book-cover]");
+  await expect(books.first()).toHaveCSS("opacity", "0");
 
-  // The end: three books, three modules, the route has run on.
-  await playAcademy(page, 16.3);
-  await shown("[data-book]").toHaveCSS("opacity", "1");
-  await expect(chapter.locator("[data-module]").last()).toHaveCSS(
-    "opacity",
-    "1",
-  );
+  // One book at a time: the first has landed and opened (its cover has narrowed away
+  // at the spine); the second has not arrived.
+  await playAcademy(page, 12.3);
+  await expect(books.first()).toHaveCSS("opacity", "1");
+  await expect(covers.first()).toHaveCSS("transform", /^matrix\(0, /);
+  await expect(books.nth(1)).toHaveCSS("opacity", "0");
+
+  // The end: three open books with readable names, the route has run on.
+  await playAcademy(page, 17.3);
+  await expect(books.last()).toHaveCSS("opacity", "1");
+  await expect(covers.last()).toHaveCSS("transform", /^matrix\(0, /);
+  await expect(chapter.locator("[data-module]").last()).toBeVisible();
+  const names = await new AxeBuilder({ page })
+    .include("[data-academy]")
+    .withRules(["color-contrast"])
+    .analyze();
+  expect(names.violations).toEqual([]);
   await expect(line(2)).toHaveCSS("opacity", "0");
   await expect(drawing.locator("[data-route]")).toHaveCSS(
     "stroke-dashoffset",

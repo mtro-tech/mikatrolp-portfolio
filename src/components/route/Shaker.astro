@@ -1,0 +1,130 @@
+---
+// The Boston shaker that appears on the red in Behind the bar (animated version only):
+// a large tin, the second tin that closes it, a jigger that pours a measure in, two ice
+// cubes, and splash marks for the shaking. No hand is drawn: the pieces move on their own.
+// The tin stands on (0, 0); its mouth is at (0, -170), the point the whole shaker
+// turns around (BehindTheBar.astro sets that as the transform origin).
+// Pieces that end up inside the tin are drawn before it, so they vanish behind its rim.
+// behind-the-bar.motion.ts brings the pieces in.
+---
+
+<svg
+  class="shaker-svg"
+  viewBox="-160 -300 320 320"
+  aria-hidden="true"
+  focusable="false"
+>
+  {/* Everything that shakes together. */}
+  <g data-shake>
+    <rect
+      class="steel-light line"
+      data-measure
+      x="-36"
+      y="-216"
+      width="6"
+      height="70"
+      rx="3"
+    ></rect>
+    <g data-shaker-ice>
+      <rect
+        class="steel-light line"
+        x="-30"
+        y="-150"
+        width="26"
+        height="26"
+        rx="4"
+        transform="rotate(-12 -17 -137)"
+      ></rect>
+    </g>
+    <g data-shaker-ice>
+      <rect
+        class="steel-light line"
+        x="4"
+        y="-128"
+        width="26"
+        height="26"
+        rx="4"
+        transform="rotate(16 17 -115)"
+      ></rect>
+    </g>
+    <g data-cap>
+      <path
+        class="steel-light line"
+        d="M-52 -150L-40 -262Q-39 -270 -31 -270L31 -270Q39 -270 40 -262L52 -150Z"
+      ></path>
+    </g>
+    <path
+      class="steel-dark line"
+      d="M-58 -170L-46 -8Q-45 0 -37 0L37 0Q45 0 46 -8L58 -170Z"
+    ></path>
+    <path class="line" d="M-56 -146L56 -146M-49 -30L49 -30"></path>
+    <path
+      class="mark"
+      data-splash="top"
+      d="M-34 -282L-46 -298M0 -286L0 -304M34 -282L46 -298"
+    ></path>
+    <path
+      class="mark"
+      data-splash="bottom"
+      d="M-30 12L-40 28M0 14L0 32M30 12L40 28"
+    ></path>
+  </g>
+
+  {/* The jigger: an hourglass-shaped measure. GSAP moves the outer group and tips the inner one. */}
+  <g data-jigger>
+    <g transform="translate(-44 -250) scale(1.3)">
+      <g data-jigger-tip>
+        <path class="brass line" d="M-20 -34L20 -34L6 0L-6 0Z"></path>
+        <path class="brass line" d="M-6 0L6 0L14 22L-14 22Z"></path>
+      </g>
+    </g>
+  </g>
+</svg>
+
+<style>
+  .shaker-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* The shaker changes size on stage, so its outlines are set in screen pixels. */
+  .line,
+  .mark {
+    stroke-width: calc(var(--route-stroke-width) * 1px);
+    vector-effect: non-scaling-stroke;
+  }
+
+  .line {
+    stroke: var(--color-ink);
+  }
+
+  .mark {
+    stroke: var(--color-paper);
+  }
+
+  .steel-light {
+    fill: var(--color-paper);
+  }
+
+  .steel-dark {
+    fill: var(--color-paper-deep);
+  }
+
+  .brass {
+    fill: var(--color-brass);
+  }
+
+  /* Not on stage before their moments. */
+  [data-measure],
+  [data-shaker-ice],
+  [data-cap],
+  [data-splash],
+  [data-jigger] {
+    opacity: 0;
+  }
+</style>

@@ -435,6 +435,14 @@ const glasses = [
     pathLength="1000"
     d={`M${g.bottle.x} ${g.bottle.y}L${g.bottle.x} ${g.counter.top - 56 * g.glasses.scale}`}
   ></path>
+  {/* The last drink is strained from the shaker (Shaker.astro) into the third glass:
+      a short stream that starts where the shaker's mouth will be. */}
+  <path
+    class="route-line pour"
+    data-serve
+    pathLength="1000"
+    d={`M${g.glasses.x[2]} ${g.counter.top - 170 * g.glasses.scale}L${g.glasses.x[2]} ${g.counter.top - 14 * g.glasses.scale}`}
+  ></path>
   <g data-bottle>
     <g
       transform={`${place(g.bottle.x, g.bottle.y, g.bottle.scale)} rotate(38)`}
@@ -693,6 +701,7 @@ const glasses = [
   :global(html[data-motion="on"]) [data-glass],
   :global(html[data-motion="on"]) [data-garnish],
   :global(html[data-motion="on"]) [data-pour],
+  :global(html[data-motion="on"]) [data-serve],
   :global(html[data-motion="on"]) [data-bottle] {
     opacity: 0;
   }

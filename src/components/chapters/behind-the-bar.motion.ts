@@ -2,7 +2,9 @@
 // learning the new.
 // What the reader should feel: walking into a warm, dim bar that builds around them;
 // then the one generous moment of the chapter, when the pour runs over and red fills
-// the screen ("today I tend bar there"); then the events arriving on a tray and, because
+// the screen: a shaker is filled there and the reader's own scrolling shakes it, the
+// playful heart of the chapter ("today I tend bar there"), and the last glass is poured
+// from it; then the events arriving on a tray and, because
 // of them, the drinks getting finished one by one, which is the growth the copy talks
 // about; and last the tools coming to life in their niches, as curiosity, not a list.
 // Pace (CLAUDE.md §4): in every moment the objects move first, then the line arrives,
@@ -51,6 +53,12 @@ export const barScene: Scene = ({ isDesktop }) => {
   const tools = all("[data-tool]");
   const route = one<SVGElement>("[data-route]");
   const flood = frame.querySelector("[data-flood]");
+  const serve = one<SVGPathElement>("[data-serve]");
+  // The shaker is its own layer over the flood (BehindTheBar.astro, Shaker.astro).
+  const shaker = frame.querySelector<HTMLElement>("[data-shaker]");
+  const piece = (selector: string) => [
+    ...(shaker?.querySelectorAll(selector) ?? []),
+  ];
 
   const title = frame.querySelector("[data-title]");
   const [joined1, joined2] = lines("joined");
@@ -150,9 +158,124 @@ export const barScene: Scene = ({ isDesktop }) => {
         at.flood + reach,
         at.drain + tokens.flood.duration - reach,
       );
+      // Under cover of the flood the second drink is poured. The third glass stays
+      // empty: it is waiting for the shaker.
+      timeline.set(liquids[1], { y: 0 }, at.shaker);
+
+      //    On the red: the shaker drops in, a jigger pours its measure, ice follows,
+      //    the second tin closes it.
+      arrive(shaker, { y: tokens.shaker.fromY }, tokens.shaker, at.shaker);
+      arrive(
+        piece("[data-jigger]"),
+        { x: tokens.jigger.fromX, y: tokens.jigger.fromY },
+        tokens.jigger,
+        at.jigger,
+      );
+      timeline
+        .to(
+          piece("[data-jigger-tip]"),
+          {
+            rotation: tokens.jigger.tip,
+            transformOrigin: "50% 50%",
+            duration: tokens.jigger.duration,
+            ease: tokens.jigger.ease,
+          },
+          at.jigger + tokens.jigger.duration,
+        )
+        .fromTo(
+          piece("[data-measure]"),
+          { autoAlpha: 1, scaleY: 0, transformOrigin: "50% 0%" },
+          { scaleY: 1, duration: tokens.measure.duration },
+          at.measure,
+        )
+        .to(
+          piece("[data-measure], [data-jigger]"),
+          { autoAlpha: 0, duration: tokens.measure.duration },
+          at.measure + tokens.measure.duration,
+        );
+      arrive(
+        piece("[data-shaker-ice]"),
+        { y: tokens.shakerIce.fromY },
+        tokens.shakerIce,
+        at.shakerIce,
+      );
+      arrive(piece("[data-cap]"), { y: tokens.cap.fromY }, tokens.cap, at.cap);
+
+      //    The reader's scrolling shakes it: it leans over, then swings along its own
+      //    length, with splash marks at each end of a swing. Scrubbed like everything
+      //    else, so scrolling back shakes it backwards.
+      const swing = tokens.shake.duration / tokens.shake.swings;
+      // When the full swings start: after leaning over and the first half swing.
+      const swings = at.shake + tokens.shake.settle + swing / 2;
+      timeline
+        .to(
+          shaker,
+          { rotation: tokens.shake.lean, duration: tokens.shake.settle },
+          at.shake,
+        )
+        .fromTo(
+          piece("[data-shake]"),
+          { y: 0 },
+          {
+            y: -tokens.shake.travel,
+            duration: swing / 2,
+            ease: "sine.out",
+          },
+          at.shake + tokens.shake.settle,
+        )
+        .to(
+          piece("[data-shake]"),
+          {
+            y: tokens.shake.travel,
+            duration: swing,
+            ease: "sine.inOut",
+            repeat: tokens.shake.swings - 1,
+            yoyo: true,
+          },
+          swings,
+        )
+        .to(
+          piece("[data-shake]"),
+          { y: 0, duration: swing / 2, ease: "sine.in" },
+          swings + tokens.shake.duration,
+        )
+        .fromTo(
+          piece('[data-splash="top"]'),
+          { autoAlpha: 1 },
+          {
+            autoAlpha: 0,
+            duration: swing,
+            ease: "sine.inOut",
+            repeat: tokens.shake.swings - 1,
+            yoyo: true,
+            // Not shown before the shaking starts.
+            immediateRender: false,
+          },
+          swings,
+        )
+        .fromTo(
+          piece('[data-splash="bottom"]'),
+          { autoAlpha: 0 },
+          {
+            autoAlpha: 1,
+            duration: swing,
+            ease: "sine.inOut",
+            repeat: tokens.shake.swings - 1,
+            yoyo: true,
+            // Not shown before the shaking starts.
+            immediateRender: false,
+          },
+          swings,
+        )
+        .to(
+          piece("[data-splash]"),
+          { autoAlpha: 0, duration: tokens.shake.settle },
+          at.rest,
+        )
+        .to(shaker, { rotation: 0, duration: tokens.shake.settle }, at.rest);
+
+      //    Only now the line, on the red beside the resting shaker.
       beatIn(today, at.today);
-      // Under cover of the flood the other two drinks are poured.
-      timeline.set(liquids.slice(1), { y: 0 }, at.today);
       beatOut(today, at.drain - out);
       timeline.to(
         flood,
@@ -163,6 +286,74 @@ export const barScene: Scene = ({ isDesktop }) => {
         },
         at.drain,
       );
+
+      //    The red has gone. The shaker moves until its mouth is where the stream into
+      //    the third glass starts, opens, tips and pours; the glass fills.
+      const toGlass = () => {
+        if (!shaker || !serve) return { x: 0, y: 0 };
+        const start = serve.getPointAtLength(0);
+        const matrix = serve.getScreenCTM();
+        const box = frame.getBoundingClientRect();
+        if (!matrix) return { x: 0, y: 0 };
+        // Where the stream starts, and where the shaker's mouth rests, in the frame.
+        const streamX = matrix.a * start.x + matrix.c * start.y + matrix.e;
+        const streamY = matrix.b * start.x + matrix.d * start.y + matrix.f;
+        return {
+          x:
+            streamX - box.left - (shaker.offsetLeft + shaker.offsetWidth * 0.5),
+          y:
+            streamY -
+            box.top -
+            (shaker.offsetTop + shaker.offsetHeight * 0.406),
+        };
+      };
+      timeline
+        .to(
+          shaker,
+          {
+            x: () => toGlass().x,
+            y: () => toGlass().y,
+            scale: tokens.serve.scale,
+            duration: tokens.serve.duration,
+            ease: tokens.serve.ease,
+          },
+          at.serve,
+        )
+        .to(
+          piece("[data-cap]"),
+          {
+            autoAlpha: 0,
+            y: tokens.cap.fromY,
+            duration: tokens.serve.duration,
+          },
+          at.serve,
+        )
+        .to(
+          shaker,
+          {
+            rotation: tokens.serve.tip,
+            duration: tokens.serve.tipDuration,
+            ease: tokens.serve.ease,
+          },
+          at.tilt,
+        )
+        .set(serve, { autoAlpha: 1 }, at.stream)
+        .fromTo(
+          serve,
+          { strokeDashoffset: DRAWN },
+          { strokeDashoffset: 0, duration: tokens.stream.duration },
+          at.stream,
+        )
+        .to(
+          liquids[2],
+          { y: 0, duration: tokens.stream.fill, ease: tokens.fill.ease },
+          at.stream + tokens.stream.duration,
+        )
+        .to(
+          [serve, shaker],
+          { autoAlpha: 0, duration: tokens.stream.duration },
+          at.leave,
+        );
 
       // 4. Responsibility: the events arrive as a tray of small glasses. Then the line.
       arrive(tray, { x: tokens.tray.fromX }, tokens.tray, at.tray);
