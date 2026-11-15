@@ -8,6 +8,12 @@ period:
   end: "2029-07"
 body:
   - I am studying for a Bachelor in Hospitality Management at SHL Schweizerische Hotelfachschule Luzern. I am currently in semester 3, Rooms Division.
+# The same copy as body, cut into lines for the staged scene. No facts are added.
+beats:
+  studying:
+    - "I am studying for a Bachelor in Hospitality Management"
+    - "at SHL Schweizerische Hotelfachschule Luzern."
+    - "I am currently in semester 3, Rooms Division."
 items:
   - label: Favourite modules
     values:

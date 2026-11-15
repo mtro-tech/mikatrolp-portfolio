@@ -9,7 +9,12 @@
 // then it rests before anything else starts.
 // Idle motion (the globes, the drinks, the tools working, the flood's bubbles) is CSS.
 import type { Scene } from "../../lib/motion";
-import { beatMoves, holdStage, visible } from "../../lib/motion/stage";
+import {
+  beatMoves,
+  holdStage,
+  undrawnAfter,
+  visible,
+} from "../../lib/motion/stage";
 import { bar as tokens, stage } from "../../lib/motion/tokens";
 
 // Scroll-drawn paths declare pathLength="1000" (BarScene.astro).
@@ -55,14 +60,8 @@ export const barScene: Scene = ({ isDesktop }) => {
 
   const { at } = tokens;
   const out = stage.beatOut.duration;
-  // What is left undrawn of the route (of 1000) once the counter's edge is drawn.
-  // Measured when needed: the path's far end bends with the window (src/lib/scroll.ts).
-  // On phones the edge is the whole drawn path (its edge length is given as 0).
-  const edge = () => {
-    const length = Number(route?.dataset.edgeLength ?? 0);
-    const total = (route as SVGPathElement | null)?.getTotalLength() ?? 0;
-    return length && total ? DRAWN * (1 - length / total) : 0;
-  };
+  // What is left undrawn of the route once the counter's edge is drawn.
+  const edge = () => undrawnAfter(route as SVGPathElement | null);
   const depth = (liquid: Element) =>
     Number((liquid as SVGElement).dataset.depth);
 

@@ -91,6 +91,11 @@ test("the header shows the chapter being read", async ({ page }) => {
     .locator('[data-bar] [data-group="learning"]')
     .scrollIntoViewIfNeeded();
   await expect(stage).toHaveText("Behind the bar");
+  await page
+    .locator("[data-academy] [data-module]")
+    .last()
+    .scrollIntoViewIfNeeded();
+  await expect(stage).toHaveText("The academy");
 });
 
 test("Check-in is complete and static without motion", async ({ page }) => {
@@ -154,6 +159,11 @@ const playFoundations = (page: Page, position: number) =>
   });
 const playBar = (page: Page, position: number) =>
   playStage(page, "[data-bar]", position / 24, { desktop: 6, phone: 5.5 });
+const playAcademy = (page: Page, position: number) =>
+  playStage(page, "[data-academy]", position / 16.4, {
+    desktop: 4,
+    phone: 3.5,
+  });
 
 test("Check-in plays as a held scene, one beat at a time", async ({ page }) => {
   await page.goto("/en/");
@@ -231,6 +241,10 @@ test("the route line keeps one thickness on screen", async ({ page }) => {
   await playBar(page, 1);
   await expect
     .poll(() => thickness("[data-bar] .route-line"))
+    .toBeCloseTo(atLoad, 1);
+  await playAcademy(page, 1);
+  await expect
+    .poll(() => thickness("[data-academy] .route-line"))
     .toBeCloseTo(atLoad, 1);
 });
 
@@ -360,6 +374,82 @@ test("the route meets between chapters on a short, wide window", async ({
   expect(await entry("[data-bar]")).toBeCloseTo(width / 2, 0);
   // Behind the bar hands the route on at a fixed place: 72.22% of the page width.
   expect(await exit("[data-bar]")).toBeCloseTo(width * 0.7222, 0);
+  expect(await entry("[data-academy]")).toBeCloseTo(width * 0.7222, 0);
+  // The academy hands it on at a quarter of the page width.
+  expect(await exit("[data-academy]")).toBeCloseTo(width * 0.25, 0);
+});
+
+test("The academy is complete and static without motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/en/");
+  const chapter = page.locator("[data-academy]");
+  const drawing = chapter.locator("svg:visible");
+  await expect(drawing).toHaveCount(1);
+  await expect(chapter.getByRole("heading", { level: 2 })).toHaveText(
+    "The academy",
+  );
+  // The three lines of the copy and the three modules are on the page at once.
+  const lines = chapter.locator("[data-line], [data-module]");
+  await expect(lines).toHaveCount(6);
+  for (const line of await lines.all()) {
+    await expect(line).toBeVisible();
+    await expect(line).toHaveCSS("opacity", "1");
+  }
+  await expect(chapter.getByRole("listitem")).toHaveCount(3);
+  // The pin, one book per module, and the route drawn.
+  await expect(drawing.locator("[data-pin]")).toHaveCount(1);
+  await expect(drawing.locator("[data-book]")).toHaveCount(3);
+  await expect(drawing.locator("[data-route]")).toHaveCSS(
+    "stroke-dashoffset",
+    "0px",
+  );
+});
+
+test("The academy plays as a held scene, objects before text", async ({
+  page,
+}) => {
+  await page.goto("/de/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion-ready", "");
+  const chapter = page.locator("[data-academy]");
+  const drawing = chapter.locator("svg:visible");
+  const line = (index: number) => chapter.locator("[data-line]").nth(index);
+  const shown = (part: string) => expect(drawing.locator(part).last());
+
+  // Nothing is on stage before its moment.
+  await expect(line(0)).toHaveCSS("opacity", "0");
+  for (const part of ["[data-ridge]", "[data-tower]", "[data-span]"]) {
+    await shown(part).toHaveCSS("opacity", "0");
+  }
+
+  // Just before the first line: the whole bridge stands, the line is not up yet.
+  await playAcademy(page, 3.5);
+  await shown("[data-span]").toHaveCSS("opacity", "1");
+  await expect(line(0)).toHaveCSS("opacity", "0");
+
+  // The first line rests; the flowers have not bloomed and the pin has not landed.
+  await playAcademy(page, 4.6);
+  await expect(line(0)).toHaveCSS("opacity", "1");
+  await shown("[data-flower]").toHaveCSS("opacity", "0");
+  await shown("[data-pin]").toHaveCSS("opacity", "0");
+
+  // Where I am now: the pin has landed before its line rests.
+  await playAcademy(page, 9.8);
+  await expect(line(2)).toHaveCSS("opacity", "1");
+  await shown("[data-pin]").toHaveCSS("opacity", "1");
+  await shown("[data-book]").toHaveCSS("opacity", "0");
+
+  // The end: three books, three modules, the route has run on.
+  await playAcademy(page, 16.3);
+  await shown("[data-book]").toHaveCSS("opacity", "1");
+  await expect(chapter.locator("[data-module]").last()).toHaveCSS(
+    "opacity",
+    "1",
+  );
+  await expect(line(2)).toHaveCSS("opacity", "0");
+  await expect(drawing.locator("[data-route]")).toHaveCSS(
+    "stroke-dashoffset",
+    "0px",
+  );
 });
 
 test("Foundations is complete and static without motion", async ({ page }) => {
