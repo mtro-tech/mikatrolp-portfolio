@@ -72,6 +72,8 @@ const g =
       };
 
 const round = (n: number) => Math.round(n * 10) / 10;
+// How far the pouring bottle leans from straight down, in degrees.
+const bottleLean = 48;
 const place = (x: number, y: number, scale: number) =>
   `translate(${x} ${y}) scale(${scale})`;
 
@@ -149,13 +151,15 @@ const glasses = [
     name: "highball",
     inside: "M-21 -112L-21 -4Q-21 0 -17 0L17 0Q21 0 21 -4L21 -112Z",
     level: -94,
-    liquid: "fill-brass",
+    // A pale drink, so the three differ: red, pale, brass.
+    liquid: "fill-paper-deep",
   },
   {
     name: "tumbler",
     inside: "M-29 -66L-24 0L24 0L29 -66Z",
     level: -50,
-    liquid: "fill-route",
+    // Brass, like the measure the jigger pours into the shaker it comes from.
+    liquid: "fill-brass",
   },
 ];
 ---
@@ -428,24 +432,20 @@ const glasses = [
     </g>
   </g>
 
-  {/* The pour: a tilted bottle and a thin stream into the first glass (animated version only). */}
+  {/* The pours (animated version only). Each stream starts at the lowest lip of its
+      tipped vessel and falls straight down into the glass.
+      First: the bottle, upside down and leaning, its low lip over the first glass. */}
   <path
-    class="route-line pour"
+    class="pour"
     data-pour
     pathLength="1000"
-    d={`M${g.bottle.x} ${g.bottle.y}L${g.bottle.x} ${g.counter.top - 56 * g.glasses.scale}`}
-  ></path>
-  {/* The last drink is strained from the shaker (Shaker.astro) into the third glass:
-      a short stream that starts where the shaker's mouth will be. */}
-  <path
-    class="route-line pour"
-    data-serve
-    pathLength="1000"
-    d={`M${g.glasses.x[2]} ${g.counter.top - 170 * g.glasses.scale}L${g.glasses.x[2]} ${g.counter.top - 14 * g.glasses.scale}`}
+    d={`M${g.bottle.x} ${g.bottle.y}L${g.bottle.x} ${g.counter.top - 58 * g.glasses.scale}`}
   ></path>
   <g data-bottle>
+    {/* The bottle is drawn with the low corner of its mouth on (0, 0), so that corner
+        stays over the glass however far it leans. */}
     <g
-      transform={`${place(g.bottle.x, g.bottle.y, g.bottle.scale)} rotate(38)`}
+      transform={`${place(g.bottle.x, g.bottle.y, g.bottle.scale)} rotate(${bottleLean}) translate(-6 0)`}
     >
       <path
         class="fill-brass ink-line"
@@ -460,6 +460,14 @@ const glasses = [
       ></rect>
     </g>
   </g>
+  {/* Last: the drink strained from the shaker (Shaker.astro) into the third glass.
+      The stream starts where the low corner of the shaker's rim will be. */}
+  <path
+    class="pour pour--brass"
+    data-serve
+    pathLength="1000"
+    d={`M${g.glasses.x[2]} ${g.counter.top - 150 * g.glasses.scale}L${g.glasses.x[2]} ${g.counter.top - 14 * g.glasses.scale}`}
+  ></path>
 
   {glasses.map(({ name, inside, level, liquid }, index) => (
     <g data-glass={name}>
@@ -575,6 +583,20 @@ const glasses = [
   .route-draw,
   .pour {
     stroke-dasharray: 1000;
+  }
+
+  /* A stream of drink: thicker than the route line, so it reads as liquid and not as
+     a second route, and always falling from a vessel. */
+  .pour {
+    stroke: var(--color-route);
+    stroke-width: calc(
+      var(--route-stroke-width) * 3 / var(--route-scale, 1) / var(--zoom, 1)
+    );
+    stroke-linecap: butt;
+  }
+
+  .pour--brass {
+    stroke: var(--color-brass);
   }
 
   .sway,
@@ -700,8 +722,7 @@ const glasses = [
   :global(html[data-motion="on"]) [data-tray],
   :global(html[data-motion="on"]) [data-glass],
   :global(html[data-motion="on"]) [data-garnish],
-  :global(html[data-motion="on"]) [data-pour],
-  :global(html[data-motion="on"]) [data-serve],
+  :global(html[data-motion="on"]) .pour,
   :global(html[data-motion="on"]) [data-bottle] {
     opacity: 0;
   }

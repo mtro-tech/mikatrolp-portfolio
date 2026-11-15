@@ -1,11 +1,30 @@
 ---
 // The Boston shaker that appears on the red in Behind the bar (animated version only):
-// a large tin, the second tin that closes it, a jigger that pours a measure in, two ice
-// cubes, and splash marks for the shaking. No hand is drawn: the pieces move on their own.
+// a large tin, the second tin that closes it, a jigger that pours a measure in, a small
+// scoop that tips five ice cubes in, and splash marks for the shaking. No hand is drawn:
+// the pieces move on their own.
 // The tin stands on (0, 0); its mouth is at (0, -170), the point the whole shaker
 // turns around (BehindTheBar.astro sets that as the transform origin).
 // Pieces that end up inside the tin are drawn before it, so they vanish behind its rim.
+// Every pour leaves from the lowest lip of its tipped vessel: the jigger turns around
+// the corner of its rim, and the measure falls from exactly there.
 // behind-the-bar.motion.ts brings the pieces in.
+
+// The scoop's lip, where it rests over the tin's rim before it tips.
+const scoop = { x: -42, y: -200 };
+// Five cubes: where each lies on the scoop (from its lip) and where it ends up inside
+// the tin, in the order they tumble in. `turn` is how each is drawn turned.
+const cubes = [
+  { from: [-22, -24], to: [-26, -118], turn: -10 },
+  { from: [-34, -48], to: [22, -108], turn: 14 },
+  { from: [-44, -30], to: [-4, -138], turn: 24 },
+  { from: [-56, -54], to: [32, -138], turn: -18 },
+  { from: [-66, -36], to: [-30, -146], turn: 8 },
+].map(({ from, to, turn }) => {
+  const x = scoop.x + from[0];
+  const y = scoop.y + from[1];
+  return { x, y, dx: to[0] - x, dy: to[1] - y, turn };
+});
 ---
 
 <svg
@@ -16,37 +35,52 @@
 >
   {/* Everything that shakes together. */}
   <g data-shake>
-    <rect
-      class="steel-light line"
-      data-measure
-      x="-36"
-      y="-216"
-      width="6"
-      height="70"
-      rx="3"
-    ></rect>
-    <g data-shaker-ice>
+    {/* The measure: it grows down from the jigger's lip, then its tail runs out. */}
+    <g data-measure>
       <rect
-        class="steel-light line"
-        x="-30"
-        y="-150"
-        width="26"
-        height="26"
-        rx="4"
-        transform="rotate(-12 -17 -137)"
+        class="brass"
+        data-measure-tail
+        x="-31.5"
+        y="-204"
+        width="7"
+        height="54"
+        rx="3.5"
       ></rect>
     </g>
-    <g data-shaker-ice>
-      <rect
-        class="steel-light line"
-        x="4"
-        y="-128"
-        width="26"
-        height="26"
-        rx="4"
-        transform="rotate(16 17 -115)"
-      ></rect>
+
+    {/* The scoop: a small steel trough with a brass handle, lip to the right. */}
+    <g data-scoop>
+      <g transform={`translate(${scoop.x} ${scoop.y})`}>
+        <g data-scoop-tip>
+          <rect
+            class="brass line"
+            x="-142"
+            y="-30"
+            width="52"
+            height="12"
+            rx="6"
+          ></rect>
+          <path
+            class="steel-light line"
+            d="M0 0L-86 0Q-94 0 -94 -8L-94 -40L-84 -40L0 -10Z"
+          ></path>
+        </g>
+      </g>
     </g>
+    {cubes.map(({ x, y, dx, dy, turn }) => (
+      <g data-cube data-dx={dx} data-dy={dy}>
+        <rect
+          class="steel-light line"
+          x={x - 10}
+          y={y - 10}
+          width="20"
+          height="20"
+          rx="3"
+          transform={`rotate(${turn} ${x} ${y})`}
+        />
+      </g>
+    ))}
+
     <g data-cap>
       <path
         class="steel-light line"
@@ -70,12 +104,14 @@
     ></path>
   </g>
 
-  {/* The jigger: an hourglass-shaped measure. GSAP moves the outer group and tips the inner one. */}
+  {/* The jigger: an hourglass-shaped measure, drawn with the corner of its rim on
+       (0, 0). GSAP moves the outer group and turns the inner one around that corner,
+       so the corner is where the measure leaves it. */}
   <g data-jigger>
-    <g transform="translate(-44 -250) scale(1.3)">
+    <g transform="translate(-28 -204) scale(1.3)">
       <g data-jigger-tip>
-        <path class="brass line" d="M-20 -34L20 -34L6 0L-6 0Z"></path>
-        <path class="brass line" d="M-6 0L6 0L14 22L-14 22Z"></path>
+        <path class="brass line" d="M-40 0L0 0L-14 34L-26 34Z"></path>
+        <path class="brass line" d="M-26 34L-14 34L-6 56L-34 56Z"></path>
       </g>
     </g>
   </g>
@@ -121,7 +157,8 @@
 
   /* Not on stage before their moments. */
   [data-measure],
-  [data-shaker-ice],
+  [data-scoop],
+  [data-cube],
   [data-cap],
   [data-splash],
   [data-jigger] {

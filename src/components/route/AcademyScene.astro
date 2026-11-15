@@ -51,7 +51,7 @@ const g =
           "M1040 380L800 455L545 610C480 650 {x} 640 {x} 720L{x} 2000",
         exit: { x: 360, origin: 1040 },
         swan: { x: 1010, y: 600, scale: 1 },
-        labels: { start: [1064, 368], end: [528, 584] },
+        labels: { start: [1064, 368], end: [600, 672] },
       }
     : {
         view: [390, 340],
@@ -221,12 +221,7 @@ const pin: Point = [
         </text>
       )}
       {end && (
-        <text
-          class="map-label"
-          x={g.labels.end[0]}
-          y={g.labels.end[1]}
-          text-anchor="end"
-        >
+        <text class="map-label" x={g.labels.end[0]} y={g.labels.end[1]}>
           {end}
         </text>
       )}

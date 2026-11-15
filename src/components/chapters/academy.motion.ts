@@ -1,8 +1,10 @@
 // The academy, staged: Lucerne's waterfront, the school, where I am now, the modules.
 // What the reader should feel: arriving in Lucerne as the town assembles itself, the
 // bridge growing across the water under the route; a moment of bloom for the school;
-// the pin landing as a plain "I am here"; and the favourite modules arriving one at a
-// time, as books worth picking up: each drops into the text column and opens.
+// the pin landing as a plain "I am here"; and the favourite modules arriving as books
+// worth picking up: three are dropped into the text column, then opened one by one.
+// The town builds while the chapter scrolls into view, so the route never arrives at
+// an empty page; once the frame is held, the text can begin.
 // Pace (CLAUDE.md §4): in every moment the objects move first, then the line arrives,
 // then it rests before anything else starts.
 // Idle motion (the water, the swan, the flowers, the key) is CSS, on inner elements.
@@ -46,51 +48,36 @@ export const academyScene: Scene = ({ isDesktop }) => {
   const modulesLabel = frame.querySelector("[data-modules-label]");
   const books = text("[data-book]");
   const covers = text("[data-book-cover]");
-  const insides = text("[data-book-inside]");
+  const leftHalves = text("[data-book-left]");
 
-  const { at } = tokens;
+  const { at, approach } = tokens;
   const out = stage.beatOut.duration;
+
+  // An object arriving: it fades in while it moves the last bit into place.
+  const arriveOn =
+    (timeline: gsap.core.Timeline) =>
+    (
+      target: gsap.TweenTarget,
+      from: gsap.TweenVars,
+      move: { duration: number; ease: string; stagger?: number },
+      position: number,
+    ) =>
+      timeline.fromTo(
+        target,
+        { autoAlpha: 0, ...from },
+        { autoAlpha: 1, x: 0, y: 0, ...move },
+        position,
+      );
 
   return holdStage(
     frame,
     isDesktop ? tokens.screens.desktop : tokens.screens.phone,
     (timeline) => {
       const { beatIn, beatOut } = beatMoves(timeline);
-      // An object arriving: it fades in while it moves the last bit into place.
-      const arrive = (
-        target: gsap.TweenTarget,
-        from: gsap.TweenVars,
-        move: { duration: number; ease: string; stagger?: number },
-        position: number,
-      ) =>
-        timeline.fromTo(
-          target,
-          { autoAlpha: 0, ...from },
-          { autoAlpha: 1, x: 0, y: 0, ...move },
-          position,
-        );
+      const arrive = arriveOn(timeline);
 
-      // 1. Lucerne: the ridge settles, the lake rises, the tower stands up, and the
-      //    bridge builds section by section under the route. Then the first line.
-      beatIn(title, at.town);
-      arrive(ridge, { y: tokens.ridge.fromY }, tokens.ridge, at.town);
-      arrive(water, { y: tokens.water.fromY }, tokens.water, at.water);
-      arrive(tower, { y: tokens.tower.fromY }, tokens.tower, at.tower);
-      arrive(piles, { y: tokens.spans.fromY }, tokens.spans, at.bridge);
-      arrive(spans, { y: tokens.spans.fromY }, tokens.spans, at.bridge);
-      // The flowers wait for their own moment.
-      timeline.set(flowers, { autoAlpha: 0 }, 0);
-      timeline.fromTo(
-        route,
-        { strokeDashoffset: DRAWN },
-        {
-          strokeDashoffset: () => undrawnAfter(route),
-          // As long as the sections take to arrive, so the line keeps up with them.
-          duration:
-            tokens.spans.duration + tokens.spans.stagger * (spans.length - 1),
-        },
-        at.bridge,
-      );
+      // 1. The town already stands (it was built on the way in). The first line.
+      beatIn(title, at.title);
       beatIn(programme, at.programme);
       beatOut(programme, at.flowers - out);
 
@@ -122,15 +109,13 @@ export const academyScene: Scene = ({ isDesktop }) => {
       beatIn(now, at.now);
       beatOut([title, now], at.books - out);
 
-      // 4. Favourite modules: each book drops into the column closed, then opens: the
-      //    cover narrows away at the spine and its inside grows out on the other side.
-      //    One book at a time, so each name gets its own moment.
+      // 4. Favourite modules. First all three books are dropped into the column,
+      //    closed, one after another: a small pile of things worth opening.
       beatIn(modulesLabel, at.books);
-      const half = tokens.open.duration / 2;
       books.forEach((book, index) => {
-        const lands = at.books + tokens.open.afterLabel + index * at.bookStep;
-        const opens = lands + tokens.book.duration + tokens.open.afterLanding;
         timeline
+          // Closed, a book is as wide as one page and lies in the middle of its place.
+          .set(book, { xPercent: tokens.book.closedShift }, 0)
           // Opacity, not visibility: the name stays available to screen readers.
           .fromTo(
             book,
@@ -141,7 +126,25 @@ export const academyScene: Scene = ({ isDesktop }) => {
               duration: tokens.book.duration,
               ease: tokens.book.ease,
             },
-            lands,
+            at.drop + index * at.dropStep,
+          );
+      });
+
+      //    Then they are opened one after another, each with a rest for its name:
+      //    the book slides to its place while the cover turns away at the spine, and
+      //    the left page unfolds on the other side.
+      const half = tokens.open.duration / 2;
+      books.forEach((book, index) => {
+        const opens = at.open + index * at.openStep;
+        timeline
+          .to(
+            book,
+            {
+              xPercent: 0,
+              duration: tokens.open.duration,
+              ease: "power1.inOut",
+            },
+            opens,
           )
           .fromTo(
             covers[index],
@@ -155,7 +158,7 @@ export const academyScene: Scene = ({ isDesktop }) => {
             opens,
           )
           .fromTo(
-            insides[index],
+            leftHalves[index],
             { scaleX: 0 },
             {
               scaleX: 1,
@@ -176,6 +179,29 @@ export const academyScene: Scene = ({ isDesktop }) => {
 
       // A rest at the end, so the list can be read before the scene lets go.
       timeline.set({}, {}, at.end);
+    },
+    // On the way in: the ridge settles, the lake rises, the tower stands up, and the
+    // bridge builds section by section under the route.
+    (timeline) => {
+      const arrive = arriveOn(timeline);
+      arrive(ridge, { y: tokens.ridge.fromY }, tokens.ridge, approach.town);
+      arrive(water, { y: tokens.water.fromY }, tokens.water, approach.water);
+      arrive(tower, { y: tokens.tower.fromY }, tokens.tower, approach.tower);
+      arrive(piles, { y: tokens.spans.fromY }, tokens.spans, approach.bridge);
+      arrive(spans, { y: tokens.spans.fromY }, tokens.spans, approach.bridge);
+      // The flowers wait for their own moment.
+      timeline.set(flowers, { autoAlpha: 0 }, 0);
+      timeline.fromTo(
+        route,
+        { strokeDashoffset: DRAWN },
+        {
+          strokeDashoffset: () => undrawnAfter(route),
+          // As long as the sections take to arrive, so the line keeps up with them.
+          duration:
+            tokens.spans.duration + tokens.spans.stagger * (spans.length - 1),
+        },
+        approach.bridge,
+      );
     },
   );
 };

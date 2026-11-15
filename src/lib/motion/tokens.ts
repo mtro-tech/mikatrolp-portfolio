@@ -9,6 +9,8 @@ export const stage = {
   scrub: 0.6,
   /** A scene's timeline is built once its frame is within this many screen heights. */
   buildAhead: 1,
+  /** Units on a scene's way-in timeline: the screen of scrolling before it is held. */
+  approach: 4,
   /** How a text beat arrives and leaves: it rises into place, then lifts away. */
   beatIn: { duration: 0.5, ease: "power2.out", y: 28 },
   beatOut: { duration: 0.35, ease: "power1.in", y: -20 },
@@ -40,7 +42,6 @@ export const foundations = {
   /** When each thing starts, in units on the scene's timeline. */
   at: {
     title: 0,
-    ruler: 0.1,
     rank1: 0.9,
     count: 2.6,
     rank2: 4.2,
@@ -56,7 +57,9 @@ export const foundations = {
     carry2: 18.1,
     end: 20,
   },
-  ruler: { fromX: -80, duration: 0.6, ease: "power2.out" },
+  /** On the way in (of stage.approach units): the ruler slides in beside the route. */
+  approach: { ruler: 1.8 },
+  ruler: { fromX: -80, duration: 0.9, ease: "power2.out" },
   /** The pegs pop up on the ticks one by one while the numeral counts with them. */
   count: { duration: 1.2, pop: 0.15, popEase: "back.out(3)", dot: 0.42 },
   ground: { duration: 0.6, ease: "power2.out", fromScale: 0.9 },
@@ -77,22 +80,25 @@ export const foundations = {
  */
 export const academy = {
   /** Screens of scrolling the scene is held for. */
-  screens: { desktop: 4.25, phone: 3.75 },
-  /** When each thing starts, in units on the scene's timeline. */
+  screens: { desktop: 3.9, phone: 3.5 },
+  /** On the way in (of stage.approach units): the town builds, from the top down. */
+  approach: { town: 0.4, water: 0.8, tower: 1.3, bridge: 1.7 },
+  /** When each thing starts, in units on the held scene's timeline. */
   at: {
-    town: 0,
-    water: 0.3,
-    tower: 0.9,
-    bridge: 1.4,
-    programme: 3.6,
-    flowers: 5.3,
-    school: 6.5,
-    pin: 8.2,
-    now: 8.9,
-    books: 10.6,
-    bookStep: 1.5,
-    route: 15.4,
-    end: 17.4,
+    title: 0,
+    programme: 0.3,
+    flowers: 2.0,
+    school: 3.2,
+    pin: 4.9,
+    now: 5.6,
+    books: 7.3,
+    // The three books are dropped first, then opened one by one.
+    drop: 7.6,
+    dropStep: 0.5,
+    open: 9.3,
+    openStep: 1.3,
+    route: 13.4,
+    end: 15.4,
   },
   ridge: { fromY: 40, duration: 0.6, ease: "power2.out" },
   water: { fromY: 50, duration: 0.7, ease: "power2.out" },
@@ -101,9 +107,9 @@ export const academy = {
   spans: { fromY: -30, duration: 0.4, stagger: 0.25, ease: "power2.out" },
   flowers: { duration: 0.3, stagger: 0.12, ease: "back.out(3)" },
   pin: { fromY: -90, duration: 0.55, ease: "bounce.out" },
-  book: { fromY: -60, duration: 0.5, ease: "bounce.out" },
-  /** A book opens shortly after it has landed; the first one waits for the label. */
-  open: { afterLabel: 0.3, afterLanding: 0.15, duration: 0.5 },
+  /** A closed book is one page wide and lies in the middle of its open width. */
+  book: { fromY: -90, duration: 0.5, ease: "bounce.out", closedShift: -25 },
+  open: { duration: 0.7 },
   route: { duration: 1.2 },
 } as const;
 
@@ -114,47 +120,53 @@ export const academy = {
  */
 export const bar = {
   /** Screens of scrolling the scene is held for. */
-  screens: { desktop: 7.9, phone: 7.4 },
-  /** When each thing starts, in units on the scene's timeline. */
+  screens: { desktop: 9, phone: 8.5 },
+  /** On the way in (of stage.approach units): the room builds, from the top down. */
+  approach: { room: 0.5, wall: 1.0, globes: 1.4, counter: 2.2, edge: 2.7 },
+  /** When each thing starts, in units on the held scene's timeline. */
   at: {
-    room: 0,
-    wall: 0.3,
-    globes: 0.7,
-    counter: 1.2,
-    edge: 1.5,
-    joined1: 2.3,
-    stools: 4.1,
-    glasses: 4.5,
-    joined2: 5.7,
-    bottle: 7.7,
-    pour: 8.1,
-    fill: 8.3,
-    flood: 8.9,
-    // On the red: the shaker is filled, closed and shaken, then the line.
-    shaker: 9.9,
-    jigger: 10.6,
-    measure: 11.0,
-    shakerIce: 11.8,
-    cap: 12.6,
-    shake: 13.2,
-    rest: 15.5,
-    today: 15.9,
-    drain: 17.5,
-    // The shaker moves over the last glass and pours it.
-    serve: 18.4,
-    tilt: 19.0,
-    stream: 19.2,
-    leave: 20.0,
-    tray: 20.6,
-    responsibility: 21.3,
-    ice: 23.1,
-    peel: 23.5,
-    growth: 24.0,
-    learning1: 25.9,
-    tools: 27.6,
-    learning2: 29.1,
-    route: 29.5,
-    end: 32.1,
+    title: 0,
+    joined1: 0.2,
+    stools: 2.0,
+    glasses: 2.4,
+    joined2: 3.6,
+    bottle: 5.6,
+    pour: 6.1,
+    fill: 6.3,
+    flood: 6.9,
+    pourEnd: 7.2,
+    // On the red, one step at a time: the shaker, the jigger and its measure, the
+    // scoop and its ice, the second tin, the shake, a rest, then the line.
+    shaker: 8.0,
+    jigger: 8.9,
+    jiggerTip: 9.4,
+    measure: 9.9,
+    measureEnd: 10.5,
+    jiggerLeave: 11.0,
+    scoop: 11.6,
+    scoopTip: 12.2,
+    cubes: 12.5,
+    scoopLeave: 14.3,
+    cap: 15.0,
+    shake: 15.7,
+    rest: 19.7,
+    today: 20.2,
+    drain: 21.9,
+    // The shaker tips over the last glass and pours it.
+    serve: 22.8,
+    stream: 23.7,
+    streamEnd: 24.8,
+    leave: 25.4,
+    tray: 25.9,
+    responsibility: 26.6,
+    ice: 28.4,
+    peel: 28.8,
+    growth: 29.3,
+    learning1: 31.2,
+    tools: 32.9,
+    learning2: 34.4,
+    route: 34.8,
+    end: 37.4,
   },
   ceiling: { fromY: -60, duration: 0.7, ease: "power2.out" },
   wall: { fromY: 30, duration: 0.6, ease: "power2.out" },
@@ -165,34 +177,38 @@ export const bar = {
   stools: { fromY: 60, duration: 0.5, stagger: 0.2, ease: "power2.out" },
   glasses: { fromX: 90, duration: 0.5, stagger: 0.3, ease: "back.out(1.6)" },
   bottle: { fromY: -50, duration: 0.4, ease: "power2.out" },
-  pour: { duration: 0.3 },
+  /** Every stream grows from the lip, and later runs out, over this long. */
+  stream: { duration: 0.3, pause: 0.2 },
   fill: { duration: 0.6, ease: "power1.inOut" },
   /** Red rises to cover the frame, and later drains away at the same pace. */
   flood: { duration: 0.9, ease: "power2.inOut", reachesHeader: 0.9 },
   /** The shaker drops onto the red and stands. */
   shaker: { fromY: -80, duration: 0.5, ease: "back.out(1.4)" },
-  /** The jigger comes in, tips over the tin, pours its measure and leaves. */
+  /** The jigger comes in upright above the tin (hover), then turns over its rim. */
   jigger: {
     fromX: -70,
-    fromY: -50,
-    duration: 0.4,
-    tip: 130,
+    fromY: -150,
+    hover: -90,
+    duration: 0.45,
+    tip: 125,
     ease: "power2.out",
   },
-  measure: { duration: 0.4 },
-  shakerIce: { fromY: -170, duration: 0.35, stagger: 0.25, ease: "power2.in" },
+  /** The scoop comes in from the side with its cubes, and tips over the rim. */
+  scoop: { fromX: -120, duration: 0.5, tip: 28, ease: "power2.out" },
+  /** The cubes tumble in one after another. */
+  cube: { duration: 0.5, stagger: 0.32, turn: 120 },
   cap: { fromY: -90, duration: 0.4, ease: "back.out(1.2)" },
   /** The scrolling shakes it: leaning over, then swings along its length. */
-  shake: { lean: 28, travel: 22, swings: 10, duration: 1.9, settle: 0.2 },
-  /** Over the last glass: smaller, cap off, tipped until it pours. */
+  shake: { lean: 28, travel: 22, swings: 16, duration: 3.5, settle: 0.2 },
+  /** Over the last glass: smaller, tipped so the drink leaves from the rim's corner. */
   serve: {
     scale: 0.6,
-    duration: 0.6,
+    duration: 0.8,
     tip: 118,
-    tipDuration: 0.25,
+    fill: 0.7,
+    leave: 0.5,
     ease: "power2.inOut",
   },
-  stream: { duration: 0.25, fill: 0.6 },
   tray: { fromX: -90, duration: 0.6, ease: "back.out(1.4)" },
   garnish: { fromY: -40, duration: 0.4, ease: "back.out(2.5)" },
   /** The tools land in their niches one after another. */
