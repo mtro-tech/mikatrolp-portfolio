@@ -14,7 +14,8 @@
 // - the ice lies inside the scoop: the scoop's wall is drawn over the cubes.
 // behind-the-bar.motion.ts brings the pieces in.
 
-// The corner of the jigger's rim once it has tipped: where the measure leaves it.
+// The corner of the jigger's rim once it has tipped. The measure leaves over the rim
+// just right of that corner (the rim runs up to the right from it), not from the point.
 const pour = { x: -28, y: -204 };
 // The scoop's lip, where it rests over the tin's rim, and how far it tips (degrees).
 const scoop = { x: -42, y: -200, tip: 22 };
@@ -61,7 +62,7 @@ const cubes = [
       <rect
         class="brass"
         data-measure-tail
-        x={pour.x - 3.5}
+        x={pour.x}
         y={pour.y - 16}
         width="7"
         height="66"

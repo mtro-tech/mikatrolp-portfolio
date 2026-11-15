@@ -383,10 +383,10 @@ test("Behind the bar plays as a held scene, objects before text", async ({
   await expect(shaker.locator("[data-measure]")).toHaveCSS("opacity", "1");
   await expect(shaker.locator("[data-cap]")).toHaveCSS("opacity", "0");
   await expect(lastDrink).not.toHaveAttribute("transform", poured);
-  // The measure comes out of the jigger's cup: its top end (Shaker.astro: 16 units
-  // above the rim's corner at -28, -204) is covered by the jigger.
+  // The measure comes out of the jigger's cup, just right of the rim's corner at
+  // -28, -204 (Shaker.astro): its top end, 16 units above, is covered by the jigger.
   await expect
-    .poll(() => covered("[data-shaker] svg", -28, -218, "[data-jigger]"))
+    .poll(() => covered("[data-shaker] svg", -24.5, -218, "[data-jigger]"))
     .toBe(true);
 
   // The measure has run out (its tail has no height left) while the jigger is still there.
