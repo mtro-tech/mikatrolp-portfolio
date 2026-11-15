@@ -161,14 +161,11 @@ const playFoundations = (page: Page, position: number) =>
     phone: 4,
   });
 const playBar = (page: Page, position: number) =>
-  playStage(page, "[data-bar]", position / 32.1, {
-    desktop: 7.9,
-    phone: 7.4,
-  });
+  playStage(page, "[data-bar]", position / 37.4, { desktop: 9, phone: 8.5 });
 const playAcademy = (page: Page, position: number) =>
-  playStage(page, "[data-academy]", position / 17.4, {
-    desktop: 4.25,
-    phone: 3.75,
+  playStage(page, "[data-academy]", position / 15.4, {
+    desktop: 3.9,
+    phone: 3.5,
   });
 
 test("Check-in plays as a held scene, one beat at a time", async ({ page }) => {
@@ -304,9 +301,14 @@ test("Behind the bar plays as a held scene, objects before text", async ({
   await expect(page.locator("html")).toHaveAttribute("data-motion-ready", "");
   const chapter = page.locator("[data-bar]");
   const drawing = chapter.locator("svg:visible");
+  const header = page.locator(".site-header");
   const line = (moment: string, index = 0) =>
     chapter.locator(`[data-group="${moment}"] [data-line]`).nth(index);
   const shown = (part: string) => expect(drawing.locator(part).last());
+  const shaker = chapter.locator("[data-shaker]");
+  const lastDrink = drawing.locator("[data-liquid]").last();
+  // A drink waits below its glass until it is poured: then its group is back at 0, 0.
+  const poured = /,0,0\)$/;
 
   // Nothing is on stage before its moment.
   await expect(line("joined")).toHaveCSS("opacity", "0");
@@ -315,37 +317,58 @@ test("Behind the bar plays as a held scene, objects before text", async ({
   }
   await expect(chapter.locator("[data-flood]")).toHaveCSS("opacity", "0");
 
-  // The room is built and the first line rests; the glasses have not started.
-  await playBar(page, 3.5);
+  // The room was built on the way in. The first line rests; no glasses yet.
+  await playBar(page, 1.5);
   await expect(line("joined")).toHaveCSS("opacity", "1");
   await shown("[data-counter]").toHaveCSS("opacity", "1");
   await shown("[data-glass]").toHaveCSS("opacity", "0");
 
   // Just before the second line: every glass is in place, the line is not up yet.
-  await playBar(page, 5.6);
+  await playBar(page, 3.5);
   await shown("[data-glass]").toHaveCSS("opacity", "1");
   await expect(line("joined", 1)).toHaveCSS("opacity", "0");
 
-  // On the red: the shaker is being filled. The third glass is still empty (its drink
-  // waits below the glass), and the shaker is not closed yet.
-  const shaker = chapter.locator("[data-shaker]");
-  const lastDrink = drawing.locator("[data-liquid]").last();
-  await playBar(page, 12.2);
+  // The first pour has stopped: its stream is gone while the bottle is still there.
+  await playBar(page, 7.6);
+  await shown("[data-pour]").toHaveCSS("opacity", "0");
+  await shown("[data-bottle]").toHaveCSS("opacity", "1");
+
+  // On the red: the jigger is pouring its measure. The shaker is open and the third
+  // glass is still empty.
+  await playBar(page, 10.3);
+  await expect(header).toHaveAttribute("data-tone", "red");
   await expect(shaker).toHaveCSS("opacity", "1");
+  await expect(shaker.locator("[data-jigger]")).toHaveCSS("opacity", "1");
+  await expect(shaker.locator("[data-measure]")).toHaveCSS("opacity", "1");
   await expect(shaker.locator("[data-cap]")).toHaveCSS("opacity", "0");
-  await expect(lastDrink).not.toHaveAttribute("transform", /,0,0\)$/);
+  await expect(lastDrink).not.toHaveAttribute("transform", poured);
+
+  // The measure has run out (its tail has no height left) while the jigger is still there.
+  await playBar(page, 10.9);
+  await expect(shaker.locator("[data-measure-tail]")).toHaveAttribute(
+    "transform",
+    /^matrix\(1,0,0,0,/,
+  );
+  await expect(shaker.locator("[data-jigger]")).toHaveCSS("opacity", "1");
+
+  // The scoop has tipped all five cubes in; the shaker is not closed yet.
+  await playBar(page, 14.25);
+  await expect(shaker.locator("[data-cube]")).toHaveCount(5);
+  for (const cube of await shaker.locator("[data-cube]").all()) {
+    await expect(cube).toHaveCSS("opacity", "1");
+    await expect(cube).toHaveAttribute("transform", /matrix/);
+  }
+  await expect(shaker.locator("[data-cap]")).toHaveCSS("opacity", "0");
 
   // Just before the shake: the shaker is closed, and the line is not up yet.
-  await playBar(page, 13.1);
+  await playBar(page, 15.6);
   await expect(shaker.locator("[data-cap]")).toHaveCSS("opacity", "1");
   await expect(line("today")).toHaveCSS("opacity", "0");
 
   // The red moment: the shaker rests, paper-coloured text on the flood, readable.
-  await playBar(page, 16.7);
+  await playBar(page, 21.0);
   await expect(line("today")).toHaveCSS("opacity", "1");
-  await expect(shaker).toHaveCSS("rotate", "none");
   // The header has turned red with the flood, and its text is still readable.
-  const header = page.locator(".site-header");
   await expect(header).toHaveAttribute("data-tone", "red");
   await expect(header).toHaveCSS("background-color", "rgb(166, 52, 27)");
   const red = await new AxeBuilder({ page })
@@ -355,33 +378,56 @@ test("Behind the bar plays as a held scene, objects before text", async ({
     .analyze();
   expect(red.violations).toEqual([]);
 
-  // The red has drained and the shaker hangs over the third glass, about to pour:
-  // the glass is still empty.
-  await playBar(page, 19.1);
+  // The red has drained. The drink falls from the low corner of the shaker's rim:
+  // the stream starts within a few pixels of that corner on screen.
+  await playBar(page, 24.4);
   await expect(header).not.toHaveAttribute("data-tone");
+  await shown("[data-serve]").toHaveCSS("opacity", "1");
+  const gap = () =>
+    page.evaluate(() => {
+      const onScreen = (element: SVGGraphicsElement, x: number, y: number) => {
+        const matrix = element.getScreenCTM()!;
+        return [
+          matrix.a * x + matrix.c * y + matrix.e,
+          matrix.b * x + matrix.d * y + matrix.f,
+        ];
+      };
+      const stream = [
+        ...document.querySelectorAll<SVGPathElement>("[data-bar] [data-serve]"),
+      ].find((path) => path.getClientRects().length > 0)!;
+      const start = stream.getPointAtLength(0);
+      const [streamX, streamY] = onScreen(stream, start.x, start.y);
+      // The rim's corner in the shaker's own drawing (Shaker.astro): 58 to the side
+      // of the mouth, which is at (0, -170).
+      const tin = document.querySelector<SVGSVGElement>("[data-shaker] svg")!;
+      const [cornerX, cornerY] = onScreen(tin, 58, -170);
+      return Math.hypot(streamX - cornerX, streamY - cornerY);
+    });
+  await expect.poll(gap).toBeLessThan(4);
+
+  // The glass is full and the stream has run out, while the shaker is still there.
+  await playBar(page, 25.25);
+  await expect(lastDrink).toHaveAttribute("transform", poured);
+  await shown("[data-serve]").toHaveCSS("opacity", "0");
   await expect(shaker).toHaveCSS("opacity", "1");
-  await expect(lastDrink).not.toHaveAttribute("transform", /,0,0\)$/);
 
-  // Poured: the glass is full and the shaker has left.
-  await playBar(page, 20.5);
-  await expect(lastDrink).toHaveAttribute("transform", /,0,0\)$/);
+  // Responsibility: the shaker has left, the tray is there with its line; the drinks
+  // are not finished yet.
+  await playBar(page, 27.5);
   await expect(shaker).toHaveCSS("opacity", "0");
-
-  // Responsibility: the tray is there with its line; the drinks are not finished yet.
-  await playBar(page, 22.6);
   await expect(header).not.toHaveAttribute("data-tone");
   await expect(line("responsibility")).toHaveCSS("opacity", "1");
   await shown("[data-tray]").toHaveCSS("opacity", "1");
   await shown('[data-garnish="ice"]').toHaveCSS("opacity", "0");
 
   // Growth: both garnishes have landed before its line rests.
-  await playBar(page, 25.1);
+  await playBar(page, 30.4);
   await expect(line("growth")).toHaveCSS("opacity", "1");
   await shown('[data-garnish="peel"]').toHaveCSS("opacity", "1");
   await shown("[data-tool]").toHaveCSS("opacity", "0");
 
   // The end: the tools are in their niches, the last line is up, the route has run on.
-  await playBar(page, 31.9);
+  await playBar(page, 37.2);
   await shown("[data-tool]").toHaveCSS("opacity", "1");
   await expect(line("learning", 1)).toHaveCSS("opacity", "1");
   await expect(line("learning")).toHaveCSS("opacity", "0");
@@ -389,6 +435,61 @@ test("Behind the bar plays as a held scene, objects before text", async ({
     "stroke-dashoffset",
     "0px",
   );
+});
+
+// Between two chapters the next one builds its place while it scrolls into view, so
+// the route never arrives at an empty page.
+test("each chapter's place is built on the way in", async ({ page }) => {
+  await page.goto("/en/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion-ready", "");
+  // Scroll to a point on a chapter's way in: `left` screens before it is held.
+  const wayIn = (chapter: string, left: number) =>
+    page.evaluate(
+      ({ chapter, left }) => {
+        const frame = document.querySelector(`${chapter} [data-stage-frame]`)!;
+        const spacer = frame.closest(".pin-spacer") ?? frame;
+        const held =
+          spacer.getBoundingClientRect().top +
+          window.scrollY -
+          document.querySelector("header")!.offsetHeight;
+        window.scrollTo(0, held - left * window.innerHeight);
+      },
+      { chapter, left },
+    );
+  const places: [string, string[], string][] = [
+    ["[data-foundations]", ["[data-ruler]", "[data-leader]"], "[data-line]"],
+    [
+      "[data-bar]",
+      ["[data-ceiling]", "[data-wall]", "[data-globe]", "[data-counter]"],
+      "[data-line]",
+    ],
+    [
+      "[data-academy]",
+      ["[data-ridge]", "[data-water]", "[data-tower]", "[data-span]"],
+      "[data-line]",
+    ],
+  ];
+  for (const [chapter, parts, firstLine] of places) {
+    const drawing = page.locator(`${chapter} svg:visible`);
+    // Still a screen and a half away: nothing is there yet.
+    await wayIn(chapter, 1.5);
+    await expect(drawing.locator(parts[0]).last()).toHaveCSS("opacity", "0");
+    // Halfway in, the first piece is arriving.
+    await wayIn(chapter, 0.45);
+    await expect(drawing.locator(parts[0]).last()).not.toHaveCSS(
+      "opacity",
+      "0",
+    );
+    // Held: everything stands, and the first line is not up yet.
+    await wayIn(chapter, 0);
+    for (const part of parts) {
+      await expect(drawing.locator(part).last()).toHaveCSS("opacity", "1");
+    }
+    await expect(page.locator(`${chapter} ${firstLine}`).first()).toHaveCSS(
+      "opacity",
+      "0",
+    );
+  }
 });
 
 test("the route meets between chapters on a short, wide window", async ({
@@ -468,6 +569,15 @@ test("The academy is complete and static without motion", async ({ page }) => {
   for (const cover of await chapter.locator("[data-book-cover]").all()) {
     await expect(cover).toBeHidden();
   }
+  // Both pages of an open book have the same width.
+  for (const book of await chapter.locator("[data-book]").all()) {
+    const [left, right] = await book.evaluate((element) =>
+      [...element.querySelectorAll(".half")].map(
+        (half) => half.getBoundingClientRect().width,
+      ),
+    );
+    expect(Math.abs(left - right)).toBeLessThan(1);
+  }
   await expect(drawing.locator("[data-pin]")).toHaveCount(1);
   await expect(drawing.locator("[data-route]")).toHaveCSS(
     "stroke-dashoffset",
@@ -484,6 +594,11 @@ test("The academy plays as a held scene, objects before text", async ({
   const drawing = chapter.locator("svg:visible");
   const line = (index: number) => chapter.locator("[data-line]").nth(index);
   const shown = (part: string) => expect(drawing.locator(part).last());
+  const books = chapter.locator("[data-book]");
+  const covers = chapter.locator("[data-book-cover]");
+  // A closed cover is at full width; an opened one has narrowed away at the spine.
+  const closed = /^matrix\(1, /;
+  const opened = /^matrix\(0, /;
 
   // Nothing is on stage before its moment.
   await expect(line(0)).toHaveCSS("opacity", "0");
@@ -491,36 +606,44 @@ test("The academy plays as a held scene, objects before text", async ({
     await shown(part).toHaveCSS("opacity", "0");
   }
 
-  // Just before the first line: the whole bridge stands, the line is not up yet.
-  await playAcademy(page, 3.5);
+  // The town was built on the way in. The first line rests; the flowers have not
+  // bloomed and the pin has not landed.
+  await playAcademy(page, 1.3);
   await shown("[data-span]").toHaveCSS("opacity", "1");
-  await expect(line(0)).toHaveCSS("opacity", "0");
-
-  // The first line rests; the flowers have not bloomed and the pin has not landed.
-  await playAcademy(page, 4.6);
   await expect(line(0)).toHaveCSS("opacity", "1");
   await shown("[data-flower]").toHaveCSS("opacity", "0");
   await shown("[data-pin]").toHaveCSS("opacity", "0");
 
-  // Where I am now: the pin has landed before its line rests.
-  await playAcademy(page, 9.8);
+  // Where I am now: the pin has landed before its line rests. No books yet.
+  await playAcademy(page, 6.5);
   await expect(line(2)).toHaveCSS("opacity", "1");
   await shown("[data-pin]").toHaveCSS("opacity", "1");
-  const books = chapter.locator("[data-book]");
-  const covers = chapter.locator("[data-book-cover]");
   await expect(books.first()).toHaveCSS("opacity", "0");
 
-  // One book at a time: the first has landed and opened (its cover has narrowed away
-  // at the spine); the second has not arrived.
-  await playAcademy(page, 12.3);
-  await expect(books.first()).toHaveCSS("opacity", "1");
-  await expect(covers.first()).toHaveCSS("transform", /^matrix\(0, /);
-  await expect(books.nth(1)).toHaveCSS("opacity", "0");
+  // All three books have been dropped, and all are still closed.
+  await playAcademy(page, 9.2);
+  for (const index of [0, 1, 2]) {
+    await expect(books.nth(index)).toHaveCSS("opacity", "1");
+    await expect(covers.nth(index)).toHaveCSS("transform", closed);
+  }
 
-  // The end: three open books with readable names, the route has run on.
-  await playAcademy(page, 17.3);
-  await expect(books.last()).toHaveCSS("opacity", "1");
-  await expect(covers.last()).toHaveCSS("transform", /^matrix\(0, /);
+  // Then one at a time: the first is open, the second is not yet.
+  await playAcademy(page, 10.4);
+  await expect(covers.first()).toHaveCSS("transform", opened);
+  await expect(covers.nth(1)).toHaveCSS("transform", closed);
+
+  // The end: three open books, each with two pages of the same width and a readable
+  // name; the route has run on.
+  await playAcademy(page, 15.3);
+  await expect(covers.last()).toHaveCSS("transform", opened);
+  for (const book of await books.all()) {
+    const [left, right] = await book.evaluate((element) =>
+      [...element.querySelectorAll(".half")].map(
+        (half) => half.getBoundingClientRect().width,
+      ),
+    );
+    expect(Math.abs(left - right)).toBeLessThan(1);
+  }
   await expect(chapter.locator("[data-module]").last()).toBeVisible();
   const names = await new AxeBuilder({ page })
     .include("[data-academy]")

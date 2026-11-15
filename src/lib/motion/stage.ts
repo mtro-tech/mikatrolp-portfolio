@@ -18,12 +18,32 @@ export const headerHeight = () =>
  * building every scene's tweens at page load made the browser re-measure the page
  * hundreds of times in one long task. Until then the scene's CSS keeps its pieces
  * off stage.
+ *
+ * `approach` fills a second timeline that plays while the frame scrolls into view,
+ * from its top entering the bottom of the screen until it is held. A scene builds its
+ * place there, so the route never arrives at an empty page between two chapters. Its
+ * positions are units too; the whole way in is `stage.approach` units long.
  */
 export function holdStage(
   frame: Element,
   screens: number,
   build: (timeline: gsap.core.Timeline) => void,
+  approach?: (timeline: gsap.core.Timeline) => void,
 ): () => void {
+  // The frame's section: the frame itself is taken out of the flow while it is held.
+  const section = frame.closest("section") ?? frame;
+  const entering =
+    approach &&
+    gsap.timeline({
+      defaults: { ease: "none" },
+      scrollTrigger: {
+        trigger: section,
+        start: "top bottom",
+        end: () => `top ${headerHeight()}`,
+        scrub: tokens.scrub,
+        invalidateOnRefresh: true,
+      },
+    });
   const timeline = gsap.timeline({
     defaults: { ease: "none" },
     scrollTrigger: {
@@ -41,14 +61,19 @@ export function holdStage(
     (entries) => {
       if (!entries.some((entry) => entry.isIntersecting)) return;
       near.disconnect();
+      // The way in first: the held part may start from what it leaves behind.
+      if (entering && approach) {
+        approach(entering);
+        entering.set({}, {}, tokens.approach);
+        entering.progress(entering.scrollTrigger?.progress ?? 0);
+      }
       build(timeline);
       // If the reader jumped straight into the scene, show the moment they are at.
       timeline.progress(timeline.scrollTrigger?.progress ?? 0);
     },
     { rootMargin: `${tokens.buildAhead * 100}% 0px` },
   );
-  // The frame's section: the frame itself is taken out of the flow while it is held.
-  near.observe(frame.closest("section") ?? frame);
+  near.observe(section);
   return () => {
     near.disconnect();
     // A scene may have coloured the header (toneHeader); GSAP cannot revert that.
