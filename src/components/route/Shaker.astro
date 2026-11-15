@@ -5,9 +5,10 @@
 // the pieces move on their own.
 // The tin stands on (0, 0); its mouth is at (0, -170), the point the whole shaker
 // turns around (BehindTheBar.astro sets that as the transform origin).
-// Vessels have a drawn mouth, and what goes in or comes out passes through it:
-// - the tin's mouth is drawn first and its front wall last, so the measure and the ice
-//   are seen entering the mouth and then vanish behind the wall;
+// Everything is drawn flat, from the side, like the rest of the site (no openings
+// seen from above):
+// - pieces that end up inside the tin are drawn before it, so they vanish behind its
+//   top edge;
 // - a stream starts a little way inside the vessel it comes from, which is drawn over
 //   it, so the stream's top end is never seen;
 // - the ice lies inside the scoop: the scoop's wall is drawn over the cubes.
@@ -54,9 +55,6 @@ const cubes = [
 >
   {/* Everything that shakes together. */}
   <g data-shake>
-    {/* The tin's mouth: its inside, seen a little from above. */}
-    <ellipse class="inside line" cx="0" cy="-170" rx="58" ry="12"></ellipse>
-
     {/* The measure: one band from inside the jigger's cup down into the tin. It
          grows from the top, and when the pouring stops its tail runs out downward. */}
     <g data-measure>
@@ -120,15 +118,11 @@ const cubes = [
         d="M-52 -150L-40 -262Q-39 -270 -31 -270L31 -270Q39 -270 40 -262L52 -150Z"
       ></path>
     </g>
-    {/* The tin's front wall, from the front of its rim down. */}
     <path
       class="steel-dark line"
-      d="M-58 -170A58 12 0 0 0 58 -170L46 -8Q45 0 37 0L-37 0Q-45 0 -46 -8Z"
+      d="M-58 -170L-46 -8Q-45 0 -37 0L37 0Q45 0 46 -8L58 -170Z"
     ></path>
-    <path
-      class="line"
-      d="M-56.3 -146A58 12 0 0 0 56.3 -146M-49 -30L49 -30"
-    ></path>
+    <path class="line" d="M-56 -146L56 -146M-49 -30L49 -30"></path>
     <path
       class="mark"
       data-splash="top"
@@ -141,7 +135,7 @@ const cubes = [
     ></path>
   </g>
 
-  {/* The jigger: a steel measure with its mouth showing, drawn with the corner of its
+  {/* The jigger: a steel measure, flat like the tin, drawn with the corner of its
        rim on (0, 0) and over the measure. GSAP moves the outer group and turns the
        inner one around that corner, so the measure comes out of the cup there. */}
   <g data-jigger>
@@ -149,7 +143,6 @@ const cubes = [
       <g data-jigger-tip>
         <path class="steel-light line" d="M-40 0L0 0L-14 34L-26 34Z"></path>
         <path class="steel-light line" d="M-26 34L-14 34L-6 56L-34 56Z"></path>
-        <ellipse class="inside line" cx="-20" cy="0" rx="20" ry="4.5"></ellipse>
       </g>
     </g>
   </g>
@@ -187,11 +180,6 @@ const cubes = [
 
   .steel-dark {
     fill: var(--color-paper-deep);
-  }
-
-  /* The inside of a vessel, seen through its mouth. */
-  .inside {
-    fill: var(--color-ink-soft);
   }
 
   .brass {
