@@ -1,0 +1,69 @@
+---
+// The room key, the reference drawing of the house style (CLAUDE.md §4). It hangs in
+// Check-in and returns in Concierge of the future, so it is drawn once, here.
+// Coordinates are Check-in's: the key hangs from (1040, 150). A scene that wants it
+// elsewhere wraps it in a group with a transform.
+// The key and its fob are separate parts, because Check-in turns the key and lets the
+// fob swing on its own.
+interface Props {
+  part: "key" | "fob";
+}
+
+const { part } = Astro.props;
+---
+
+{part === "fob" && (
+  <>
+    <path class="brass" d="M1072 222C1092 232 1104 250 1110 276" />
+    <g transform="rotate(14 1112 330)">
+      <rect
+        class="fill-route ink-line"
+        x="1088"
+        y="276"
+        width="48"
+        height="96"
+        rx="14"
+      />
+      <rect class="fob-edge" x="1095" y="296" width="34" height="68" rx="9" />
+      <circle class="fill-paper ink-line" cx="1112" cy="288" r="5" />
+    </g>
+  </>
+)}
+{part === "key" && (
+  <>
+    <circle class="key-ring" cx="1040" cy="250" r="33" />
+    <circle class="ink-line" cx="1040" cy="250" r="44" />
+    <circle class="ink-line" cx="1040" cy="250" r="22" />
+    <rect
+      class="fill-brass ink-line"
+      x="1026"
+      y="290"
+      width="28"
+      height="12"
+      rx="3"
+    />
+    <rect
+      class="fill-brass ink-line"
+      x="1032"
+      y="302"
+      width="16"
+      height="160"
+      rx="3"
+    />
+    <path class="fill-brass ink-line" d="M1048 392h28v20h-12v10h12v20h-28z" />
+  </>
+)}
+
+<style>
+  /* The ring of the key: a thick brass band between two ink outlines. */
+  .key-ring {
+    stroke: var(--color-brass);
+    stroke-width: 22;
+  }
+
+  .fob-edge {
+    stroke: var(--color-paper);
+    stroke-width: 1.5;
+    opacity: 0.7;
+  }
+</style>

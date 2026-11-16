@@ -217,6 +217,62 @@ export const bar = {
 } as const;
 
 /**
+ * Concierge of the future: the bell, the circuit, the key, the desk, the website.
+ * Objects first, then the line, then a rest (CLAUDE.md §4). One unit is about a
+ * quarter of a screen of scrolling.
+ */
+export const concierge = {
+  /** Screens of scrolling the scene is held for. */
+  screens: { desktop: 8, phone: 7.5 },
+  /** On the way in (of stage.approach units): the desk, then the bell on it. */
+  approach: { desk: 0.6, bell: 1.8 },
+  /** When each thing starts, in units on the held scene's timeline. */
+  at: {
+    ring: 0,
+    title: 0.6,
+    ask: 0.9,
+    lift: 3.4,
+    door: 3.7,
+    trunk: 4.4,
+    circuit: 5.2,
+    how: 8.8,
+    key: 11.0,
+    around: 11.8,
+    people: 14.0,
+    close: 16.6,
+    office: 18.0,
+    wiring: 18.6,
+    behind1: 20.4,
+    behind2: 22.6,
+    project: 24.8,
+    first: 25.6,
+    frames: 26.6,
+    more: 27.8,
+    route: 29.4,
+    end: 32,
+  },
+  desk: { fromY: 50, duration: 0.8, ease: "power2.out" },
+  /** The bell lands on the desk and bounces to rest. */
+  bell: { fromY: -80, duration: 0.55, ease: "bounce.out" },
+  /** A ring: the dome dips under the route's touch and springs back. */
+  ring: { dip: 5, down: 0.12, up: 0.35, ease: "back.out(3)", fade: 0.5 },
+  /** The dome lifts off its base before the dark opens out of the bell. */
+  lift: { y: -22, duration: 0.5, ease: "power2.out" },
+  /** The dark scene opens from the bell and closes back into it. */
+  door: { duration: 0.9, ease: "power2.inOut", reachesHeader: 0.85 },
+  trunk: { duration: 0.8 },
+  /** One trace of the circuit, the pause before the next, and its node lighting up. */
+  trace: { duration: 0.8, stagger: 0.55, node: 0.2 },
+  key: { fromY: -40, duration: 0.6, ease: "power2.out" },
+  /** The things behind the desk appear one after another. */
+  /** Then the traces reach them, quicker than in the dark: three short runs. */
+  office: { fromY: 16, duration: 0.4, ease: "power2.out", stagger: 0.2 },
+  wiring: { duration: 0.8, stagger: 0.3 },
+  browser: { fromY: 24, duration: 0.5, ease: "power2.out", stagger: 0.3 },
+  route: { duration: 1.2 },
+} as const;
+
+/**
  * Next destination: the flight to Hong Kong. Objects first, then the line, then a rest
  * (CLAUDE.md §4); during the flight the map keeps drifting under a line that rests.
  * One unit is about a quarter of a screen of scrolling.

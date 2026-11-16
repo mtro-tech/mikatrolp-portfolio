@@ -1,0 +1,430 @@
+---
+// Concierge of the future: a concierge desk with a brass bell, once for desktop and once
+// for phones (choreography: chapters/concierge.motion.ts).
+// - The route arrives on the bell's button. Inside the dark scene it runs on in right
+//   angles, like a trace on a circuit board, and brass side traces branch off it.
+// - In the middle of the circuit hangs the room key from Check-in. The traces pass
+//   around it and never cross it: the human part stays untouched.
+// - Back on paper, traces run across the desk's front as a cutaway of what happens
+//   behind it, and connect a ledger, a rack of keys and a letter.
+// - Beside the bell stands a small browser window with this website in it, and two
+//   empty frames for what follows.
+// Everything is drawn in desktop units (1440 × 810). Phones show the same composition
+// at 40%, moved so the bell stands at (150, 149); only the route differs there, because
+// it leaves the rail on the left and returns to it.
+// A plain red line is the route and nothing else, so every side trace is brass.
+import Key from "./Key.astro";
+
+interface Props {
+  part: "desktop" | "phone";
+}
+
+const { part } = Astro.props;
+const desktop = part === "desktop";
+
+// The composition's place: as drawn on desktop, shrunk and moved on phones.
+const composition = desktop
+  ? {}
+  : { class: "small", transform: "translate(-138 -32) scale(0.4)" };
+
+const route = desktop
+  ? {
+      in: "M720 -1200L720 454",
+      // It starts inside the bell, which is drawn over it; then the trunk of the
+      // circuit, and out through the middle of the page.
+      out: "M720 470L720 560L780 560L780 660L720 660L720 2000",
+      trunk: 310,
+    }
+  : {
+      in: "M39 60L150 60L150 150",
+      out: "M150 156L150 192L174 192L174 232L150 232L150 300L39 300L39 340",
+      trunk: 124,
+    };
+
+// The circuit of the dark scene: each trace ends in a node. The first set spreads out
+// across the frame; the second arrives once the key hangs there, and goes around it.
+// (The key takes up x 990–1135, y 275–495: no trace enters that box.)
+type Trace = { d: string; node: [number, number] };
+const spread: Trace[] = [
+  { d: "M780 660L1270 660L1270 170L1150 170", node: [1150, 170] },
+  { d: "M780 560L860 560L860 450L800 450", node: [800, 450] },
+  { d: "M1000 660L1000 740L1120 740", node: [1120, 740] },
+  { d: "M1270 420L1340 420L1340 300", node: [1340, 300] },
+  { d: "M1150 660L1150 600", node: [1150, 600] },
+];
+const around: Trace[] = [
+  { d: "M860 560L940 560L940 230L1190 230", node: [1190, 230] },
+  { d: "M780 610L960 610L960 530L1210 530L1210 300", node: [1210, 300] },
+  { d: "M1040 230L1040 130L960 130", node: [960, 130] },
+];
+
+// Behind the desk: three traces from the trunk to the three things they serve.
+const office = [
+  "M780 590L856 590",
+  "M780 630L820 630L820 700L1070 700L1070 662",
+  "M750 660L750 745L1235 745L1235 640",
+];
+---
+
+<svg
+  class="scene-svg"
+  viewBox={desktop ? "0 0 1440 810" : "0 0 390 340"}
+  aria-hidden="true"
+  focusable="false"
+>
+  {/* The desk's front: a panel in the darker paper. */}
+  <g data-desk>
+    <g {...composition}>
+      <rect
+        class="fill-paper-deep ink-line"
+        x="660"
+        y="514"
+        width="680"
+        height="420"
+      ></rect>
+    </g>
+  </g>
+
+  {/* Behind the desk, drawn on its front as a cutaway. */}
+  <g {...composition}>
+    {office.map((d) => (
+      <>
+        <path class="trace draw" data-office-trace pathLength="1000" d={d} />
+        <path class="pulse" data-pulse pathLength="1000" d={d} />
+      </>
+    ))}
+    {/* A ledger: a closed book with a brass ribbon. */}
+    <g data-office-piece>
+      <rect
+        class="fill-paper ink-line"
+        x="858"
+        y="566"
+        width="84"
+        height="60"
+        rx="4"
+      ></rect>
+      <path class="ink-line" d="M872 566L872 626"></path>
+      <path class="fin" d="M886 584h42M886 598h42M886 612h28"></path>
+      <path class="fill-brass ink-line" d="M922 626v16l6 -5l6 5v-16z"></path>
+    </g>
+    {/* A rack of keys. */}
+    <g data-office-piece>
+      <rect
+        class="fill-brass ink-line"
+        x="1022"
+        y="580"
+        width="96"
+        height="14"
+        rx="4"
+      ></rect>
+      {[1042, 1070, 1098].map((x) => (
+        <>
+          <path class="ink-line" d={`M${x} 594L${x} 612`} />
+          <circle class="fill-paper ink-line" cx={x} cy="620" r="8" />
+          <path class="ink-line" d={`M${x} 628L${x} 652M${x} 644h7`} />
+        </>
+      ))}
+    </g>
+    {/* A letter. */}
+    <g data-office-piece>
+      <rect
+        class="fill-paper ink-line"
+        x="1192"
+        y="586"
+        width="86"
+        height="54"
+        rx="3"
+      ></rect>
+      <path class="ink-line" d="M1192 588L1235 618L1278 588"></path>
+    </g>
+  </g>
+
+  {/* The route: down onto the bell, then (drawn by the scene) on through the circuit. */}
+  <path class="route-line" d={route.in}></path>
+  <path
+    class="route-line draw"
+    data-route
+    data-edge-length={route.trunk}
+    pathLength="1000"
+    d={route.out}
+  ></path>
+
+  {/* The circuit of the dark scene. */}
+  <g data-circuit>
+    <g {...composition}>
+      {[...spread, ...around].map(({ d, node }, index) => (
+        <>
+          <path
+            class="trace draw"
+            data-trace={index < spread.length ? "spread" : "around"}
+            pathLength="1000"
+            d={d}
+          />
+          <g data-node={index < spread.length ? "spread" : "around"}>
+            <circle
+              class:list={[
+                "fill-brass pivot idle-pulse",
+                index % 2 && "idle-pulse--late",
+              ]}
+              cx={node[0]}
+              cy={node[1]}
+              r="7"
+            />
+          </g>
+        </>
+      ))}
+    </g>
+  </g>
+
+  {/* The room key, with a brass ring of light behind it. */}
+  <g data-key-stage>
+    <g {...composition}>
+      <circle class="brass pivot idle-pulse" cx="1040" cy="320" r="62"></circle>
+      <g
+        data-concierge-key
+        transform="translate(1040 240) scale(0.8) translate(-1040 -150)"
+      >
+        <Key part="fob" />
+        <Key part="key" />
+        {/* The box no trace may enter (a test asks what lies on top inside it). */}
+        <rect class="unseen" x="978" y="194" width="180" height="276"></rect>
+      </g>
+    </g>
+  </g>
+
+  {/* The desk's top: a brass slab. */}
+  <g data-desk-top>
+    <g {...composition}>
+      <rect
+        class="fill-brass ink-line"
+        x="640"
+        y="506"
+        width="720"
+        height="14"
+        rx="4"
+      ></rect>
+    </g>
+  </g>
+
+  {/* The bell. Its dome is its own group: the scene dips and lifts it. */}
+  <g data-bell>
+    <g {...composition}>
+      <g data-bell-rings>
+        <path
+          class="ink-line"
+          d="M664 468Q652 482 664 496M648 460Q630 482 648 504M776 468Q788 482 776 496M792 460Q810 482 792 504"
+        ></path>
+      </g>
+      <g data-bell-dome>
+        <rect
+          class="fill-brass ink-line"
+          x="714"
+          y="452"
+          width="12"
+          height="12"
+          rx="3"
+        ></rect>
+        <path
+          class="fill-brass ink-line"
+          d="M686 496A34 34 0 0 1 754 496Z"
+        ></path>
+        <path
+          class="shine idle-shimmer"
+          d="M700 484A22 22 0 0 1 712 470"
+        ></path>
+      </g>
+      <rect
+        class="fill-brass ink-line"
+        x="678"
+        y="496"
+        width="84"
+        height="10"
+        rx="3"
+      ></rect>
+      {/* The point the dark scene opens from. */}
+      <circle data-bell-heart class="unseen" cx="720" cy="486" r="1"></circle>
+    </g>
+  </g>
+
+  {/* The first project: this website, in a small browser window on the desk. */}
+  <g data-browser>
+    <g {...composition}>
+      <path class="ink-line" d="M960 496v10M934 506h52"></path>
+      <rect
+        class="fill-paper ink-line"
+        x="860"
+        y="336"
+        width="200"
+        height="160"
+        rx="8"
+      ></rect>
+      <path class="ink-line" d="M860 362h200"></path>
+      <circle class="fill-route" cx="878" cy="349" r="4"></circle>
+      <circle class="fill-brass" cx="892" cy="349" r="4"></circle>
+      <circle class="fill-paper-deep ink-line" cx="906" cy="349" r="4"></circle>
+      {/* The page itself: a route line, a pin, a few lines of text. */}
+      <path
+        class="mini-route"
+        d="M990 362L990 392C990 414 936 408 936 436C936 462 990 458 990 496"
+      ></path>
+      <path
+        class="fill-route"
+        d="M990 392C990 392 982 384 982 378A8 8 0 1 1 998 378C998 384 990 392 990 392Z"
+      ></path>
+      <path
+        class="fin"
+        d="M878 384h56M878 398h40M1004 430h36M1004 444h24"
+      ></path>
+      <rect class="cursor" x="1032" y="437" width="3" height="14"></rect>
+    </g>
+  </g>
+  {/* More will follow: two empty frames. */}
+  {[
+    { x: 1090, y: 386, w: 120, h: 110 },
+    { x: 1240, y: 416, w: 100, h: 80 },
+  ].map(({ x, y, w, h }) => (
+    <g data-frame>
+      <g {...composition}>
+        <path class="dashed" d={`M${x + w / 2} 496v10`} />
+        <rect class="dashed" x={x} y={y} width={w} height={h} rx="8" />
+      </g>
+    </g>
+  ))}
+</svg>
+
+<style>
+  /* Pieces drawn at 40% on phones: outlines inside are scaled back up, so they stay
+     as thick on screen as everywhere else (route.css divides stroke widths by --zoom). */
+  .small {
+    --zoom: calc(0.4 * var(--stage-fit, 1));
+  }
+
+  /* A side trace of the circuit: as thick as the route, in brass. */
+  .trace {
+    stroke: var(--color-brass);
+    stroke-width: calc(
+      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+    stroke-linejoin: miter;
+  }
+
+  /* A pulse travelling along a trace: one short dash of the path's 1000 steps. */
+  .pulse {
+    stroke: var(--color-ink);
+    stroke-width: calc(
+      var(--route-stroke-width) * 2 / var(--route-scale, 1) / var(--zoom, 1)
+    );
+    stroke-dasharray: 10 990;
+  }
+
+  /* Fine ink lines: ruled pages, lines of text. */
+  .fin {
+    stroke: var(--color-ink-soft);
+    stroke-width: calc(
+      var(--route-detail-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  .shine {
+    stroke: var(--color-paper);
+    stroke-width: calc(
+      var(--route-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  /* The website's own route inside the small window: short, and part of the object. */
+  .mini-route {
+    stroke: var(--color-route);
+    stroke-width: calc(
+      var(--route-detail-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  .cursor {
+    fill: var(--color-ink);
+  }
+
+  .dashed {
+    stroke: var(--color-ink-soft);
+    stroke-width: calc(
+      var(--route-detail-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+    stroke-dasharray: 9 8;
+  }
+
+  /* Shapes that only mark a place or a box. */
+  .unseen {
+    stroke: none;
+    fill: none;
+  }
+
+  /* Scroll-drawn paths count their length in 1000 steps (GSAP rounds stroke-dashoffset
+     to whole pixels). */
+  .draw {
+    stroke-dasharray: 1000;
+  }
+
+  /* Idle: pulses travel along the traces behind the desk, the cursor blinks. */
+  :global(html[data-motion="on"]) .pulse {
+    animation: trace-pulse var(--duration-drift) linear infinite;
+  }
+
+  :global(html[data-motion="on"]) .pulse:nth-of-type(4n) {
+    animation-delay: calc(var(--duration-drift) * -0.4);
+  }
+
+  :global(html[data-motion="on"]) .cursor {
+    animation: cursor-blink var(--duration-flutter) steps(2, jump-none) infinite
+      alternate;
+  }
+
+  :global(html[data-motion="on"]) .idle-pulse--late {
+    animation-delay: calc(var(--duration-pulse) * -0.5);
+  }
+
+  @keyframes trace-pulse {
+    from {
+      stroke-dashoffset: 1000;
+    }
+
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes cursor-blink {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+
+  /* Before the choreography reaches them, these are not on stage. */
+  :global(html[data-motion="on"]) [data-desk],
+  :global(html[data-motion="on"]) [data-desk-top],
+  :global(html[data-motion="on"]) [data-bell],
+  :global(html[data-motion="on"]) [data-bell-rings],
+  :global(html[data-motion="on"]) [data-office-piece],
+  :global(html[data-motion="on"]) [data-pulse],
+  :global(html[data-motion="on"]) [data-node],
+  :global(html[data-motion="on"]) [data-key-stage],
+  :global(html[data-motion="on"]) [data-browser],
+  :global(html[data-motion="on"]) [data-frame] {
+    opacity: 0;
+  }
+
+  :global(html[data-motion="on"]) .draw {
+    stroke-dashoffset: 1000;
+  }
+
+  /* Without motion there is no dark scene: no circuit, no key, no ringing, no pulses. */
+  :global(html:not([data-motion="on"])) [data-circuit],
+  :global(html:not([data-motion="on"])) [data-key-stage],
+  :global(html:not([data-motion="on"])) [data-bell-rings],
+  :global(html:not([data-motion="on"])) [data-pulse] {
+    display: none;
+  }
+</style>
