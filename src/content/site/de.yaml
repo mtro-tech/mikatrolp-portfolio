@@ -13,3 +13,17 @@ hiddenDetail: Die lokale Gastfreundschaft kleiner Lokale auf der ganzen Welt
 links:
   linkedin: https://www.linkedin.com/in/mika-trolp-767b63381/
   github: https://github.com/mtro-tech
+# The contact form in Check-out. It stays off until its server endpoint and the
+# privacy notice exist (build step 5, CLAUDE.md §7). With false, no form is built.
+contactForm: false
+# Interface text of the guestbook form.
+guestbook:
+  name: "Name"
+  email: "E-Mail"
+  message: "Nachricht"
+  send: "Ins Gästebuch eintragen"
+  sending: "Wird gesendet…"
+  thanks: "Vielen Dank. Ihre Nachricht ist auf dem Weg zu mir."
+  error: "Das hat nicht geklappt. Bitte versuchen Sie es gleich noch einmal."
+  privacy: "Datenschutzhinweis"
+  trap: "Dieses Feld bitte leer lassen"

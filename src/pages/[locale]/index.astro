@@ -4,8 +4,8 @@ import { getRelativeLocaleUrl } from "astro:i18n";
 import Academy from "../../components/chapters/Academy.astro";
 import Arrival from "../../components/chapters/Arrival.astro";
 import BehindTheBar from "../../components/chapters/BehindTheBar.astro";
-import ChapterHeading from "../../components/chapters/ChapterHeading.astro";
 import CheckIn from "../../components/chapters/CheckIn.astro";
+import CheckOut from "../../components/chapters/CheckOut.astro";
 import ConciergeOfTheFuture from "../../components/chapters/ConciergeOfTheFuture.astro";
 import Foundations from "../../components/chapters/Foundations.astro";
 import NextDestination from "../../components/chapters/NextDestination.astro";
@@ -25,7 +25,7 @@ const otherSite = (await getEntry("site", other))!.data;
 const chapters = (
   await getCollection("chapters", ({ id }) => id.startsWith(`${locale}/`))
 ).sort((a, b) => a.data.order - b.data.order);
-const [arrival, checkIn, foundations, bar, academy, next, concierge, ...stops] =
+const [arrival, checkIn, foundations, bar, academy, next, concierge, checkOut] =
   chapters;
 
 // "2027-02-15" → day, month and year; "2025-08" → month and year only.
@@ -129,26 +129,14 @@ const meta = (data: (typeof chapters)[number]["data"]) =>
       beats={concierge.data.beats ?? {}}
     />
 
-    <!-- Plain placeholders until step 4 designs each chapter. -->
-    <div class="mx-auto max-w-2xl space-y-16 p-6">
-      {stops.map(({ data }) => (
-        <section class="space-y-4" data-stage-name={data.stage}>
-          <div>
-            <ChapterHeading stage={data.stage} heading={data.heading} />
-          </div>
-          {meta(data) && <p class="text-ink-soft">{meta(data)}</p>}
-          {data.body.map((paragraph) => (
-            <p>{paragraph}</p>
-          ))}
-          {data.items?.map((item) => (
-            <p>
-              <span class="font-semibold">{item.label}:</span>{" "}
-              {item.values.join(", ")}
-            </p>
-          ))}
-        </section>
-      ))}
-    </div>
+    <CheckOut
+      stage={checkOut.data.stage}
+      heading={checkOut.data.heading}
+      beats={checkOut.data.beats ?? {}}
+      links={site.links}
+      form={site.contactForm ? site.guestbook : undefined}
+      privacyHref={`/${locale}/privacy/`}
+    />
   </main>
 
   <footer class="mx-auto flex max-w-2xl gap-6 p-6">

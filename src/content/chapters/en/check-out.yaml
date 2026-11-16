@@ -3,3 +3,9 @@ stage: Check-out
 heading: Guestbook
 body:
   - The guestbook is open for a message. There is more from me on LinkedIn and GitHub.
+# The same copy as body, cut into beats for the staged scene. No facts are added.
+beats:
+  open:
+    - "The guestbook is open for a message."
+  more:
+    - "There is more from me on LinkedIn and GitHub."

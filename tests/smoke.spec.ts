@@ -107,6 +107,9 @@ test("the header shows the chapter being read", async ({ page }) => {
     .locator('[data-concierge] [data-group="project"]')
     .scrollIntoViewIfNeeded();
   await expect(stage).toHaveText("Concierge of the future");
+  // The last chapter: the end of the page.
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(stage).toHaveText("Check-out");
 });
 
 test("Check-in is complete and static without motion", async ({ page }) => {
@@ -177,6 +180,8 @@ const playConcierge = (page: Page, position: number) =>
     desktop: 8,
     phone: 7.5,
   });
+const playCheckOut = (page: Page, position: number) =>
+  playStage(page, "[data-check-out]", position / 12, { desktop: 3, phone: 3 });
 const playAcademy = (page: Page, position: number) =>
   playStage(page, "[data-academy]", position / 14.8, {
     desktop: 3.7,
@@ -683,6 +688,8 @@ test("the route meets between chapters on a short, wide window", async ({
   await playConcierge(page, 31.9);
   expect(await entry("[data-concierge]")).toBeCloseTo(width / 2, 0);
   await expect.poll(() => exit("[data-concierge]")).toBeCloseTo(width / 2, 0);
+  // Check-out takes it there, onto the guestbook's spine. The route ends in it.
+  expect(await entry("[data-check-out]")).toBeCloseTo(width / 2, 0);
 });
 
 test("The academy is complete and static without motion", async ({ page }) => {
@@ -1137,6 +1144,114 @@ test("Concierge of the future plays as a held scene, objects before text", async
   await drawn("[data-route]");
 });
 
+test("Check-out is the open guestbook without motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/en/");
+  const chapter = page.locator("[data-check-out]");
+  await expect(chapter.getByRole("heading", { level: 2 })).toHaveText(
+    "Check-out",
+  );
+  await expect(page.locator(".pin-spacer")).toHaveCount(0);
+  // Both lines of the copy, and the book open (no closed cover).
+  const lines = chapter.locator("[data-line]");
+  await expect(lines).toHaveCount(2);
+  for (const line of await lines.all()) {
+    await expect(line).toBeVisible();
+    await expect(line).toHaveCSS("opacity", "1");
+  }
+  await expect(chapter.locator("[data-book-cover]")).toBeHidden();
+  // The two profiles, as links that open safely.
+  for (const [name, href] of [
+    ["LinkedIn", "https://www.linkedin.com/in/mika-trolp-767b63381/"],
+    ["GitHub", "https://github.com/mtro-tech"],
+  ]) {
+    const link = chapter.getByRole("link", { name });
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute("href", href);
+    await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  }
+  // The contact form is switched off until its endpoint and the privacy notice
+  // exist (CLAUDE.md §7): no part of a form is on the page, only an empty ruled page.
+  await expect(page.locator("main form")).toHaveCount(0);
+  await expect(page.locator("main").locator("input, textarea")).toHaveCount(0);
+  await expect(chapter.locator("[data-rule]")).toHaveCount(5);
+  await expect(chapter.locator("[data-rule]").first()).toBeVisible();
+});
+
+test("Check-out plays as a short held scene, objects before text", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "not held on phones");
+  await page.goto("/de/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion-ready", "");
+  const chapter = page.locator("[data-check-out]");
+  const shown = (part: string) => expect(chapter.locator(part).last());
+  // How much of a writing line is drawn, as a share of its width.
+  const ruled = (index: number) =>
+    chapter
+      .locator("[data-rule]")
+      .nth(index)
+      .evaluate(
+        (track) =>
+          track.querySelector(".rule")!.getBoundingClientRect().width /
+          track.getBoundingClientRect().width,
+      );
+
+  // On the way in the closed book and the pen are placed; no text is up.
+  await playCheckOut(page, 0);
+  await shown("[data-book]").toHaveCSS("opacity", "1");
+  await shown("[data-pen]").toHaveCSS("opacity", "1");
+  await expect(chapter.locator("[data-book-cover]")).toBeVisible();
+  await shown("[data-line]").toHaveCSS("opacity", "0");
+
+  // The book is open and the invitation rests before the pen starts ruling.
+  await playCheckOut(page, 2.1);
+  await expect(chapter.locator('[data-line="open"]')).toHaveCSS("opacity", "1");
+  await expect.poll(() => ruled(0)).toBeLessThan(0.05);
+
+  // Every line is ruled, and dry (ink, not the route's red), before the tags drop.
+  await playCheckOut(page, 5.3);
+  for (const index of [0, 4])
+    await expect.poll(() => ruled(index)).toBeGreaterThan(0.99);
+  await shown("[data-rule] i").toHaveCSS("opacity", "0");
+  await shown("[data-tag]").toHaveCSS("opacity", "0");
+
+  // The tags hang before their line arrives.
+  await playCheckOut(page, 6.3);
+  await shown("[data-tag]").toHaveCSS("opacity", "1");
+  await expect(chapter.locator('[data-line="more"]')).toHaveCSS("opacity", "0");
+
+  // The end: the second line is up, the route has signed off with its full stop.
+  await playCheckOut(page, 11.9);
+  await expect(chapter.locator('[data-line="more"]')).toHaveCSS("opacity", "1");
+  await expect(chapter.locator("[data-route]")).toHaveCSS(
+    "stroke-dashoffset",
+    "0px",
+  );
+  await shown("[data-stop]").toHaveCSS("opacity", "1");
+});
+
+test("on phones Check-out is a normal section, never held", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "desktop holds it");
+  await page.goto("/en/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion-ready", "");
+  const chapter = page.locator("[data-check-out]");
+  await expect(chapter.locator(".pin-spacer")).toHaveCount(0);
+  await chapter.locator("[data-tags]").scrollIntoViewIfNeeded();
+  await expect(chapter.locator('[data-line="open"]')).toBeVisible();
+  // Whatever fades in while scrolling ends fully shown.
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect
+    .poll(() =>
+      chapter
+        .getByRole("link", { name: "GitHub" })
+        .evaluate((link) => getComputedStyle(link.closest("ul")!).opacity),
+    )
+    .toBe("1");
+});
+
 test("Foundations is complete and static without motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/en/");
@@ -1291,6 +1406,8 @@ test("the hero's drawings are not visible before they animate in", async ({
     for (const animation of document.getAnimations()) {
       if (animation.effect?.getComputedTiming().iterations === Infinity)
         continue;
+      // Scroll-linked animations (Check-out on phones) have no clock to rewind.
+      if (!(animation.timeline instanceof DocumentTimeline)) continue;
       animation.pause();
       animation.currentTime = 0;
     }

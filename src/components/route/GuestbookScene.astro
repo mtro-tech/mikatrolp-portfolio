@@ -1,0 +1,92 @@
+---
+// Check-out's drawing, desktop only (1440 × 810): the route comes down onto the spine
+// of the guestbook, a fountain pen lies beside it, and under the book the route leaves
+// as a signature flourish that ends in a full stop. That is where the route ends.
+// The book itself is markup (CheckOut.astro), laid over this drawing in the same box:
+// its top edge is at y = 130, its bottom at y = 640, its spine at x = 720.
+// Phones have no drawing here: the rail ends in a full stop of its own.
+---
+
+<svg
+  class="scene-svg"
+  viewBox="0 0 1440 810"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path class="route-line" d="M720 -1200L720 124"></path>
+
+  {/* The flourish: out from under the spine, a loop, a long stroke, a full stop. */}
+  <path
+    class="route-line draw"
+    data-route
+    pathLength="1000"
+    d="M720 646L720 684C720 730 636 742 600 716C566 692 602 660 644 680C704 708 770 764 868 742C904 734 930 724 952 724"
+  ></path>
+  <g data-stop>
+    <circle
+      class="fill-route pivot idle-pulse"
+      cx="966"
+      cy="724"
+      r="7"
+    ></circle>
+  </g>
+
+  {/* The pen. The scene moves the outer group (its tip is the origin); it lies at a
+       slant, as a pen is held. */}
+  <g data-pen transform="translate(1080 772)">
+    <g transform="rotate(-32)">
+      <path class="fill-paper ink-line" d="M0 0L26 -8L26 8Z"></path>
+      <path class="ink-line" d="M4 0L22 0"></path>
+      <rect
+        class="fill-brass ink-line"
+        x="26"
+        y="-9"
+        width="20"
+        height="18"
+        rx="2"
+      ></rect>
+      <rect
+        class="fill-route ink-line"
+        x="46"
+        y="-10"
+        width="118"
+        height="20"
+        rx="8"
+      ></rect>
+      <path class="shine idle-shimmer" d="M62 -4h40"></path>
+      <rect
+        class="fill-brass ink-line"
+        x="118"
+        y="-13"
+        width="8"
+        height="26"
+        rx="2"
+      ></rect>
+    </g>
+  </g>
+</svg>
+
+<style>
+  .shine {
+    stroke: var(--color-paper);
+    stroke-width: calc(
+      var(--route-detail-stroke-width) / var(--route-scale, 1) / var(--zoom, 1)
+    );
+  }
+
+  /* Scroll-drawn paths count their length in 1000 steps (GSAP rounds stroke-dashoffset
+     to whole pixels). */
+  .draw {
+    stroke-dasharray: 1000;
+  }
+
+  /* Before the choreography reaches them, these are not on stage. */
+  :global(html[data-motion="on"]) [data-pen],
+  :global(html[data-motion="on"]) [data-stop] {
+    opacity: 0;
+  }
+
+  :global(html[data-motion="on"]) .draw {
+    stroke-dashoffset: 1000;
+  }
+</style>
