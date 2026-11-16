@@ -5,6 +5,21 @@ body:
   - At some point I looked at AI and asked how far I could go with it, and whether I could understand how it really works.
   - Hospitality is a people business that workflows and automations cannot replace. But AI has enormous potential to ease background processes and improve margins in a very tight business.
   - This website is my first project. More will follow.
+# The same copy as body, cut into beats for the staged scene. No facts are added.
+beats:
+  ask:
+    - "At some point I looked at AI and asked how far I could go with it,"
+  how:
+    - "and whether I could understand how it really works."
+  people:
+    - "Hospitality is a people business that workflows and automations cannot replace."
+  behind:
+    - "But AI has enormous potential to ease background processes"
+    - "and improve margins in a very tight business."
+  project:
+    - "This website is my first project."
+    - "More will follow."
+# Not shown on the page (Mika, 2026-11-16): the tools are left out of the chapter.
 items:
   - label: Tools
     values:

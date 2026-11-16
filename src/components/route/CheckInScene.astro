@@ -7,6 +7,7 @@
 //   other in the top half of the frame. The rail at x = 39 is drawn by the frame itself.
 // data-* attributes are the handles the choreography animates.
 import { contours, graticule } from "./contours";
+import Key from "./Key.astro";
 import Pin from "./Pin.astro";
 import Plane from "./Plane.astro";
 
@@ -218,51 +219,10 @@ const ground =
           <path class="route-line" d="M1040 150L1040 208" />
           {/* The fob: a red tag on its own short cord, swinging a beat behind the key. */}
           <g class="idle-sway idle-sway--late fob">
-            <path class="brass" d="M1072 222C1092 232 1104 250 1110 276" />
-            <g transform="rotate(14 1112 330)">
-              <rect
-                class="fill-route ink-line"
-                x="1088"
-                y="276"
-                width="48"
-                height="96"
-                rx="14"
-              />
-              <rect
-                class="fob-edge"
-                x="1095"
-                y="296"
-                width="34"
-                height="68"
-                rx="9"
-              />
-              <circle class="fill-paper ink-line" cx="1112" cy="288" r="5" />
-            </g>
+            <Key part="fob" />
           </g>
           <g data-key-turn>
-            <circle class="key-ring" cx="1040" cy="250" r="33" />
-            <circle class="ink-line" cx="1040" cy="250" r="44" />
-            <circle class="ink-line" cx="1040" cy="250" r="22" />
-            <rect
-              class="fill-brass ink-line"
-              x="1026"
-              y="290"
-              width="28"
-              height="12"
-              rx="3"
-            />
-            <rect
-              class="fill-brass ink-line"
-              x="1032"
-              y="302"
-              width="16"
-              height="160"
-              rx="3"
-            />
-            <path
-              class="fill-brass ink-line"
-              d="M1048 392h28v20h-12v10h12v20h-28z"
-            />
+            <Key part="key" />
             {/* Balances the teeth, so the turn pivots exactly on the ring's centre. */}
             <rect class="balance" x="996" y="206" width="88" height="256" />
           </g>
@@ -343,18 +303,6 @@ const ground =
 )}
 
 <style>
-  /* The ring of the key: a thick brass band between two ink outlines. */
-  .key-ring {
-    stroke: var(--color-brass);
-    stroke-width: 22;
-  }
-
-  .fob-edge {
-    stroke: var(--color-paper);
-    stroke-width: 1.5;
-    opacity: 0.7;
-  }
-
   /* Invisible shapes that only give a group the right bounding box or a handle. */
   .balance {
     stroke: none;

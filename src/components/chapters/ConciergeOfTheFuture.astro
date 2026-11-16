@@ -1,0 +1,213 @@
+---
+// Concierge of the future as a staged scene (the frame is .stage-frame in
+// src/styles/route.css): hospitality meets AI, the third of the page's big moments.
+// - With motion on, the frame is held on screen and concierge.motion.ts plays the scene:
+//   the route rings a bell, the dark opens out of it and a circuit spreads, the traces
+//   go around a room key, then the same traces work behind the desk; a small browser
+//   window shows this website.
+// - With motion off (or no JavaScript) the same markup is a normal section: the desk in
+//   its finished state and every line of text visible.
+// The tools in the content file are not shown (Mika, 2026-11-16).
+import ConciergeScene from "../route/ConciergeScene.astro";
+import ChapterHeading from "./ChapterHeading.astro";
+
+interface Props {
+  stage: string;
+  heading: string;
+  /** The copy in lines, grouped by moment: ask, how, people, behind, project. */
+  beats: Record<string, string[]>;
+}
+
+const { stage, heading, beats } = Astro.props;
+// Read on the dark scene, so paper-coloured.
+const dark = ["how", "people"];
+// Lines that gather instead of replacing one another.
+const gathered = ["project"];
+---
+
+<section class="concierge" data-concierge data-stage-name={stage}>
+  <div class="stage-frame" data-stage-frame>
+    {/* The dark scene: a circle that grows out of the bell. Animated version only. */}
+    <div class="backdrop" data-backdrop aria-hidden="true"></div>
+
+    <div class="scene" data-stage-scene>
+      <div class="layer layer--desktop">
+        <ConciergeScene part="desktop" />
+      </div>
+      <div class="layer layer--phone">
+        <ConciergeScene part="phone" />
+      </div>
+    </div>
+
+    <div class="copy">
+      <div class="stage-slot">
+        {Object.entries(beats).map(([moment, lines], index) => (
+          <div
+            class:list={["group", dark.includes(moment) && "group--dark"]}
+            data-group={moment}
+          >
+            {/* The heading belongs to the first moment, so later ones start at the top. */}
+            {index === 0 && (
+              <div class="title" data-title>
+                <ChapterHeading stage={stage} heading={heading} />
+              </div>
+            )}
+            <div
+              class:list={[
+                "lines font-display text-quote",
+                gathered.includes(moment) && "lines--gathered",
+              ]}
+            >
+              {lines.map((line) => (
+                <p data-line>{line}</p>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .layer--desktop {
+    display: none;
+  }
+
+  .lines {
+    display: grid;
+    gap: 0.5rem;
+    text-wrap: balance;
+  }
+
+  .title {
+    margin-bottom: 1rem;
+  }
+
+  /* ---- Motion off: a normal scrolling section ------------------------------------ */
+  .backdrop {
+    display: none;
+  }
+
+  .copy {
+    position: relative;
+    padding: 1.5rem var(--spacing-page) 3rem calc(10% + 1.25rem);
+  }
+
+  @media (width >= 60rem) {
+    .layer--desktop {
+      display: block;
+    }
+
+    .layer--phone {
+      display: none;
+    }
+
+    /* The drawing lies behind; the copy takes the column left of the route. */
+    .scene {
+      position: absolute;
+      inset: 0;
+    }
+
+    .copy {
+      width: 36%;
+      margin-left: 8.33%;
+      padding: 5vw 0 4rem;
+    }
+
+    /* Stacked, the large beat size would not fit the column. */
+    :global(html:not([data-motion="on"])) .lines {
+      font-size: var(--text-lead);
+      line-height: var(--text-lead--line-height);
+    }
+  }
+
+  /* ---- Motion on: the scene plays inside the held frame -------------------------- */
+  /* A circle that grows from the bell until it covers the frame: the dark scene. */
+  :global(html[data-motion="on"]) .backdrop {
+    display: block;
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    margin: -50px 0 0 -50px;
+    border-radius: 50%;
+    background: var(--color-ink);
+    scale: 0;
+  }
+
+  /* Phones: the drawing in the top 46% of the frame, the text below. The drawing
+     shrinks from the rail's top if the screen is short (--stage-fit, src/lib/scroll.ts). */
+  :global(html[data-motion="on"]) .scene {
+    --zoom: var(--stage-fit, 1);
+
+    position: absolute;
+    inset: 0 0 54% 0;
+    scale: var(--stage-fit, 1);
+    transform-origin: 10% 0;
+  }
+
+  :global(html[data-motion="on"]) .layer {
+    position: absolute;
+    inset: 0 0 auto 0;
+  }
+
+  :global(html[data-motion="on"]) .copy {
+    position: absolute;
+    inset: 46% 0 0 0;
+    padding: 0.5rem var(--spacing-page) 1.5rem calc(10% + 1.25rem);
+  }
+
+  /* The lines of a moment replace each other, so they share one place... */
+  :global(html[data-motion="on"]) .lines {
+    gap: 0;
+  }
+
+  :global(html[data-motion="on"]) .lines > * {
+    grid-area: 1 / 1;
+  }
+
+  /* ...except where they gather, one under the other. */
+  :global(html[data-motion="on"]) .lines--gathered {
+    gap: 0.5rem;
+  }
+
+  :global(html[data-motion="on"]) .lines--gathered > * {
+    grid-area: auto;
+  }
+
+  /* Text on the dark scene is paper-coloured. */
+  :global(html[data-motion="on"]) .group--dark {
+    color: var(--color-paper);
+  }
+
+  /* Nothing is on stage before its moment (concierge.motion.ts brings each in). */
+  :global(html[data-motion="on"]) .title,
+  :global(html[data-motion="on"]) [data-line] {
+    opacity: 0;
+  }
+
+  @media (width >= 60rem) {
+    /* Desktop: the drawing fills the frame and shrinks from where the route enters
+       and leaves, the middle of the page. */
+    :global(html[data-motion="on"]) .scene {
+      inset: 0;
+      transform-origin: 50% 0;
+    }
+
+    /* The text stands left of the route. */
+    :global(html[data-motion="on"]) .copy {
+      inset: 13% auto 0 8.33%;
+      width: 36%;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* On a short screen the large beat size would run out of the frame. */
+    @media (height < 52rem) {
+      :global(html[data-motion="on"]) .lines {
+        font-size: var(--text-lead);
+        line-height: var(--text-lead--line-height);
+      }
+    }
+  }
+</style>

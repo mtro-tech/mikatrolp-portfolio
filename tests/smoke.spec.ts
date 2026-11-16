@@ -103,6 +103,10 @@ test("the header shows the chapter being read", async ({ page }) => {
     .locator('[data-flight] [data-group="learn"]')
     .scrollIntoViewIfNeeded();
   await expect(stage).toHaveText("Next destination");
+  await page
+    .locator('[data-concierge] [data-group="project"]')
+    .scrollIntoViewIfNeeded();
+  await expect(stage).toHaveText("Concierge of the future");
 });
 
 test("Check-in is complete and static without motion", async ({ page }) => {
@@ -168,6 +172,11 @@ const playBar = (page: Page, position: number) =>
   playStage(page, "[data-bar]", position / 37.4, { desktop: 9, phone: 8.5 });
 const playFlight = (page: Page, position: number) =>
   playStage(page, "[data-flight]", position / 28, { desktop: 7, phone: 6.5 });
+const playConcierge = (page: Page, position: number) =>
+  playStage(page, "[data-concierge]", position / 32, {
+    desktop: 8,
+    phone: 7.5,
+  });
 const playAcademy = (page: Page, position: number) =>
   playStage(page, "[data-academy]", position / 14.8, {
     desktop: 3.7,
@@ -265,6 +274,10 @@ test("the route line keeps one thickness on screen", async ({ page }) => {
   await playFlight(page, 1);
   await expect
     .poll(() => thickness("[data-flight] [data-flight-path]"))
+    .toBeCloseTo(atLoad, 1);
+  await playConcierge(page, 1);
+  await expect
+    .poll(() => thickness("[data-concierge] .route-line"))
     .toBeCloseTo(atLoad, 1);
 });
 
@@ -577,6 +590,11 @@ test("each chapter's place is built on the way in", async ({ page }) => {
       ["[data-origin-map]", "[data-land]", "[data-origin-pin]", "[data-plane]"],
       "[data-line]",
     ],
+    [
+      "[data-concierge]",
+      ["[data-desk]", "[data-desk-top]", "[data-bell]"],
+      "[data-line]",
+    ],
   ];
   for (const [chapter, parts, firstLine] of places) {
     const drawing = page.locator(`${chapter} svg:visible`);
@@ -661,6 +679,10 @@ test("the route meets between chapters on a short, wide window", async ({
   // Next destination hands it on in the middle of the page.
   await playFlight(page, 27.9);
   await expect.poll(() => exit("[data-flight]")).toBeCloseTo(width / 2, 0);
+  // Concierge of the future takes it there and hands it on there too.
+  await playConcierge(page, 31.9);
+  expect(await entry("[data-concierge]")).toBeCloseTo(width / 2, 0);
+  await expect.poll(() => exit("[data-concierge]")).toBeCloseTo(width / 2, 0);
 });
 
 test("The academy is complete and static without motion", async ({ page }) => {
@@ -957,6 +979,162 @@ test("Next destination plays as a held scene, objects before text", async ({
     "stroke-dashoffset",
     "0px",
   );
+});
+
+test("Concierge of the future is complete and static without motion", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/en/");
+  const chapter = page.locator("[data-concierge]");
+  const drawing = chapter.locator("svg:visible");
+  await expect(drawing).toHaveCount(1);
+  await expect(drawing).toHaveAttribute("aria-hidden", "true");
+  await expect(chapter.getByRole("heading", { level: 2 })).toHaveText(
+    "Concierge of the future",
+  );
+  await expect(page.locator(".pin-spacer")).toHaveCount(0);
+  // All seven lines of the copy are on the page at once.
+  const lines = chapter.locator("[data-line]");
+  await expect(lines).toHaveCount(7);
+  for (const line of await lines.all()) {
+    await expect(line).toBeVisible();
+    await expect(line).toHaveCSS("opacity", "1");
+  }
+  // The desk with its bell, what is behind it, the small browser window and the two
+  // empty frames; the route drawn. No dark scene: no backdrop, circuit or key.
+  for (const part of ["[data-desk]", "[data-bell]", "[data-browser]"])
+    await expect(drawing.locator(part)).toBeVisible();
+  await expect(drawing.locator("[data-frame]")).toHaveCount(2);
+  await expect(drawing.locator("[data-office-piece]").first()).toBeVisible();
+  await expect(drawing.locator("[data-route]")).toHaveCSS(
+    "stroke-dashoffset",
+    "0px",
+  );
+  for (const part of ["[data-circuit]", "[data-key-stage]"])
+    await expect(drawing.locator(part)).toBeHidden();
+  await expect(chapter.locator("[data-backdrop]")).toBeHidden();
+  // The tools are left out of the chapter (Mika, 2026-11-16).
+  for (const tool of ["Claude", "Firecrawl", "Notion"])
+    await expect(chapter).not.toContainText(tool);
+});
+
+test("Concierge of the future plays as a held scene, objects before text", async ({
+  page,
+}) => {
+  await page.goto("/en/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion-ready", "");
+  const chapter = page.locator("[data-concierge]");
+  const drawing = chapter.locator("svg:visible");
+  const header = page.locator(".site-header");
+  const line = (moment: string, index = 0) =>
+    chapter.locator(`[data-group="${moment}"] [data-line]`).nth(index);
+  const shown = (part: string) => expect(drawing.locator(part).last());
+  const drawn = (part: string) =>
+    expect(drawing.locator(part).last()).toHaveCSS("stroke-dashoffset", "0px");
+  // How large the dark circle is, as a share of the frame's width.
+  const dark = () =>
+    chapter.evaluate((el) => {
+      const circle = el.querySelector("[data-backdrop]")!;
+      return (
+        circle.getBoundingClientRect().width / el.getBoundingClientRect().width
+      );
+    });
+
+  // Nothing is on stage before its moment.
+  await expect(line("ask")).toHaveCSS("opacity", "0");
+  await shown("[data-bell]").toHaveCSS("opacity", "0");
+  await shown("[data-browser]").toHaveCSS("opacity", "0");
+
+  // The question: the desk and the bell were there on the way in; the first line
+  // rests on paper.
+  await playConcierge(page, 2.6);
+  await shown("[data-bell]").toHaveCSS("opacity", "1");
+  await shown("[data-desk]").toHaveCSS("opacity", "1");
+  await expect(line("ask")).toHaveCSS("opacity", "1");
+  expect(await dark()).toBeLessThan(0.01);
+  await expect(header).not.toHaveAttribute("data-tone");
+
+  // Just before the second line: the frame is dark, the header has turned, the desk
+  // has stepped back, the whole first circuit is drawn, and the line is not up yet.
+  await playConcierge(page, 8.7);
+  await expect.poll(dark).toBeGreaterThan(1);
+  await expect(header).toHaveAttribute("data-tone", "ink");
+  await shown("[data-desk]").toHaveCSS("opacity", "0");
+  await drawn('[data-trace="spread"]');
+  await shown('[data-node="spread"]').toHaveCSS("opacity", "1");
+  await shown("[data-key-stage]").toHaveCSS("opacity", "0");
+  await expect(line("how")).toHaveCSS("opacity", "0");
+
+  // The line rests, paper-coloured on ink and readable.
+  await playConcierge(page, 10);
+  await expect(line("how")).toHaveCSS("opacity", "1");
+  await expect(header).toHaveCSS("background-color", "rgb(30, 43, 38)");
+  const contrast = await new AxeBuilder({ page })
+    .include("[data-concierge]")
+    .include(".site-header")
+    .withRules(["color-contrast"])
+    .analyze();
+  expect(contrast.violations).toEqual([]);
+
+  // Just before the third line: the key hangs there and the traces have gone around
+  // it. No trace, and not the route, enters the key's box.
+  await playConcierge(page, 13.9);
+  await shown("[data-key-stage]").toHaveCSS("opacity", "1");
+  await drawn('[data-trace="around"]');
+  await expect(line("people")).toHaveCSS("opacity", "0");
+  const crossings = await drawing.evaluate((svg) => {
+    const box = svg
+      .querySelector("[data-concierge-key] rect:last-of-type")!
+      .getBoundingClientRect();
+    let inside = 0;
+    for (const path of svg.querySelectorAll<SVGPathElement>(
+      "[data-trace], [data-route]",
+    )) {
+      const matrix = path.getScreenCTM()!;
+      const length = path.getTotalLength();
+      for (let at = 0; at <= length; at += 4) {
+        const point = path.getPointAtLength(at).matrixTransform(matrix);
+        if (
+          point.x > box.left &&
+          point.x < box.right &&
+          point.y > box.top &&
+          point.y < box.bottom
+        )
+          inside += 1;
+      }
+    }
+    return { inside, box: box.width * box.height };
+  });
+  expect(crossings.box).toBeGreaterThan(0);
+  expect(crossings.inside).toBe(0);
+
+  // Just before the fourth line: paper again, the header with it; the desk is back
+  // with the things behind it, wired up; the circuit and the key are gone.
+  await playConcierge(page, 20.3);
+  await expect.poll(dark).toBeLessThan(0.01);
+  await expect(header).not.toHaveAttribute("data-tone");
+  await shown("[data-desk]").toHaveCSS("opacity", "1");
+  await shown("[data-office-piece]").toHaveCSS("opacity", "1");
+  await drawn("[data-office-trace]");
+  await shown("[data-circuit]").toHaveCSS("opacity", "0");
+  await shown("[data-key-stage]").toHaveCSS("opacity", "0");
+  await expect(line("behind")).toHaveCSS("opacity", "0");
+
+  // The browser window stands before its line; the empty frames before theirs.
+  await playConcierge(page, 25.5);
+  await shown("[data-browser]").toHaveCSS("opacity", "1");
+  await expect(line("project")).toHaveCSS("opacity", "0");
+  await shown("[data-frame]").toHaveCSS("opacity", "0");
+  await playConcierge(page, 27.7);
+  await shown("[data-frame]").toHaveCSS("opacity", "1");
+  await expect(line("project", 1)).toHaveCSS("opacity", "0");
+
+  // The end: both last lines are up together, and the route has run on.
+  await playConcierge(page, 31.9);
+  await expect(line("project")).toHaveCSS("opacity", "1");
+  await expect(line("project", 1)).toHaveCSS("opacity", "1");
+  await drawn("[data-route]");
 });
 
 test("Foundations is complete and static without motion", async ({ page }) => {
