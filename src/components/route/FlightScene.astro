@@ -636,6 +636,28 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
           d="M300 90h80M520 150h70M80 180h60"
         ></path>
       </g>
+      {/* The sea does not end in a straight cut where the chapter ends: it fades into
+           the paper, like the map under the hero. A paper-coloured veil, not a
+           see-through sea, so the towers still rise from behind it. */}
+      <defs>
+        <linearGradient
+          id={`flight-sea-fade-${part}`}
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="1"
+        >
+          <stop class="veil" offset="0" stop-opacity="0"></stop>
+          <stop class="veil" offset="0.5" stop-opacity="1"></stop>
+        </linearGradient>
+      </defs>
+      <rect
+        x={g.travel - 460 * g.k}
+        y={desktop ? 700 : 296}
+        width={reach + 460 * g.k}
+        height={desktop ? 200 : 84}
+        fill={`url(#flight-sea-fade-${part})`}
+      ></rect>
     </g>
     <g
       class:list={[!desktop && "small"]}
@@ -785,6 +807,10 @@ const stars = Array.from({ length: 14 }, (_, i) => ({
   /* The hotel's name must stay legible on a phone, where pieces are drawn at 45%. */
   .small .tower-label {
     font-size: 26px;
+  }
+
+  .veil {
+    stop-color: var(--color-paper);
   }
 
   .wave {
