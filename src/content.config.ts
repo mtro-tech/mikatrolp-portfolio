@@ -71,6 +71,20 @@ const site = defineCollection({
       linkedin: z.url(),
       github: z.url(),
     }),
+    // The contact form is built only when this is true (CLAUDE.md §7: the endpoint
+    // and the privacy notice must exist first).
+    contactForm: z.boolean(),
+    guestbook: z.strictObject({
+      name: z.string().min(1),
+      email: z.string().min(1),
+      message: z.string().min(1),
+      send: z.string().min(1),
+      sending: z.string().min(1),
+      thanks: z.string().min(1),
+      error: z.string().min(1),
+      privacy: z.string().min(1),
+      trap: z.string().min(1),
+    }),
   }),
 });
 

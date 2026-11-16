@@ -82,6 +82,27 @@ const office = [
         width="680"
         height="420"
       ></rect>
+      {/* The desk's front does not end in a straight cut where the chapter ends: it
+           fades into the paper, like the sea in Next destination. */}
+      <defs>
+        <linearGradient
+          id={`concierge-desk-fade-${part}`}
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="1"
+        >
+          <stop class="veil" offset="0" stop-opacity="0"></stop>
+          <stop class="veil" offset="0.3" stop-opacity="1"></stop>
+        </linearGradient>
+      </defs>
+      <rect
+        x="640"
+        y="752"
+        width="720"
+        height="200"
+        fill={`url(#concierge-desk-fade-${part})`}
+      ></rect>
     </g>
   </g>
 
@@ -297,6 +318,10 @@ const office = [
      as thick on screen as everywhere else (route.css divides stroke widths by --zoom). */
   .small {
     --zoom: calc(0.4 * var(--stage-fit, 1));
+  }
+
+  .veil {
+    stop-color: var(--color-paper);
   }
 
   /* A side trace of the circuit: as thick as the route, in brass. */

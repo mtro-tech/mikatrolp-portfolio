@@ -217,6 +217,48 @@ export const bar = {
 } as const;
 
 /**
+ * Check-out: the guestbook. Desktop only, and short: the form must be reached quickly.
+ * Objects first, then the line, then a rest (CLAUDE.md §4). One unit is about a
+ * quarter of a screen of scrolling.
+ */
+export const checkOut = {
+  /** Screens of scrolling the scene is held for. */
+  screens: 3,
+  /** On the way in (of stage.approach units): the closed book, then the pen beside it. */
+  approach: { book: 0.8, pen: 2.0 },
+  /** When each thing starts, in units on the held scene's timeline. */
+  at: {
+    open: 0.2,
+    title: 1.0,
+    line: 1.3,
+    rules: 2.4,
+    tags: 5.4,
+    more: 6.4,
+    seal: 7.4,
+    flourish: 8.2,
+    stop: 9.6,
+    end: 12,
+  },
+  /** The closed book is dropped onto the page: one page wide, lying in the middle. */
+  book: { fromY: -90, duration: 0.5, ease: "bounce.out", closedShift: -25 },
+  pen: { fromY: 30, duration: 0.5, ease: "power2.out", move: 0.25 },
+  open: { duration: 0.7 },
+  /** One writing line, and the pause before the next. */
+  rule: { duration: 0.42, stagger: 0.52, settle: 0.2 },
+  /** The link tags drop onto their rail and swing to rest, like the language tags. */
+  tags: {
+    fromY: -30,
+    fromRotation: 10,
+    duration: 0.45,
+    ease: "back.out(2.2)",
+    stagger: 0.25,
+  },
+  seal: { fromY: -40, duration: 0.5, ease: "bounce.out" },
+  flourish: { duration: 1.4 },
+  stop: { duration: 0.25 },
+} as const;
+
+/**
  * Concierge of the future: the bell, the circuit, the key, the desk, the website.
  * Objects first, then the line, then a rest (CLAUDE.md §4). One unit is about a
  * quarter of a screen of scrolling.
