@@ -24,7 +24,8 @@ Never delete or weaken a rule without Mika's explicit OK.
 - **Sources of truth:**
   - Facts about Mika: `src/content/` only, built from `docs/content-source.md`. Nothing else.
   - Tools and versions: the Tool Framework doc (see §3).
-  - Privacy and security: §7 and the *Privacy & Security* doc.
+  - Privacy and security: §7 and the full checklist in `docs/security-checklist.md`. The *Privacy & Security* doc is Mika's copy
+    with the research and legal background; Claude Code cannot open it, so every rule that matters is in the repo.
   - Design decisions: §4 and the Decision log.
 
 ## 2. Non-negotiables
@@ -148,24 +149,36 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
 
 ## 7. Security & privacy rules
 
+The full checklist, with reasons and sources, is `docs/security-checklist.md`. Read its matching section before working on
+the contact form, headers, dependencies, CI, DNS or deployment settings, and tick off the items a change completes.
+
 **Secrets**
 
 - Secrets live only in Vercel environment variables and the local `.env`. Never in code, content, docs, logs or commit messages.
 - Never give a secret the `PUBLIC_` prefix. Use secrets only in server code (`src/pages/api/`).
 - Never read, print or edit `.env` (the deny rules enforce this). If you need a new variable, tell Mika its name and purpose.
+- The Scaleway key comes from an IAM application limited to `TransactionalEmailEmailApiCreate`, with an expiry date.
+  In Vercel it is Sensitive and set for Production only. Mika creates it; never ask for its value.
 
 **Dependencies**
 
 - Only the packages in §3. Before proposing a new one, check that its name is exact on npmjs.com, and that it has real downloads, a repository and history.
 - Keep `package-lock.json` committed. CI uses `npm ci`. Pin GitHub Actions to full commit SHAs with minimal `permissions`.
 - Run `npm audit` before every release and report the result.
+- Dependabot keeps `npm` and `github-actions` up to date (`.github/dependabot.yml`, weekly). Never merge its pull requests with
+  failing CI; read the changelog for major versions. When `@astrojs/vercel` updates, check whether the `path-to-regexp` override is still needed.
 
 **The contact form** (`src/pages/api/contact.ts`)
 
 - Fields: name, email, message. Plus a hidden honeypot field.
 - Validate everything on the server: required fields, email format, length limits (name ≤ 100, message ≤ 2,000 characters).
 - User input never goes into email headers except a validated address in Reply-To. Send as plain text.
-- Rate-limit per IP address. Show visitors generic errors only.
+- Rate-limit per IP address with a Vercel WAF rule on `/api/contact` (counters inside the function don't work across instances).
+  Show visitors generic errors only.
+- Keep Astro's `security.checkOrigin` on (the default) and post the form as form data. Never send `Access-Control-Allow-Origin`.
+- The `fetch` to Scaleway gets a timeout (about 8 s) and the function a short `maxDuration` (about 10 s). No automatic retries;
+  the send button is disabled after the first click, so a message is never sent twice.
+- Call only the fixed Scaleway URL; never fetch a URL taken from user input. Answer with `Cache-Control: no-store`.
 - Store nothing. Never log message contents.
 
 **Output and headers**
@@ -180,6 +193,14 @@ you're unsure about), frontend-design plugin (design direction), `/security-revi
   - a `Permissions-Policy` that disables camera, microphone and geolocation
   - `frame-ancestors 'none'`
 - No source maps or debug output in production.
+
+**Domain, email and operations**
+
+- Before the form goes live: SPF, DKIM, DMARC (start `p=none`, later `p=quarantine`) and MX for mikatrolp.com.
+  Every DNS record is written down in `docs/dns.md`.
+- Settings that live only in dashboards (env variable names, never values; the WAF rule; Deployment Protection; GitHub security settings)
+  are recorded in `docs/settings.md` whenever they change.
+- After an incident: roll back in Vercel first, then add a postmortem to Lessons learned (what happened, impact, cause, fix, rule).
 
 **Privacy**
 
@@ -235,6 +256,7 @@ Add new entries at the top. Format: date · decision · why · decided by.
 
 | Date | Decision | Why | By |
 | --- | --- | --- | --- |
+| 2026-11-17 | §7 extended after a security review against a "vibe coder" production checklist: a WAF rate-limit rule, origin check, timeout, no retries, no double sends, no SSRF and `no-store` for the form; a send-only Scaleway key with an expiry date; Dependabot; email DNS records; a settings register; postmortems. The full checklist now lives in the repo as `docs/security-checklist.md`, linked from §1 and §7 | Claude Code cannot open the *Privacy & Security* doc, so new checklist items never reached it | Mika |
 | 2026-11-16 | Concierge of the future is a staged scene and the third cinematic peak, held for 8 screens on desktop and 7.5 on phones: a concierge desk with a brass bell. On the way in the desk and the bell are ready, and the route arrives on the bell's button. Moments: the bell rings for the first line; the dome lifts and the dark (pine ink, header too) opens out of the bell while the route runs on in right angles as the trunk of a circuit and brass side traces branch off it, each ending in a node; the room key from Check-in appears in the middle and the next traces go around it, none crossing it (tested); the dark closes back into the bell, and traces now run across the desk's front, a cutaway of what is behind it, to a ledger, a rack of keys and a letter, with small pulses travelling along them; a small browser window on the desk shows this website in miniature, then two empty dashed frames for "More will follow"; the route leaves at 50%. Copy stands left of the route. Side traces are brass, because a plain red line is the route. The key is now a shared drawing, `Key.astro`. Without motion: the desk, what is behind it, the browser window and the frames, with all the text; no dark scene | Step 4 plan | Claude, plan approved by Mika |
 | 2026-11-16 | Check-out is the guestbook, the last chapter. Desktop: a staged scene held for only 3 screens (the form must be reached quickly). On the way in a closed red guestbook and a fountain pen are ready, and the route arrives on the book's spine. Moments: the book opens on the heading and the invitation; the pen rules the right page line by line (each line red while wet, then ink); the two profile links drop in as key tags on a brass rail, then their line; the route leaves under the book as a signature flourish and ends in a full stop: the end of the route. The book is markup, not a drawing (its text and form are real), laid over the drawing in the same 1440 × 810 box so both shrink together. Phones: never held, a normal section with the two pages stacked and the rail ending in a full stop (this is the one exception to "held on phones too": a form in a held frame is hard to use on a small screen). Without motion: the open book | Step 4 plan | Claude, plan approved by Mika |
 | 2026-11-16 | The contact form is built but switched off: `contactForm: false` in `src/content/site/`. With `false` no form markup is on the page; the right page is an empty ruled page. It is turned on in step 5, when the endpoint `/api/contact`, the privacy notice and the Scaleway set-up exist. The form's interface text is in `src/content/site/` (`guestbook`). When on: real labels and fields on the ruled lines, a brass "Sign the guestbook" button, the privacy link beside it, a hidden trap field, general error text; tabbing into the form jumps to the scene's end | Mika: "Chapter now, form off"; CLAUDE.md §7 | Mika |
@@ -325,6 +347,7 @@ Add new entries at the top. Format: date · decision · why · decided by.
 Add an entry whenever a bug, a correction from Mika or a wrong assumption teaches something reusable.
 Format: date · what happened · the rule that prevents it next time.
 
+- 2026-11-17 · A security review added new checklist items to the *Privacy & Security* doc on claude.ai, which Claude Code cannot read; the rulebook only named the doc · Every rule Claude Code must follow lives in the repo (`CLAUDE.md` or a file it links). A doc outside the repo is background for Mika, never the only copy of a rule.
 - 2026-11-16 · The pen could not be seen writing: it is part of the drawing, and the book (markup) lay over the drawing · When markup and a drawing share a scene, decide which is on top for each piece that touches both; a drawing above markup needs `pointer-events: none`.
 - 2026-11-16 · A scroll-linked CSS animation (Check-out's fade-in on phones) broke an older test that rewinds every animation, and the dev toolbar's own fields were counted as form fields · Tests that sweep the whole document must skip animations without a clock (`timeline` is not a `DocumentTimeline`) and look inside `main`, not the page.
 - 2026-11-16 · Two sets of pieces that arrive one after another (the desk's wiring, the empty frames) were still arriving when their line of text came up; only the "objects before text" test showed it · For a staggered set, add up start + (count − 1) × stagger + duration and keep that before the line's start. Write the test for each moment before judging the pace by eye.
@@ -384,7 +407,11 @@ Format: date · what happened · the rule that prevents it next time.
 - [x] Email delivery service: Scaleway Transactional Email (approved 2026-11-13). Mika still needs to create the account, verify mikatrolp.com (SPF/DKIM), create the mailbox and set the API key in Vercel
 - [x] LinkedIn and GitHub URLs (in `docs/content-source.md` §11, given 2026-11-14)
 - [ ] **Reminder for Claude, at the start of build step 5:** remind Mika of the Scaleway tasks before building the form
-  (create the account, verify mikatrolp.com with SPF/DKIM, create the mailbox, set the API key in Vercel)
+  (create the account, verify mikatrolp.com with SPF/DKIM, add DMARC and MX, create the mailbox, create the API key from an
+  IAM application limited to sending with an expiry date, set it in Vercel as Sensitive for Production only, add the WAF rate-limit rule)
+- [ ] `.github/dependabot.yml` (npm + github-actions, weekly) and CodeQL default setup in GitHub (`docs/security-checklist.md` §3)
+- [ ] This file has over 400 lines; Claude Code's docs recommend under 200, because longer files are followed less reliably.
+  Mika decides whether the Decision log, Lessons learned and Open questions move into `docs/` and get linked from here
 - [ ] **Reminder for Claude:** tell Mika before starting any step that needs mikatrolp.com to be registered
   (expected first at step 5, for Scaleway domain verification; also for connecting the domain in Vercel at launch)
 - [x] Shell deny rules for `.env` in `.claude/settings.json` (pasted in by Mika, 2026-11-14)
